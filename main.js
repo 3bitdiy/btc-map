@@ -102,17 +102,14 @@ async function initMap() {
   const styleResponse = await fetch('/map-style.json');
   const style = await styleResponse.json();
 
-  // Replace placeholder with actual tile source.
-  // For dev we fall back to Protomaps cloud CDN via a custom TileJSON endpoint.
-  // REPLACE THIS URL with your self-hosted PMTiles file for production.
-  const PMTILES_URL = 'https://api.protomaps.com/tiles/v3.json?key=REPLACE_WITH_YOUR_KEY';
+  // Self-hosted PMTiles file on Cloudflare R2.
+  // To switch to a local file during development, use: pmtiles:///tiles/western-balkans.pmtiles
+  const PMTILES_URL = 'pmtiles://https://pub-716e1bd7d8eb43cdafdb8f37dd91f157.r2.dev/western-balkans.pmtiles';
 
-  // Swap out the source to use standard XYZ tiles as the fallback so the map
-  // renders without a local PMTiles file during development.
-  style.sources.protomaps = {
+  style.sources.openmaptiles = {
     type: 'vector',
     url: PMTILES_URL,
-    attribution: "© <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
+    attribution: "© <a href='https://openmaptiles.org'>OpenMapTiles</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
   };
 
   const map = new maplibregl.Map({

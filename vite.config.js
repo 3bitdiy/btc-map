@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Serve data/ and assets/ as static files from root
-  publicDir: false,
+  publicDir: 'public',
   server: {
     port: 5173,
     open: false,
