@@ -586,13 +586,16 @@ a { color: inherit; }
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,.12);
     z-index: 30;
-    transform: translateY(100%);
+    /* Start off-screen; .is-open slides it up */
+    transform: translateY(110%);
     transition: transform 300ms ease;
+    /* Override desktop visibility rule — let transform handle show/hide */
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
-  #detail-panel[aria-hidden="false"] {
+  #detail-panel.is-open {
     transform: translateY(0);
-    visibility: visible;
   }
 
   #panel-photo-wrap { height: 160px; }

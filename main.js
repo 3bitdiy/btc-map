@@ -301,10 +301,11 @@ function openPanel(colony) {
     socialEl.appendChild(a);
   });
 
-  // Show panel
+  // Show panel — rAF ensures CSS transition fires after initial paint
   const panel = document.getElementById('detail-panel');
   panel.setAttribute('aria-hidden', 'false');
   document.getElementById('app').classList.add('panel-open');
+  requestAnimationFrame(() => panel.classList.add('is-open'));
   panel.scrollTop = 0;
 }
 
@@ -317,6 +318,7 @@ function renderDescription(colony) {
 function closePanel() {
   state.selectedColony = null;
   const panel = document.getElementById('detail-panel');
+  panel.classList.remove('is-open');
   panel.setAttribute('aria-hidden', 'true');
   document.getElementById('app').classList.remove('panel-open');
 }
@@ -345,18 +347,21 @@ function applyUiLang(lang) {
 // Filter event wiring
 // ---------------------------------------------------------------------------
 function wireFilters() {
+  // Read all checkbox states from DOM on every change — avoids closure issues
   document.querySelectorAll('input[name="country"]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      if (cb.checked) state.activeCountries.add(cb.value);
-      else state.activeCountries.delete(cb.value);
-      applyFilters();
-    });
+    cb.addEventListener('change', syncFilters);
   });
 
-  document.getElementById('active-toggle').addEventListener('change', e => {
-    state.showActiveOnly = e.target.checked;
-    applyFilters();
-  });
+  document.getElementById('active-toggle').addEventListener('change', syncFilters);
+}
+
+function syncFilters() {
+  state.activeCountries = new Set(
+    Array.from(document.querySelectorAll('input[name="country"]:checked'))
+      .map(el => el.value)
+  );
+  state.showActiveOnly = document.getElementById('active-toggle').checked;
+  applyFilters();
 }
 
 // ---------------------------------------------------------------------------
