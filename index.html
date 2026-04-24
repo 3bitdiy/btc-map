@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Western Balkans Artist Residencies</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/node_modules/maplibre-gl/dist/maplibre-gl.css" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- Top header bar -->
+      <header id="header">
+        <div id="header-left">
+          <h1 id="site-title">
+            <span class="title-main" data-i18n="title">Artist Residencies</span>
+            <span class="title-sub">Western Balkans</span>
+          </h1>
+        </div>
+        <div id="header-right">
+          <!-- Global language switcher (EN / DE for UI) -->
+          <div id="lang-switcher" role="group" aria-label="Interface language">
+            <button type="button" class="lang-btn active" data-lang="en">EN</button>
+            <button type="button" class="lang-btn" data-lang="de">DE</button>
+          </div>
+          <!-- Mobile: toggle filter panel -->
+          <button type="button" id="filter-toggle" aria-label="Toggle filters" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+              <line x1="10" y1="18" x2="14" y2="18"/>
+            </svg>
+            <span data-i18n="filters">Filters</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Filter sidebar (collapsible on mobile) -->
+      <aside id="filter-panel" aria-label="Map filters">
+        <div class="filter-section">
+          <h3 class="filter-heading" data-i18n="filterByCountry">By Country</h3>
+          <label class="filter-check">
+            <input type="checkbox" name="country" value="Serbia" checked />
+            <span class="check-dot check-dot--serbia"></span>
+            <span data-i18n="serbia">Serbia</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox" name="country" value="Bosnia and Herzegovina" checked />
+            <span class="check-dot check-dot--bosnia"></span>
+            <span data-i18n="bosnia">Bosnia &amp; Herzegovina</span>
+          </label>
+          <label class="filter-check">
+            <input type="checkbox" name="country" value="North Macedonia" checked />
+            <span class="check-dot check-dot--macedonia"></span>
+            <span data-i18n="northMacedonia">North Macedonia</span>
+          </label>
+        </div>
+
+        <div class="filter-section">
+          <h3 class="filter-heading" data-i18n="filterByStatus">Status</h3>
+          <label class="filter-toggle-row">
+            <span data-i18n="activeOnly">Active only</span>
+            <div class="toggle-wrap">
+              <input type="checkbox" id="active-toggle" checked role="switch" />
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+        </div>
+
+        <div class="filter-counter">
+          <span data-i18n="showing">Showing</span>
+          <strong id="colony-count">0</strong>
+          <span data-i18n="colonies">colonies</span>
+        </div>
+      </aside>
+
+      <!-- Map -->
+      <main id="map-container">
+        <div id="map"></div>
+      </main>
+
+      <!-- Detail panel (desktop: right sidebar; mobile: bottom sheet) -->
+      <aside id="detail-panel" aria-label="Colony details" aria-hidden="true">
+        <button type="button" id="panel-close" aria-label="Close panel">×</button>
+
+        <div id="panel-content">
+          <div id="panel-photo-wrap">
+            <img id="panel-photo" src="" alt="" />
+          </div>
+
+          <div id="panel-header">
+            <h2 id="panel-name"></h2>
+            <p id="panel-location"></p>
+            <div id="panel-meta">
+              <span id="panel-founded"></span>
+              <span id="panel-members"></span>
+            </div>
+            <div id="panel-disciplines"></div>
+          </div>
+
+          <!-- Description with per-colony language switcher (SR/EN/DE/MK) -->
+          <div id="panel-description-section">
+            <div id="desc-lang-switcher" role="group" aria-label="Description language">
+              <button type="button" class="desc-lang-btn" data-desc-lang="sr">SR</button>
+              <button type="button" class="desc-lang-btn active" data-desc-lang="en">EN</button>
+              <button type="button" class="desc-lang-btn" data-desc-lang="de">DE</button>
+              <button type="button" class="desc-lang-btn" data-desc-lang="mk">MK</button>
+            </div>
+            <p id="panel-description"></p>
+          </div>
+
+          <div id="panel-contact">
+            <h3 data-i18n="contact">Contact</h3>
+            <ul id="panel-contact-list"></ul>
+          </div>
+
+          <div id="panel-social"></div>
+        </div>
+      </aside>
+
+    </div><!-- /#app -->
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
