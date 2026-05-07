@@ -116,7 +116,7 @@
       "maxzoom": 8,
       "layout": {
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Open Sans Regular"],
+        "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 5, 10, 8, 13],
         "text-transform": "uppercase",
         "text-letter-spacing": 0.1
@@ -135,7 +135,7 @@
       "filter": ["==", "class", "country"],
       "layout": {
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Open Sans Bold"],
+        "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 4, 11, 8, 16],
         "text-transform": "uppercase",
         "text-letter-spacing": 0.15
@@ -155,7 +155,7 @@
       "minzoom": 6,
       "layout": {
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Open Sans Regular"],
+        "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 6, 10, 12, 14],
         "text-anchor": "bottom",
         "text-offset": [0, -0.3]
@@ -175,7 +175,7 @@
       "minzoom": 10,
       "layout": {
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Open Sans Regular"],
+        "text-font": ["Noto Sans Regular"],
         "text-size": 11
       },
       "paint": {

@@ -14,6 +14,7 @@ dist-ssr
 
 # folders
 /0
+data/
 
 # Editor directories and files
 .vscode/*

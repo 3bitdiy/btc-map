@@ -65,7 +65,8 @@ const COUNTRY_COLORS = {
 // ---------------------------------------------------------------------------
 const state = {
   colonies: [],
-  markers: [],            // { marker, colony } objects
+  markers: [],            // { marker, el, colony } objects
+  map: null,
   selectedColony: null,
   uiLang: 'en',
   descLang: 'en',
@@ -76,13 +77,13 @@ const state = {
 // ---------------------------------------------------------------------------
 // SVG marker generator
 // ---------------------------------------------------------------------------
-function createMarkerSvg(color) {
+function createMarkerSvg(color, uid) {
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-      <filter id="shadow" x="-30%" y="-20%" width="160%" height="160%">
+      <filter id="shadow-${uid}" x="-30%" y="-20%" width="160%" height="160%">
         <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.28)"/>
       </filter>
-      <g filter="url(#shadow)">
+      <g filter="url(#shadow-${uid})">
         <ellipse cx="14" cy="33" rx="5" ry="2.5" fill="rgba(0,0,0,0.18)"/>
         <path d="M14 2 C8 2 3 7 3 13 C3 20 14 31 14 31 C14 31 25 20 25 13 C25 7 20 2 14 2 Z"
               fill="${color}" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
@@ -151,22 +152,21 @@ function buildMarkers(map) {
   const visible = getVisibleColonies();
 
   state.colonies.forEach(colony => {
+    if (!visible.has(colony.id)) return;
+
     const color = colony.is_active
       ? (COUNTRY_COLORS[colony.country] ?? '#888')
       : '#9E9E9E';
 
     const el = document.createElement('div');
     el.className = 'colony-marker' + (colony.is_active ? '' : ' inactive');
-    el.innerHTML = createMarkerSvg(color);
+    el.innerHTML = createMarkerSvg(color, colony.id);
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', colony.name);
     el.setAttribute('tabindex', '0');
 
-    const isVisible = visible.has(colony.id);
-    el.style.display = isVisible ? 'block' : 'none';
-
     el.addEventListener('click', (e) => {
-      e.stopPropagation(); // prevent map click from firing closePanel
+      e.stopPropagation();
       openPanel(colony);
     });
 
@@ -178,10 +178,11 @@ function buildMarkers(map) {
       .setLngLat([colony.longitude, colony.latitude])
       .addTo(map);
 
-    state.markers.push({ marker, colony });
+    state.markers.push({ marker, el, colony });
   });
 
   updateCounter(visible.size);
+  return visible;
 }
 
 function getVisibleColonies() {
@@ -195,13 +196,8 @@ function getVisibleColonies() {
 }
 
 function applyFilters() {
-  const visible = getVisibleColonies();
-  state.markers.forEach(({ marker, colony }) => {
-    marker.getElement().style.display = visible.has(colony.id) ? 'block' : 'none';
-  });
-  updateCounter(visible.size);
-
-  // Close panel if selected colony is now hidden
+  if (!state.map) return;
+  const visible = buildMarkers(state.map);
   if (state.selectedColony && !visible.has(state.selectedColony.id)) {
     closePanel();
   }
@@ -422,8 +418,10 @@ async function main() {
   const res = await fetch('/data/colonies.json');
   state.colonies = await res.json();
 
+  state.map = map;
+
   // Wait for map to be ready before adding markers
-  map.on('load', () => buildMarkers(map));
+  map.once('load', () => buildMarkers(map));
 
   wireFilters();
   wireMobileFilterToggle();
