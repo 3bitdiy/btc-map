@@ -29,7 +29,7 @@ Flat-file vanilla JS (no framework, no src/ folder). Core files:
 
 ## Full Stack (production)
 
-- **Frontend** — Cloudflare Pages (static)
+- **Frontend** — Cloudflare Pages (GitHub auto-deploy, push to `main` triggers build)
 - **Backend/DB** — PocketBase on Hetzner CX32 VPS, behind Caddy reverse proxy
 - **Map tiles** — PMTiles on Cloudflare R2
 - **Foto storage** — Cloudflare R2 via PocketBase S3 backend
