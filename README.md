@@ -1,9 +1,27 @@
-# Western Balkans Artist Residencies — Interactive Map
+# Beyond the Cities — Interactive Map & Colony Platform
 
-Interactive map of artist colonies in Serbia, Bosnia and Herzegovina, and North Macedonia.
+Interactive map of artist colonies in Serbia, Bosnia and Herzegovina, and North Macedonia, with a communication platform for colony managers.
 Built for the Goethe-Institut Belgrade as part of the *Beyond the Cities* project (2026–2028).
 
-**Tech stack:** MapLibre GL JS · Protomaps PMTiles · Vanilla JS (ES Modules) · Vite · Cloudflare Pages
+---
+
+## Tech Stack
+
+```text
+| Sloj           | Tehnologija                                        |
+| -------------- | -------------------------------------------------- |
+| Frontend mapa  | HTML / Vanilla JS + MapLibre GL JS (Vite build)    |
+| Frontend forum | HTML / Vanilla JS (isti build, odvojena stranica)  |
+| Map tiles      | PMTiles (self-hosted, Cloudflare R2)               |
+| Backend/DB     | PocketBase (auth + data + real-time)               |
+| Foto storage   | Cloudflare R2 (PocketBase S3 backend)              |
+| VPS            | Hetzner CX32 (~8€/mes)                             |
+| Reverse proxy  | Caddy (na VPS-u)                                   |
+| Hosting        | Cloudflare Pages (statički frontend)               |
+| CDN / DDoS     | Cloudflare (besplatni plan)                        |
+| SSL            | Cloudflare                                         |
+| Domain         | Porkbun                                            |
+```
 
 ---
 
@@ -18,10 +36,37 @@ Open <http://localhost:5173> (or whichever port Vite assigns).
 
 ---
 
+## Architecture overview
+
+The project has two distinct parts that share the same Vite build and PocketBase backend:
+
+**1. Interactive map** — public-facing, no login required. Displays artist colonies as markers on a self-hosted vector map. Colony data is fetched from PocketBase. Map tiles are served from Cloudflare R2 via PMTiles.
+
+**2. Colony platform (forum)** — login-required area for colony managers. Built on PocketBase auth and real-time collections. Allows managers to open discussion threads, reply, attach files, and receive announcements from the Goethe-Institut team.
+
+---
+
+## PocketBase collections (planned)
+
+```text
+users          → colony managers (PocketBase auth, email/password)
+colonies       → colony records (replaces colonies.json in production)
+threads        → discussion topics (author, title, linked colony)
+posts          → replies in a thread (author, body, attachments)
+announcements  → one-way broadcasts from Goethe-Institut admins
+```
+
+In development, colony data comes from `public/data/colonies.json`. In production, the frontend fetches from:
+
+```text
+GET https://api.beyondthecities.eu/api/collections/colonies/records
+```
+
+---
+
 ## PMTiles — getting the self-hosted tile file
 
 For production you need a PMTiles extract covering the Western Balkans.
-The fallback in `main.js` uses the Protomaps cloud CDN during development.
 
 ### Option A — Protomaps web extract (recommended)
 
@@ -30,84 +75,43 @@ The fallback in `main.js` uses the Protomaps cloud CDN during development.
    - SW: **40.0, 13.0** (lat, lon)
    - NE: **47.5, 23.5**
 3. Download the `.pmtiles` file (≈ 200–400 MB for this region).
-4. Place it at `public/tiles/balkans.pmtiles`.
+4. Upload to Cloudflare R2 bucket.
 
-### Option B — CLI extract with `pmtiles` tool
+### Option B — CLI extract
 
 ```bash
-# Install the pmtiles CLI
 brew install pmtiles   # macOS
 
-# Extract from the Protomaps planet file
 pmtiles extract https://build.protomaps.com/20240101.pmtiles balkans.pmtiles \
   --bbox=13.0,40.0,23.5,47.5
 ```
 
-### Wiring the local file
-
-In `main.js`, replace the `PMTILES_URL` line and restore the source in `map-style.json`:
-
-```js
-// main.js — replace this line:
-const PMTILES_URL = 'https://api.protomaps.com/tiles/v3.json?key=REPLACE_WITH_YOUR_KEY';
-
-// With:
-const PMTILES_URL = 'pmtiles:///tiles/balkans.pmtiles';
-```
-
-And update `style.sources.protomaps` back to:
-
-```json
-{
-  "type": "vector",
-  "url": "pmtiles:///tiles/balkans.pmtiles",
-  "attribution": "© OpenStreetMap contributors"
-}
-```
-
 ---
 
-## Build for production
+## Build & deploy
 
 ```bash
-npm run build
+npm run build   # output → dist/
 ```
 
-Output goes to `dist/`. Copy your `balkans.pmtiles` into `dist/tiles/` before deploying.
+Frontend deploys to **Cloudflare Pages**. The PMTiles file lives on **R2** — do not put it in `dist/`.
 
----
+PocketBase runs on a **Hetzner CX32 VPS** behind Caddy. Cloudflare proxies both the static frontend and the PocketBase API domain.
 
-## Deploy to Cloudflare Pages
-
-1. Push the repo to GitHub.
-2. In Cloudflare Pages → **Create a project** → connect the repo.
-3. Build settings:
-   - **Framework preset:** None (Vite)
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. Upload `balkans.pmtiles` to the Pages project via `wrangler pages deployment` or place it in `public/tiles/` before building (it will be copied to `dist/tiles/` automatically).
-
-> **GDPR note:** With self-hosted PMTiles on Cloudflare Pages, no third-party servers receive visitor IP addresses. All map tile requests are served from your own Cloudflare domain.
-
----
-
-## Data
-
-Colony data lives in `data/colonies.json`. For production, replace with a live fetch from the Airtable REST API — the data shape is identical to the Airtable schema defined in the project brief.
+> **GDPR note:** All tile requests are served from Cloudflare R2 (no third-party tile provider). Colony data and user data are stored on a Hetzner VPS in the EU. No external analytics or tracking.
 
 ---
 
 ## Project structure
 
-```
+```text
 btc-map/
-├── index.html          # App shell
-├── style.css           # All styles (CSS custom properties)
-├── main.js             # App logic (ES modules, no framework)
-├── map-style.json      # MapLibre style (Protomaps vector tiles)
-├── vite.config.js
-├── data/
-│   └── colonies.json   # Mock data (6 colonies, 2 per country)
-└── assets/
-    └── markers/        # (reserved for future custom marker SVGs)
+├── index.html              # Map app shell
+├── style.css               # All styles (CSS custom properties)
+├── main.js                 # Map app logic (ES modules, no framework)
+├── public/
+│   ├── map-style.json      # MapLibre style (OpenMapTiles schema)
+│   └── data/
+│       └── colonies.json   # Mock data (6 colonies) — dev only
+└── vite.config.js
 ```

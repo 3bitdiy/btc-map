@@ -14,20 +14,49 @@ No test suite — there are no test files in this project.
 
 ## Architecture
 
-Flat-file vanilla JS app (no framework, no src/ folder). Core files:
+The project has two parts that share the same Vite build:
+
+1. **Interactive map** (`index.html` / `main.js`) — public-facing, no login. Colony markers on a self-hosted vector map.
+2. **Colony platform (forum)** — planned, login-required area for colony managers built on PocketBase auth and real-time collections.
+
+Flat-file vanilla JS (no framework, no src/ folder). Core files:
 
 - `index.html` — App shell; all markup including the filter panel, map container, and detail panel
 - `main.js` — All application logic as ES modules (~400 lines)
 - `style.css` — All styles using CSS custom properties; CSS Grid drives the 3-column desktop layout (filter | map | detail panel)
 - `public/map-style.json` — MapLibre GL v8 style using the **OpenMapTiles schema** (Planetiler output, `source-layer` names like `transportation`, `boundary`, `place`)
-- `public/data/colonies.json` — Mock data (6 colonies); production will fetch from Airtable
+- `public/data/colonies.json` — Mock data (6 colonies); production will fetch from PocketBase REST API
+
+## Full Stack (production)
+
+- **Frontend** — Cloudflare Pages (static)
+- **Backend/DB** — PocketBase on Hetzner CX32 VPS, behind Caddy reverse proxy
+- **Map tiles** — PMTiles on Cloudflare R2
+- **Foto storage** — Cloudflare R2 via PocketBase S3 backend
+- **CDN/proxy/SSL** — Cloudflare free tier
+
+## PocketBase collections (planned)
+
+```text
+users          → colony managers (email/password auth)
+colonies       → colony records (replaces colonies.json in production)
+threads        → discussion topics (author, title, linked colony)
+posts          → replies in a thread (author, body, attachments)
+announcements  → one-way broadcasts from Goethe-Institut admins
+```
+
+In production, `fetch('/data/colonies.json')` in `main.js` will be replaced with:
+
+```text
+GET https://api.beyondthecities.eu/api/collections/colonies/records
+```
 
 ## Map Stack
 
 - **MapLibre GL JS** renders vector tiles via WebGL
 - **PMTiles** (`pmtiles` npm package) provides HTTP range-request tile access; registered as a custom protocol: `maplibregl.addProtocol('pmtiles', ...)`
 - Tiles are self-hosted on **Cloudflare R2** at `pub-716e1bd7d8eb43cdafdb8f37dd91f157.r2.dev/western-balkans.pmtiles`
-- The URL is injected at runtime in `main.js` — `map-style.json` contains only `PMTILES_URL_PLACEHOLDER`
+- The URL is injected at runtime in `main.js`
 - Glyphs come from `https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf` — only **"Noto Sans Regular"** is available; "Noto Sans Bold" returns 404
 
 ## Layout & Responsive Behaviour
@@ -43,6 +72,8 @@ Flat-file vanilla JS app (no framework, no src/ folder). Core files:
 
 ## Deployment
 
-Hosted on **Cloudflare Pages** (static). To redeploy: run `npm run build`, then upload the `dist/` folder via the Cloudflare Pages dashboard. The 919 MB PMTiles file lives on R2 — do not put it in `dist/`.
+Frontend hosted on **Cloudflare Pages** (static). To redeploy: run `npm run build`, then upload the `dist/` folder via the Cloudflare Pages dashboard. The PMTiles file lives on R2 — do not put it in `dist/`.
 
 R2 bucket CORS is set to allow all origins with GET/HEAD and must expose `Content-Length`, `Content-Range`, `ETag` headers for PMTiles range requests to work.
+
+PocketBase runs on Hetzner CX32 behind Caddy. Cloudflare proxies the API subdomain (`api.beyondthecities.eu`) to the VPS.
