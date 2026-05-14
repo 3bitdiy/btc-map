@@ -172,6 +172,7 @@ ul {
   min-height: 0;
   padding: 18px 20px 22px;
   position: relative;
+  isolation: isolate;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -187,15 +188,16 @@ ul {
   background: var(--rose);
   transition: bottom 0.24s ease;
   pointer-events: none;
+  z-index: 0;
 }
 
 #filter-card.filters-expanded::after {
-  bottom: -360px;
+  bottom: -520px;
 }
 
 .filter-group {
   position: relative;
-  z-index: 3;
+  z-index: 2;
 }
 
 .pill-list[hidden] {
@@ -346,7 +348,7 @@ ul {
 
 .filter-counter {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   margin-top: 16px;
   font-size: 12px;
   color: var(--wine);
