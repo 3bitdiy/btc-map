@@ -3,8 +3,9 @@
 Interactive map of artist colonies in Serbia, Bosnia and Herzegovina, and North Macedonia, with a communication platform for colony managers.
 Built for the Goethe-Institut Belgrade as part of the *Beyond the Cities* project (2026–2028).
 
-**Live (trenutno):** <https://lucky-water-8d37.stevankojic-com.workers.dev/>
-**Live (planirano):** Cloudflare Pages + custom domen (Porkbun)
+**Live (kanonski):** <https://beyondthecities.org/>
+**Live (workers.dev):** <https://btc-map.stevan-266.workers.dev/>
+**Redirect:** <https://www.beyondthecities.org/> → <https://beyondthecities.org/> (301)
 
 ---
 
@@ -97,7 +98,8 @@ pmtiles extract https://build.protomaps.com/20240101.pmtiles balkans.pmtiles \
 npm run build   # output → dist/
 ```
 
-Frontend deploys to **Cloudflare Pages** via GitHub (push to `main` → auto-deploy). The PMTiles file lives on **R2** — do not put it in `dist/`.
+Frontend is currently served from **Cloudflare Workers** (custom domain + workers.dev URL).
+The PMTiles file lives on **R2** — do not put it in `dist/`.
 
 PocketBase runs on a **Hetzner CX32 VPS** behind Caddy. Cloudflare proxies both the static frontend and the PocketBase API domain.
 
