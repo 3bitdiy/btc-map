@@ -15,6 +15,9 @@ dist-ssr
 # folders
 /0
 data/
+!public/data/
+!public/data/*.json
+!public/data/*.csv
 
 # Editor directories and files
 .vscode/*

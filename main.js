@@ -92,6 +92,11 @@ function getColonyCoordinates(colony) {
 
 function getColonyDisciplines(colony) {
   const artField = normalizeText(colony.art_field);
+  if (!artField && Array.isArray(colony.disciplines)) {
+    return colony.disciplines
+      .map((entry) => toEnglishDiscipline(normalizeText(entry)))
+      .filter(Boolean);
+  }
   if (!artField) return [];
 
   return artField
@@ -117,51 +122,58 @@ function resolveColonyPhoto(colony) {
 }
 
 async function loadColoniesData() {
-  const fallbackResponse = await fetch("/data/colonies.json");
-
-  try {
-    const manifestResponse = await fetch("/data/colonies.manifest.json", {
-      cache: "no-store",
-    });
-
-    if (!manifestResponse.ok) {
-      if (!fallbackResponse.ok) {
-        throw new Error("Unable to load colony data.");
-      }
-      return fallbackResponse.json();
+  const fetchJson = async (url) => {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}`);
     }
 
-    const manifest = await manifestResponse.json();
-    const files = Array.isArray(manifest?.files) ? manifest.files : [];
-
-    if (!files.length) {
-      if (!fallbackResponse.ok) {
-        throw new Error("Colony manifest is empty and fallback data is missing.");
-      }
-      return fallbackResponse.json();
+    const text = await response.text();
+    const trimmed = text.trimStart();
+    if (trimmed.startsWith("<!doctype") || trimmed.startsWith("<html")) {
+      throw new Error(`Non-JSON response from ${url}`);
     }
+
+    return JSON.parse(text);
+  };
+
+  const loadByFiles = async (files) => {
+    if (!Array.isArray(files) || !files.length) return [];
 
     const payloads = await Promise.all(
       files.map(async (entry) => {
         const clean = String(entry).replace(/^\/+/, "");
-        const url = `/data/${clean}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to load ${url}`);
-        }
-        const json = await response.json();
+        const json = await fetchJson(`/data/${clean}`);
         return Array.isArray(json) ? json : [];
       }),
     );
 
     return payloads.flat();
+  };
+
+  try {
+    const manifest = await fetchJson("/data/colonies.manifest.json");
+    const files = Array.isArray(manifest?.files) ? manifest.files : [];
+    const fromManifest = await loadByFiles(files);
+    if (fromManifest.length) return fromManifest;
   } catch (error) {
     console.warn("Using fallback colony data due to manifest load error:", error);
-    if (!fallbackResponse.ok) {
-      throw error;
-    }
-    return fallbackResponse.json();
   }
+
+  try {
+    const fromKnownFiles = await loadByFiles([
+      "colonies-serbia.json",
+      "colonies-bosnia-and-herzegovina.json",
+      "colonies-north-macedonia.json",
+    ]);
+    if (fromKnownFiles.length) return fromKnownFiles;
+  } catch (error) {
+    console.warn("Known split files were not available:", error);
+  }
+
+  const fallbackJson = await fetchJson("/data/colonies.json");
+  if (Array.isArray(fallbackJson)) return fallbackJson;
+  return [];
 }
 
 async function initMap() {
