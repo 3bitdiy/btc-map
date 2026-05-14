@@ -376,15 +376,17 @@ ul {
 #filter-minimize {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  bottom: -22px;
+  transform: translateX(-50%) translateY(50%);
+  bottom: 0;
   width: 38px;
   height: 24px;
   border-radius: 0 0 8px 8px;
   border: 0;
   background: var(--paper);
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
   z-index: 5;
 }
@@ -392,24 +394,43 @@ ul {
 #filter-minimize img {
   width: 12px;
   height: 12px;
-  transform: rotate(180deg);
   transition: transform 0.2s ease;
 }
 
 #filter-minimize[aria-expanded="false"] img {
-  transform: rotate(0deg);
+  transform: rotate(180deg);
+}
+
+#filter-minimize .pill-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wine);
 }
 
 #filter-card.is-minimized {
-  flex: 0 0 68px;
-  min-height: 68px;
+  flex: 0 0 28px;
+  min-height: 28px;
   overflow: visible;
-  padding-bottom: 18px;
+  padding: 0;
 }
 
 #filter-card.is-minimized #filter-content,
 #filter-card.is-minimized #filter-decor {
   display: none;
+}
+
+#filter-card.is-minimized + #filter-minimize {
+  min-width: 116px;
+  height: 34px;
+  border-radius: 999px;
+  padding: 0 12px;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(141, 49, 58, 0.2);
+}
+
+#filter-card.is-minimized + #filter-minimize .pill-label {
+  display: inline;
 }
 
 #detail-panel {
@@ -470,6 +491,44 @@ ul {
 
 #panel-minimize[aria-expanded="false"] img {
   transform: rotate(180deg);
+}
+
+#panel-minimize .pill-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wine);
+}
+
+#detail-panel.is-minimized {
+  transform: none;
+  top: 130px;
+  bottom: auto;
+  width: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+#detail-panel.is-minimized #panel-content {
+  display: none;
+}
+
+#detail-panel.is-minimized #panel-minimize {
+  position: static;
+  transform: none;
+  min-width: 116px;
+  height: 34px;
+  border-radius: 999px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 8px 18px rgba(141, 49, 58, 0.2);
+}
+
+#detail-panel.is-minimized #panel-minimize .pill-label {
+  display: inline;
 }
 
 #panel-photo-wrap {
