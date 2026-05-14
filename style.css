@@ -299,21 +299,54 @@ a { color: inherit; }
   overflow: hidden;
 }
 
-#map {
+#svg-map-root {
+  position: relative;
   width: 100%;
   height: 100%;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.45), rgba(0,0,0,0) 42%);
+}
+
+#map-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#map-caption text {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  fill: rgba(2, 48, 71, .72);
+}
+
+#marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 /* =========================================================
    Custom Map Markers
    ========================================================= */
 .colony-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
   cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  pointer-events: auto;
+  transform: translate(-50%, -100%);
   transform-origin: center bottom;
-  transition: transform 150ms ease;
+  transition: transform 150ms ease, filter 150ms ease;
 }
 
-.colony-marker:hover { transform: scale(1.25); }
+.colony-marker:hover { transform: translate(-50%, -100%) scale(1.12); }
+.colony-marker.is-selected {
+  transform: translate(-50%, -100%) scale(1.15);
+  filter: drop-shadow(0 0 8px rgba(2, 48, 71, .45));
+}
 .colony-marker.inactive { opacity: 0.45; }
 
 /* =========================================================
@@ -538,12 +571,6 @@ a { color: inherit; }
   border: 1px solid #ddd;
   color: var(--color-inactive);
 }
-
-/* =========================================================
-   MapLibre overrides
-   ========================================================= */
-.maplibregl-ctrl-logo { display: none !important; }
-.maplibregl-ctrl-attrib { font-size: 10px !important; }
 
 /* =========================================================
    Responsive — Tablet (≤ 900px)

@@ -6,6 +6,8 @@ Built for the Goethe-Institut Belgrade as part of the *Beyond the Cities* projec
 **Live (trenutno):** <https://lucky-water-8d37.stevankojic-com.workers.dev/>
 **Live (planirano):** Cloudflare Pages + custom domen (Porkbun)
 
+**SVG migration plan:** see `docs/svg-migration-plan.md`
+
 ---
 
 ## Tech Stack
