@@ -1,11 +1,17 @@
-import maplibregl from 'maplibre-gl';
-import { Protocol } from 'pmtiles';
+// ---------------------------------------------------------------------------
+// Placeholder SVG map geometry
+// ---------------------------------------------------------------------------
+const SVG_VIEWBOX = {
+  width: 1200,
+  height: 820,
+};
 
-// ---------------------------------------------------------------------------
-// PMTiles protocol registration
-// ---------------------------------------------------------------------------
-const protocol = new Protocol();
-maplibregl.addProtocol('pmtiles', protocol.tile.bind(protocol));
+const GEO_BOUNDS = {
+  minLon: 15.5,
+  maxLon: 23.2,
+  minLat: 40.5,
+  maxLat: 46.5,
+};
 
 // ---------------------------------------------------------------------------
 // i18n strings
@@ -65,8 +71,8 @@ const COUNTRY_COLORS = {
 // ---------------------------------------------------------------------------
 const state = {
   colonies: [],
-  markers: [],            // { marker, el, colony } objects
-  map: null,
+  markers: [],            // { el, colony } objects
+  mapScene: null,
   selectedColony: null,
   uiLang: 'en',
   descLang: 'en',
@@ -79,91 +85,78 @@ const state = {
 // ---------------------------------------------------------------------------
 function createMarkerSvg(color, uid) {
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38" aria-hidden="true">
       <filter id="shadow-${uid}" x="-30%" y="-20%" width="160%" height="160%">
         <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.28)"/>
       </filter>
       <g filter="url(#shadow-${uid})">
-        <ellipse cx="14" cy="33" rx="5" ry="2.5" fill="rgba(0,0,0,0.18)"/>
-        <path d="M14 2 C8 2 3 7 3 13 C3 20 14 31 14 31 C14 31 25 20 25 13 C25 7 20 2 14 2 Z"
+        <ellipse cx="15" cy="35" rx="5.5" ry="2.8" fill="rgba(0,0,0,0.18)"/>
+        <path d="M15 2 C8.6 2 3.2 7.2 3.2 13.7 C3.2 21.2 15 32.6 15 32.6 C15 32.6 26.8 21.2 26.8 13.7 C26.8 7.2 21.4 2 15 2 Z"
               fill="${color}" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
-        <circle cx="14" cy="13" r="5" fill="rgba(255,255,255,0.9)"/>
+        <path d="M10.8 16.6 L15 12.4 L19.2 16.6 V20.6 H10.8 Z" fill="rgba(255,255,255,0.92)"/>
+        <rect x="13.6" y="17.8" width="2.8" height="2.8" fill="${color}" opacity="0.5"/>
       </g>
     </svg>`;
 }
 
 // ---------------------------------------------------------------------------
-// Map initialisation
-//
-// PRODUCTION: replace the `url` value in map-style.json with your self-hosted
-// PMTiles file path, e.g. "pmtiles:///tiles/balkans.pmtiles"
-// See README.md for instructions on downloading the PMTiles extract.
+// SVG map initialisation
 // ---------------------------------------------------------------------------
-async function initMap() {
-  const styleResponse = await fetch('/map-style.json');
-  const style = await styleResponse.json();
+function initSvgMap() {
+  const root = document.getElementById('svg-map-root');
+  const svg = document.getElementById('map-svg');
+  const markerLayer = document.getElementById('marker-layer');
 
-  // Self-hosted PMTiles file on Cloudflare R2.
-  // To switch to a local file during development, use: pmtiles:///tiles/western-balkans.pmtiles
-  const PMTILES_URL = 'pmtiles://https://pub-716e1bd7d8eb43cdafdb8f37dd91f157.r2.dev/western-balkans.pmtiles';
-
-  style.sources.openmaptiles = {
-    type: 'vector',
-    url: PMTILES_URL,
-    attribution: "© <a href='https://openmaptiles.org'>OpenMapTiles</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
-  };
-
-  const map = new maplibregl.Map({
-    container: 'map',
-    style,
-    // Initial view: fit Western Balkans region
-    bounds: [[15.5, 40.5], [23.2, 46.5]],
-    fitBoundsOptions: { padding: 40 },
-    // Hard pan/zoom limits — matches the PMTiles extract bbox
-    maxBounds: [[14.0, 39.0], [24.5, 47.5]],
-    minZoom: 5,
-    maxZoom: 14,
-    dragRotate: false,
-    touchZoomRotate: false,
-  });
-
-  // Disable rotation via keyboard too
-  map.keyboard.disableRotation();
-
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
-
-  // Close detail panel when clicking the map background (not a marker)
-  map.on('click', () => {
+  root.addEventListener('click', (e) => {
+    if (e.target.closest('.colony-marker')) return;
     if (state.selectedColony) closePanel();
   });
 
-  return map;
+  return { root, svg, markerLayer };
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function projectLngLatToSvg(lng, lat) {
+  const lonRatio = (lng - GEO_BOUNDS.minLon) / (GEO_BOUNDS.maxLon - GEO_BOUNDS.minLon);
+  const latRatio = (GEO_BOUNDS.maxLat - lat) / (GEO_BOUNDS.maxLat - GEO_BOUNDS.minLat);
+
+  const x = clamp(lonRatio, 0, 1) * SVG_VIEWBOX.width;
+  const y = clamp(latRatio, 0, 1) * SVG_VIEWBOX.height;
+
+  return { x, y };
 }
 
 // ---------------------------------------------------------------------------
 // Marker management
 // ---------------------------------------------------------------------------
-function buildMarkers(map) {
+function buildMarkers(scene) {
   // Remove existing markers
-  state.markers.forEach(({ marker }) => marker.remove());
+  state.markers.forEach(({ el }) => el.remove());
   state.markers = [];
+  scene.markerLayer.innerHTML = '';
 
   const visible = getVisibleColonies();
 
   state.colonies.forEach(colony => {
     if (!visible.has(colony.id)) return;
+    if (typeof colony.longitude !== 'number' || typeof colony.latitude !== 'number') return;
 
     const color = colony.is_active
       ? (COUNTRY_COLORS[colony.country] ?? '#888')
       : '#9E9E9E';
 
-    const el = document.createElement('div');
+    const { x, y } = projectLngLatToSvg(colony.longitude, colony.latitude);
+
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'colony-marker' + (colony.is_active ? '' : ' inactive');
     el.innerHTML = createMarkerSvg(color, colony.id);
-    el.setAttribute('role', 'button');
     el.setAttribute('aria-label', colony.name);
-    el.setAttribute('tabindex', '0');
+    el.style.left = `${(x / SVG_VIEWBOX.width) * 100}%`;
+    el.style.top = `${(y / SVG_VIEWBOX.height) * 100}%`;
 
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -171,16 +164,17 @@ function buildMarkers(map) {
     });
 
     el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') openPanel(colony);
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openPanel(colony);
+      }
     });
 
-    const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat([colony.longitude, colony.latitude])
-      .addTo(map);
-
-    state.markers.push({ marker, el, colony });
+    scene.markerLayer.appendChild(el);
+    state.markers.push({ el, colony });
   });
 
+  updateMarkerSelection();
   updateCounter(visible.size);
   return visible;
 }
@@ -196,8 +190,8 @@ function getVisibleColonies() {
 }
 
 function applyFilters() {
-  if (!state.map) return;
-  const visible = buildMarkers(state.map);
+  if (!state.mapScene) return;
+  const visible = buildMarkers(state.mapScene);
   if (state.selectedColony && !visible.has(state.selectedColony.id)) {
     closePanel();
   }
@@ -303,6 +297,7 @@ function openPanel(colony) {
   document.getElementById('app').classList.add('panel-open');
   requestAnimationFrame(() => panel.classList.add('is-open'));
   panel.scrollTop = 0;
+  updateMarkerSelection();
 }
 
 function renderDescription(colony) {
@@ -317,6 +312,15 @@ function closePanel() {
   panel.classList.remove('is-open');
   panel.setAttribute('aria-hidden', 'true');
   document.getElementById('app').classList.remove('panel-open');
+  updateMarkerSelection();
+}
+
+function updateMarkerSelection() {
+  state.markers.forEach(({ el, colony }) => {
+    const isSelected = state.selectedColony?.id === colony.id;
+    el.classList.toggle('is-selected', isSelected);
+    el.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -412,16 +416,14 @@ function wirePanel() {
 // Bootstrap
 // ---------------------------------------------------------------------------
 async function main() {
-  const map = await initMap();
+  const scene = initSvgMap();
 
   // Load colony data
   const res = await fetch('/data/colonies.json');
   state.colonies = await res.json();
 
-  state.map = map;
-
-  // Wait for map to be ready before adding markers
-  map.once('load', () => buildMarkers(map));
+  state.mapScene = scene;
+  buildMarkers(scene);
 
   wireFilters();
   wireMobileFilterToggle();
