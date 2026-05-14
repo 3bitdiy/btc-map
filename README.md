@@ -21,7 +21,7 @@ Built for the Goethe-Institut Belgrade as part of the *Beyond the Cities* projec
 | Foto storage   | Cloudflare R2 (PocketBase S3 backend)              |
 | VPS            | Hetzner CX32 (~8€/mes)                             |
 | Reverse proxy  | Caddy (na VPS-u)                                   |
-| Hosting        | Cloudflare Workers (trenutno) → Pages (planirano)  |
+| Hosting        | Cloudflare Workers (custom domain + workers.dev)   |
 | CDN / DDoS     | Cloudflare (besplatni plan)                        |
 | SSL            | Cloudflare                                         |
 | Domain         | Porkbun                                            |

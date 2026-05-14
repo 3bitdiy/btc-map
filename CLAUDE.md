@@ -21,11 +21,8 @@ The project has two parts that share the same Vite build:
 
 Flat-file vanilla JS (no framework, no src/ folder). Core files:
 
-- `index.html` — App shell; all markup including the filter panel, map container, and detail panel
-- `main.js` — All application logic as ES modules (~400 lines)
-- `style.css` — All styles using CSS custom properties; CSS Grid drives the 3-column desktop layout (filter | map | detail panel)
-- `public/map-style.json` — MapLibre GL v8 style using the **OpenMapTiles schema** (Planetiler output, `source-layer` names like `transportation`, `boundary`, `place`)
-- `public/data/colonies.json` — Mock data (6 colonies); production will fetch from PocketBase REST API
+
+**Current map implementation:** MapLibre GL JS v5.24.0 + PMTiles (self-hosted on Cloudflare R2). Map style follows OpenMapTiles schema. No custom SVG renderer.
 
 ## Full Stack (production)
 
