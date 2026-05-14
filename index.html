@@ -34,54 +34,58 @@
       </section>
 
       <section id="filter-card" aria-label="Map filters">
-        <div class="filter-group">
-          <button type="button" class="select-row" data-toggle-target="country-filter-list" aria-expanded="false">
-            <span>Country</span>
-            <img src="/assets/icons/caret-down.svg" alt="" />
-          </button>
-          <div id="country-filter-list" class="pill-list" hidden>
-            <label class="pill-filter-item country-pill">
-              <input type="checkbox" name="country" value="Serbia" checked />
-              <span>Serbia</span>
+        <div id="filter-content">
+          <div class="filter-group">
+            <button type="button" class="select-row" data-toggle-target="country-filter-list" aria-expanded="false">
+              <span>Country</span>
+              <img src="/assets/icons/caret-down.svg" alt="" />
+            </button>
+            <div id="country-filter-list" class="pill-list" hidden>
+              <label class="pill-filter-item country-pill">
+                <input type="checkbox" name="country" value="Serbia" checked />
+                <span>Serbia</span>
+              </label>
+              <label class="pill-filter-item country-pill">
+                <input type="checkbox" name="country" value="Bosnia and Herzegovina" checked />
+                <span>Bosnia and Herzegovina</span>
+              </label>
+              <label class="pill-filter-item country-pill">
+                <input type="checkbox" name="country" value="North Macedonia" checked />
+                <span>North Macedonia</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <button type="button" class="select-row" data-toggle-target="discipline-filters" aria-expanded="false">
+              <span>Art field</span>
+              <img src="/assets/icons/caret-down.svg" alt="" />
+            </button>
+            <div id="discipline-filters" class="pill-list" hidden></div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-check is-round">
+              <input type="checkbox" name="scope" value="National" checked />
+              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+              <span class="pill-light">National</span>
             </label>
-            <label class="pill-filter-item country-pill">
-              <input type="checkbox" name="country" value="Bosnia and Herzegovina" checked />
-              <span>Bosnia and Herzegovina</span>
+            <label class="filter-check is-round">
+              <input type="checkbox" name="scope" value="Regional" checked />
+              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+              <span class="pill-light">Regional</span>
             </label>
-            <label class="pill-filter-item country-pill">
-              <input type="checkbox" name="country" value="North Macedonia" checked />
-              <span>North Macedonia</span>
+            <label class="filter-check is-round">
+              <input type="checkbox" name="scope" value="International" checked />
+              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+              <span class="pill-light">International</span>
             </label>
           </div>
+
+          <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
         </div>
 
-        <div class="filter-group">
-          <button type="button" class="select-row" data-toggle-target="discipline-filters" aria-expanded="false">
-            <span>Art field</span>
-            <img src="/assets/icons/caret-down.svg" alt="" />
-          </button>
-          <div id="discipline-filters" class="pill-list" hidden></div>
-        </div>
-
-        <div class="filter-group">
-          <label class="filter-check is-round">
-            <input type="checkbox" name="scope" value="National" checked />
-            <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-            <span class="pill-light">National</span>
-          </label>
-          <label class="filter-check is-round">
-            <input type="checkbox" name="scope" value="Regional" checked />
-            <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-            <span class="pill-light">Regional</span>
-          </label>
-          <label class="filter-check is-round">
-            <input type="checkbox" name="scope" value="International" checked />
-            <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-            <span class="pill-light">International</span>
-          </label>
-        </div>
-
-        <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
+        <div id="filter-decor" aria-hidden="true"></div>
       </section>
 
       <button type="button" id="filter-minimize" aria-label="Minimize filters" aria-expanded="true">
