@@ -21,7 +21,6 @@ The project has two parts that share the same Vite build:
 
 Flat-file vanilla JS (no framework, no src/ folder). Core files:
 
-
 **Current map implementation:** MapLibre GL JS v5.24.0 + PMTiles (self-hosted on Cloudflare R2). Map style follows OpenMapTiles schema. No custom SVG renderer.
 
 ## Full Stack (production)

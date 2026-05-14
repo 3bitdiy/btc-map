@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "data:convert": "node scripts/convert-colonies-csv.mjs",
+    "data:missing": "node scripts/geocode-missing-locations.mjs",
+    "data:geocode": "node scripts/geocode-missing-locations.mjs --apply"
   },
   "devDependencies": {
+    "csv-parse": "^6.2.1",
     "vite": "^8.0.10"
   },
   "dependencies": {

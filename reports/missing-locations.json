@@ -1,0 +1,134 @@
+[
+  {
+    "file": "colonies-serbia.json",
+    "id": 11,
+    "country": "Serbia",
+    "name": "Prepoznavanje",
+    "place": "Kruševac, Ribarska banja / Kraljevo, Vrnjačka banja / Niš, Sićevo / Čačak",
+    "city": "Kruševac",
+    "scope": "International",
+    "art_field": "Visual arts",
+    "query": "Kruševac, Ribarska banja / Kraljevo, Vrnjačka banja / Niš, Sićevo / Čačak, Kruševac, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 33,
+    "country": "Serbia",
+    "name": "Likovna kolonija Sićevo",
+    "place": "Sićevo village, near City of Niš",
+    "city": "Sićevo village",
+    "scope": "International",
+    "art_field": "Visual arts",
+    "query": "Sićevo village, near City of Niš, Sićevo village, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 36,
+    "country": "Serbia",
+    "name": "Street Art Residencies",
+    "place": "Different cities in Serbia",
+    "city": "Different cities in Serbia",
+    "scope": "International",
+    "art_field": "Street art, murals",
+    "query": "Different cities in Serbia, Different cities in Serbia, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 48,
+    "country": "Serbia",
+    "name": "Feministička likovna kolonija",
+    "place": "Sićevo village, near City of Niš",
+    "city": "Sićevo village",
+    "scope": "Regional",
+    "art_field": "Visual arts",
+    "query": "Sićevo village, near City of Niš, Sićevo village, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 56,
+    "country": "Serbia",
+    "name": "Likovna kolonija \"Ravništarka - Svetlost Homolja\"",
+    "place": "Ravništarka cave, Ravnište village, Kučevo municipality",
+    "city": "Ravništarka cave",
+    "scope": "National",
+    "art_field": "Painting and sculpture",
+    "query": "Ravništarka cave, Ravnište village, Kučevo municipality, Ravništarka cave, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 58,
+    "country": "Serbia",
+    "name": "Likovna kolonija SPEKTAR",
+    "place": "Čučuge kod Uba",
+    "city": "Čučuge kod Uba",
+    "scope": "National",
+    "art_field": "Painting and art education",
+    "query": "Čučuge kod Uba, Čučuge kod Uba, Serbia"
+  },
+  {
+    "file": "colonies-serbia.json",
+    "id": 59,
+    "country": "Serbia",
+    "name": "Četiri vode",
+    "place": "Ljubanje village near Užice",
+    "city": "Ljubanje village near Užice",
+    "scope": "International",
+    "art_field": "Experimental practices, visual arts, performance",
+    "query": "Ljubanje village near Užice, Ljubanje village near Užice, Serbia"
+  },
+  {
+    "file": "colonies-bosnia-and-herzegovina.json",
+    "id": 68,
+    "country": "Bosnia and Herzegovina",
+    "name": "Likovna kolonija “Stara Bosna”",
+    "place": "Vranduk ( selo nadomak Zenice),gdje se nalazi tvrdjava Vranduk",
+    "city": "Vranduk ( selo nadomak Zenice)",
+    "scope": "International",
+    "art_field": "Visual arts",
+    "query": "Vranduk ( selo nadomak Zenice),gdje se nalazi tvrdjava Vranduk, Vranduk ( selo nadomak Zenice), Bosnia and Herzegovina"
+  },
+  {
+    "file": "colonies-north-macedonia.json",
+    "id": 80,
+    "country": "North Macedonia",
+    "name": "АРТ ПОИНТ - ГУМНО (+ година на одржување и конкретна тема за таа година)",
+    "place": "Village Spoeštica, opština Demir Hisar",
+    "city": "Village Spoeštica",
+    "scope": "International",
+    "art_field": "Visual arts, multimedia, literature",
+    "query": "Village Spoeštica, opština Demir Hisar, Village Spoeštica, North Macedonia"
+  },
+  {
+    "file": "colonies-north-macedonia.json",
+    "id": 84,
+    "country": "North Macedonia",
+    "name": "Ликовна колонија Љубанци, Ликовна колонија Нерешки мајстори, Ликовна колонија Струга.",
+    "place": "Vilage Ljubanci, Skopje and Struga",
+    "city": "Vilage Ljubanci",
+    "scope": "International",
+    "art_field": "Painting",
+    "query": "Vilage Ljubanci, Skopje and Struga, Vilage Ljubanci, North Macedonia"
+  },
+  {
+    "file": "colonies-north-macedonia.json",
+    "id": 87,
+    "country": "North Macedonia",
+    "name": "Ликовна колонија „Куманово“",
+    "place": "Kumanovo, Ethno-vlilage Timčevski (village Bojnik)",
+    "city": "Kumanovo",
+    "scope": "International",
+    "art_field": "Painting",
+    "query": "Kumanovo, Ethno-vlilage Timčevski (village Bojnik), Kumanovo, North Macedonia"
+  },
+  {
+    "file": "colonies-north-macedonia.json",
+    "id": 97,
+    "country": "North Macedonia",
+    "name": "^ПатемByTheWay - Друштво со ограничена одговорност",
+    "place": "Different locations in N.Macedonia",
+    "city": "Different locations in N.Macedonia",
+    "scope": "International",
+    "art_field": "Multimedia",
+    "query": "Different locations in N.Macedonia, Different locations in N.Macedonia, North Macedonia"
+  }
+]
