@@ -3,8 +3,10 @@
 Interactive map of artist colonies in Serbia, Bosnia and Herzegovina, and North Macedonia, with a communication platform for colony managers.
 Built for the Goethe-Institut Belgrade as part of the *Beyond the Cities* project (2026–2028).
 
-**Live (trenutno):** <https://lucky-water-8d37.stevankojic-com.workers.dev/>
+**Live (trenutno):** <https://btc-map.stevan-266.workers.dev/>
 **Live (planirano):** Cloudflare Pages + custom domen (Porkbun)
+
+**SVG migration plan:** see `docs/svg-migration-plan.md`
 
 ---
 
