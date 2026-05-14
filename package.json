@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
-    "vite": "^8.0.10"
+    "@cloudflare/vite-plugin": "^1.36.4",
+    "vite": "^8.0.10",
+    "wrangler": "^4.90.1"
   },
   "dependencies": {
     "maplibre-gl": "^5.24.0",
