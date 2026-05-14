@@ -168,6 +168,8 @@ ul {
 
 #filter-card {
   margin-top: 14px;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   padding: 18px 20px 0;
@@ -184,23 +186,23 @@ ul {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 22px;
+  padding-bottom: 16px;
 }
 
 #filter-decor {
   position: relative;
   z-index: 0;
   pointer-events: none;
-  flex: 0 0 176px;
+  flex: 0 0 188px;
   margin: 0 -20px;
+  overflow: hidden;
   transition: flex-basis 0.24s ease;
 }
 
-#filter-decor::before {
-  content: "";
+#filter-decor-circle {
   position: absolute;
   left: -86px;
-  bottom: -88px;
+  top: 8px;
   width: 248px;
   height: 248px;
   border-radius: 999px;
@@ -208,7 +210,7 @@ ul {
 }
 
 #filter-card.filters-expanded #filter-decor {
-  flex-basis: 244px;
+  flex-basis: 272px;
 }
 
 .filter-group {
