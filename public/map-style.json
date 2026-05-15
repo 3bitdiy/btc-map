@@ -106,9 +106,9 @@
       "source-layer": "boundary",
       "filter": ["==", "admin_level", 2],
       "paint": {
-        "line-color": "#8d313a",
-        "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.8, 10, 2],
-        "line-dasharray": [4, 2]
+        "line-color": "#eb5160",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.9, 10, 2.2],
+        "line-opacity": 0.9
       }
     },
     {
@@ -128,8 +128,7 @@
       },
       "paint": {
         "text-color": "#8d313a",
-        "text-halo-color": "#f6e8d5",
-        "text-halo-width": 1,
+        "text-halo-width": 0,
         "text-opacity": 0.7
       }
     },
@@ -148,8 +147,7 @@
       },
       "paint": {
         "text-color": "#8d313a",
-        "text-halo-color": "#f6e8d5",
-        "text-halo-width": 1.5,
+        "text-halo-width": 0,
         "text-opacity": 0.9
       }
     },
@@ -159,11 +157,11 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "filter": ["in", "class", "city", "town"],
-      "minzoom": 9,
+      "minzoom": 7,
       "layout": {
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
         "text-font": ["Noto Sans Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 9, 9, 12, 11],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 7, 10, 10, 12, 12, 14],
         "text-anchor": "bottom",
         "text-offset": [0, -0.3]
       },
@@ -171,7 +169,7 @@
         "text-color": "#8d313a",
         "text-halo-color": "#f6e8d5",
         "text-halo-width": 1,
-        "text-opacity": 0.56
+        "text-opacity": 0.76
       }
     }
   ]
