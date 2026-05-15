@@ -541,7 +541,7 @@ function wireMobileSidebar() {
   });
 
   document.addEventListener("click", (event) => {
-    if (!window.matchMedia("(max-width: 980px)").matches) return;
+    if (!window.matchMedia("(max-width: 1199px)").matches) return;
     if (!(event.target instanceof Node)) return;
     if (sidebar.contains(event.target) || toggle.contains(event.target)) return;
     sidebar.classList.remove("is-open");
