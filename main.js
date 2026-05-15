@@ -116,11 +116,12 @@ function markerIconFor(colony) {
 function markerScaleForZoom(zoom) {
   const minZoom = 5;
   const maxZoom = 12;
-  const minScale = 0.34;
-  const maxScale = 3.0;
+  const minScale = 0.28;
+  const maxScale = 2.6;
 
   const t = Math.min(1, Math.max(0, (zoom - minZoom) / (maxZoom - minZoom)));
-  const eased = Math.sqrt(t);
+  // Keep markers small when zoomed out, then accelerate growth on zoom-in.
+  const eased = t * t;
   return minScale + (maxScale - minScale) * eased;
 }
 
@@ -131,24 +132,6 @@ function syncMarkerScale() {
     "--marker-zoom-scale",
     scale.toFixed(3),
   );
-}
-
-function startMarkerScaleLoop() {
-  let lastZoomBucket = "";
-
-  const tick = () => {
-    if (state.map) {
-      const zoomBucket = state.map.getZoom().toFixed(3);
-      if (zoomBucket !== lastZoomBucket) {
-        lastZoomBucket = zoomBucket;
-        syncMarkerScale();
-      }
-    }
-
-    requestAnimationFrame(tick);
-  };
-
-  requestAnimationFrame(tick);
 }
 
 function resolveColonyPhoto(colony) {
@@ -570,8 +553,9 @@ async function bootstrap() {
   state.map = await initMap();
   syncMarkerScale();
   state.map.on("zoom", syncMarkerScale);
+  state.map.on("zoomend", syncMarkerScale);
+  state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
-  startMarkerScaleLoop();
 
   state.colonies = await loadColoniesData();
 
