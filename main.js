@@ -116,11 +116,12 @@ function markerIconFor(colony) {
 function markerScaleForZoom(zoom) {
   const minZoom = 5;
   const maxZoom = 12;
-  const minScale = 0.52;
-  const maxScale = 1.42;
+  const minScale = 0.34;
+  const maxScale = 3.0;
 
   const t = Math.min(1, Math.max(0, (zoom - minZoom) / (maxZoom - minZoom)));
-  return minScale + (maxScale - minScale) * t;
+  const eased = Math.sqrt(t);
+  return minScale + (maxScale - minScale) * eased;
 }
 
 function syncMarkerScale() {
