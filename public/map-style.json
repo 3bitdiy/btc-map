@@ -120,6 +120,7 @@
       "minzoom": 6,
       "maxzoom": 7,
       "layout": {
+        "visibility": "none",
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
         "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 5, 10, 8, 13],
@@ -139,6 +140,7 @@
       "source-layer": "place",
       "filter": ["==", "class", "country"],
       "layout": {
+        "visibility": "none",
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
         "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 4, 11, 8, 16],
