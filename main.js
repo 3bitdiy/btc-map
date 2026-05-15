@@ -113,6 +113,43 @@ function markerIconFor(colony) {
   return MARKER_ICONS[idx];
 }
 
+function markerScaleForZoom(zoom) {
+  const minZoom = 5;
+  const maxZoom = 12;
+  const minScale = 0.52;
+  const maxScale = 1.42;
+
+  const t = Math.min(1, Math.max(0, (zoom - minZoom) / (maxZoom - minZoom)));
+  return minScale + (maxScale - minScale) * t;
+}
+
+function syncMarkerScale() {
+  if (!state.map) return;
+  const scale = markerScaleForZoom(state.map.getZoom());
+  document.documentElement.style.setProperty(
+    "--marker-zoom-scale",
+    scale.toFixed(3),
+  );
+}
+
+function startMarkerScaleLoop() {
+  let lastZoomBucket = "";
+
+  const tick = () => {
+    if (state.map) {
+      const zoomBucket = state.map.getZoom().toFixed(3);
+      if (zoomBucket !== lastZoomBucket) {
+        lastZoomBucket = zoomBucket;
+        syncMarkerScale();
+      }
+    }
+
+    requestAnimationFrame(tick);
+  };
+
+  requestAnimationFrame(tick);
+}
+
 function resolveColonyPhoto(colony) {
   const firstPhoto = colony.photos?.[0];
   if (!firstPhoto) return "/assets/images/colony-placeholder.png";
@@ -194,7 +231,7 @@ async function initMap() {
       [15.5, 40.5],
       [23.2, 46.5],
     ],
-    fitBoundsOptions: { padding: 20 },
+    fitBoundsOptions: { padding: 56, maxZoom: 6.7 },
     maxBounds: [
       [14.0, 39.0],
       [24.5, 47.5],
@@ -530,6 +567,10 @@ function wireMobileSidebar() {
 
 async function bootstrap() {
   state.map = await initMap();
+  syncMarkerScale();
+  state.map.on("zoom", syncMarkerScale);
+  state.map.on("load", syncMarkerScale);
+  startMarkerScaleLoop();
 
   state.colonies = await loadColoniesData();
 

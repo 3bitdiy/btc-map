@@ -4,6 +4,7 @@
   --rose: #eb5160;
   --sand: #edd1aa;
   --paper: #f6e8d5;
+  --marker-zoom-scale: 1;
 }
 
 * {
@@ -696,16 +697,16 @@ ul {
 .map-marker {
   border: 0;
   background: transparent;
-  width: 49px;
-  height: 33px;
+  width: calc(49px * var(--marker-zoom-scale));
+  height: calc(33px * var(--marker-zoom-scale));
   padding: 0;
   cursor: pointer;
   transition: transform 0.14s ease;
 }
 
 .map-marker img {
-  width: 49px;
-  height: 33px;
+  width: calc(49px * var(--marker-zoom-scale));
+  height: calc(33px * var(--marker-zoom-scale));
 }
 
 .map-marker:hover {
@@ -717,8 +718,8 @@ ul {
 }
 
 .map-marker.is-selected {
-  width: 87px;
-  height: 87px;
+  width: calc(87px * var(--marker-zoom-scale));
+  height: calc(87px * var(--marker-zoom-scale));
   border-radius: 999px;
   border: 1px solid var(--rose);
   background: var(--sand);
