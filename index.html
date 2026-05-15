@@ -85,6 +85,11 @@
           <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
         </div>
 
+        <div id="filter-mobile-actions" aria-label="Filter actions">
+          <button type="button" id="filter-reset-btn">Reset</button>
+          <button type="button" id="filter-apply-btn">Apply</button>
+        </div>
+
         <div id="filter-decor" aria-hidden="true">
           <div id="filter-decor-circle"></div>
         </div>
@@ -98,7 +103,8 @@
 
     <main id="map-container" aria-label="Interactive map">
       <button type="button" id="filter-toggle" aria-label="Toggle filters" aria-expanded="false">
-        Filters
+        <span class="filter-toggle-label">Filters</span>
+        <span id="filter-active-badge" aria-hidden="true">0</span>
       </button>
       <div id="map"></div>
     </main>

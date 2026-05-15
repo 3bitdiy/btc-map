@@ -15,6 +15,11 @@ const DISCIPLINE_LABELS = {
 };
 
 const DEFAULT_SCOPES = ["National", "Regional", "International"];
+const DEFAULT_COUNTRIES = [
+  "Serbia",
+  "Bosnia and Herzegovina",
+  "North Macedonia",
+];
 
 const MARKER_ICONS = [
   "/assets/icons/house01.svg",
@@ -35,12 +40,9 @@ const state = {
   colonies: [],
   selectedColony: null,
   markers: [],
-  activeCountries: new Set([
-    "Serbia",
-    "Bosnia and Herzegovina",
-    "North Macedonia",
-  ]),
+  activeCountries: new Set(DEFAULT_COUNTRIES),
   activeDisciplines: new Set(),
+  allDisciplines: new Set(),
   activeScopes: new Set(DEFAULT_SCOPES),
   panelMinimized: false,
   filterPanelMinimized: false,
@@ -436,6 +438,8 @@ function syncFilters() {
   ) {
     closePanel();
   }
+
+  updateFilterToggleBadge();
 }
 
 function buildDisciplineFilters() {
@@ -448,6 +452,7 @@ function buildDisciplineFilters() {
   });
 
   const sorted = Array.from(all).sort((a, b) => a.localeCompare(b));
+  state.allDisciplines = new Set(sorted);
   state.activeDisciplines = new Set(sorted);
 
   sorted.forEach((discipline) => {
@@ -459,6 +464,27 @@ function buildDisciplineFilters() {
     `;
     wrapper.appendChild(label);
   });
+}
+
+function updateFilterToggleBadge() {
+  const badge = document.getElementById("filter-active-badge");
+  const toggle = document.getElementById("filter-toggle");
+  if (!badge || !toggle) return;
+
+  const activeCount =
+    Math.max(0, DEFAULT_COUNTRIES.length - state.activeCountries.size) +
+    Math.max(0, state.allDisciplines.size - state.activeDisciplines.size) +
+    Math.max(0, DEFAULT_SCOPES.length - state.activeScopes.size);
+
+  badge.textContent = String(activeCount);
+  badge.classList.toggle("is-visible", activeCount > 0);
+  badge.setAttribute("aria-hidden", activeCount > 0 ? "false" : "true");
+  toggle.setAttribute(
+    "aria-label",
+    activeCount > 0
+      ? `Toggle filters (${activeCount} active)`
+      : "Toggle filters",
+  );
 }
 
 function wirePillVisuals() {
@@ -549,6 +575,38 @@ function wireMobileSidebar() {
   });
 }
 
+function wireMobileFilterActions() {
+  const sidebar = document.getElementById("left-sidebar");
+  const toggle = document.getElementById("filter-toggle");
+  const applyButton = document.getElementById("filter-apply-btn");
+  const resetButton = document.getElementById("filter-reset-btn");
+  if (!sidebar || !toggle || !applyButton || !resetButton) return;
+
+  applyButton.addEventListener("click", () => {
+    syncFilters();
+    if (window.matchMedia("(max-width: 1199px)").matches) {
+      sidebar.classList.remove("is-open");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  resetButton.addEventListener("click", () => {
+    document
+      .querySelectorAll(
+        'input[name="country"], input[name="discipline"], input[name="scope"]',
+      )
+      .forEach((input) => {
+        if (input instanceof HTMLInputElement) input.checked = true;
+      });
+
+    document
+      .querySelectorAll(".pill-filter-item.is-off, .country-pill.is-off")
+      .forEach((el) => el.classList.remove("is-off"));
+
+    syncFilters();
+  });
+}
+
 async function bootstrap() {
   state.map = await initMap();
   syncMarkerScale();
@@ -567,6 +625,8 @@ async function bootstrap() {
   wireFilterPanel();
   wirePanel();
   wireMobileSidebar();
+  wireMobileFilterActions();
+  updateFilterToggleBadge();
 
   state.map.once("load", () => {
     syncFilters();
