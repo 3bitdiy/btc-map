@@ -156,12 +156,12 @@ ul {
   max-width: 166px;
   color: var(--ink);
   display: block;
-  line-height: 0.7;
+  line-height: 0.66;
 }
 
 .title-line {
   display: block;
-  line-height: 0.7;
+  line-height: 0.66;
 }
 
 .title-beyond,
@@ -185,7 +185,7 @@ ul {
   position: relative;
   z-index: 3;
   margin-left: 94px;
-  margin-top: 4px;
+  margin-top: 8px;
   width: 166px;
   font-size: 13px;
   line-height: 1;
