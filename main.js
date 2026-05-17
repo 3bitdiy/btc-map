@@ -205,7 +205,7 @@ async function initMap() {
 
   style.sources.openmaptiles = {
     type: "vector",
-    url: "pmtiles://https://pub-716e1bd7d8eb43cdafdb8f37dd91f157.r2.dev/western-balkans.pmtiles",
+    url: "pmtiles://https://pub-8a5794882e694e698061867fcf4ccf10.r2.dev/wb-light.pmtiles",
     attribution:
       "© <a href='https://openmaptiles.org'>OpenMapTiles</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
   };
