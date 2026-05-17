@@ -210,25 +210,51 @@ async function initMap() {
       "© <a href='https://openmaptiles.org'>OpenMapTiles</a> © <a href='https://openstreetmap.org'>OpenStreetMap</a> contributors",
   };
 
+  style.sources.globalbase = {
+    type: "vector",
+    url: "pmtiles://https://pub-8a5794882e694e698061867fcf4ccf10.r2.dev/world-basic-z11.pmtiles",
+    attribution:
+      "© <a href='https://www.naturalearthdata.com'>Natural Earth</a>",
+  };
+
+  const backgroundLayer = style.layers.find((layer) => layer.id === "background");
+  if (backgroundLayer?.type === "background") {
+    backgroundLayer.paint = {
+      ...(backgroundLayer.paint || {}),
+      "background-color": "#c2c9bc",
+    };
+  }
+
+  if (!style.layers.some((layer) => layer.id === "global-land")) {
+    const backgroundIndex = style.layers.findIndex(
+      (layer) => layer.id === "background",
+    );
+    const insertIndex = backgroundIndex >= 0 ? backgroundIndex + 1 : 0;
+
+    style.layers.splice(insertIndex, 0, {
+      id: "global-land",
+      type: "fill",
+      source: "globalbase",
+      "source-layer": "land",
+      maxzoom: 12,
+      paint: {
+        "fill-color": "#edd1aa",
+        "fill-opacity": 1,
+      },
+    });
+  }
+
   const map = new maplibregl.Map({
     container: "map",
     style,
-    bounds: [
-      [15.5, 40.5],
-      [23.2, 46.5],
-    ],
-    fitBoundsOptions: { padding: 56, maxZoom: 6.7 },
-    maxBounds: [
-      [14.0, 39.0],
-      [24.5, 47.5],
-    ],
-    minZoom: 5,
+    renderWorldCopies: false,
+    center: [20.0, 44.0],
+    zoom: 4.2,
+    minZoom: 1.2,
     maxZoom: 14,
-    dragRotate: false,
-    touchZoomRotate: false,
+    dragRotate: true,
+    touchZoomRotate: true,
   });
-
-  map.keyboard.disableRotation();
 
   return map;
 }
