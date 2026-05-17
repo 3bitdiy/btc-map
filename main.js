@@ -35,6 +35,10 @@ const MARKER_ICONS = [
   "/assets/icons/house12.svg",
 ];
 
+// Small visual nudge so markers don't sit exactly on top of city-name anchors.
+const MARKER_BASE_OFFSET_METERS_EAST = 22;
+const MARKER_BASE_OFFSET_METERS_NORTH = -16;
+
 const state = {
   map: null,
   colonies: [],
@@ -98,15 +102,27 @@ function getColonyCoordinates(colony) {
   return { latitude, longitude };
 }
 
+function applyBaseMarkerOffset(coords) {
+  const metersPerDegreeLat = 111320;
+  const latRad = (coords.latitude * Math.PI) / 180;
+  const metersPerDegreeLng = Math.max(1e-6, metersPerDegreeLat * Math.cos(latRad));
+
+  return {
+    latitude: coords.latitude + (MARKER_BASE_OFFSET_METERS_NORTH / metersPerDegreeLat),
+    longitude: coords.longitude + (MARKER_BASE_OFFSET_METERS_EAST / metersPerDegreeLng),
+  };
+}
+
 function getColonyLocations(colony) {
   const locations = [];
   const seen = new Set();
 
   const pushLocation = (latitude, longitude, label = "") => {
-    const key = `${latitude.toFixed(6)}:${longitude.toFixed(6)}`;
+    const offset = applyBaseMarkerOffset({ latitude, longitude });
+    const key = `${offset.latitude.toFixed(6)}:${offset.longitude.toFixed(6)}`;
     if (seen.has(key)) return;
     seen.add(key);
-    locations.push({ latitude, longitude, label });
+    locations.push({ latitude: offset.latitude, longitude: offset.longitude, label });
   };
 
   const primary = getColonyCoordinates(colony);
