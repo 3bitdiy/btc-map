@@ -851,7 +851,17 @@ function wireCollapsibles() {
 
 function wireFilterInputs() {
   document.querySelectorAll('input[name="scope"]').forEach((input) => {
-    input.addEventListener("change", syncFilters);
+    if (input instanceof HTMLInputElement) {
+      input.closest(".filter-check")?.classList.toggle("is-off", !input.checked);
+    }
+
+    input.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement) {
+        target.closest(".filter-check")?.classList.toggle("is-off", !target.checked);
+      }
+      syncFilters();
+    });
   });
 }
 

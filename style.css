@@ -211,35 +211,11 @@ ul {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 16px;
+  padding-bottom: 10px;
 }
 
 #filter-mobile-actions {
   display: none;
-}
-
-#filter-decor {
-  position: relative;
-  z-index: 0;
-  pointer-events: none;
-  flex: 0 0 188px;
-  margin: 0 -20px;
-  overflow: hidden;
-  transition: flex-basis 0.24s ease;
-}
-
-#filter-decor-circle {
-  position: absolute;
-  left: -86px;
-  top: 8px;
-  width: 248px;
-  height: 248px;
-  border-radius: 999px;
-  background: var(--rose);
-}
-
-#filter-card.filters-expanded #filter-decor {
-  flex-basis: 272px;
 }
 
 .filter-group {
@@ -327,15 +303,11 @@ ul {
   margin-top: 10px;
 }
 
-.colony-list[hidden] {
-  display: none;
-}
-
 .colony-list {
-  margin-top: 10px;
+  margin-top: 2px;
   display: grid;
   gap: 12px;
-  max-height: 240px;
+  max-height: 280px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -414,6 +386,10 @@ ul {
 
 .is-round {
   margin-top: 10px;
+}
+
+.filter-check.is-off {
+  opacity: 0.42;
 }
 
 .is-round input {
@@ -500,7 +476,7 @@ ul {
 }
 
 #filter-card.is-minimized #filter-content,
-#filter-card.is-minimized #filter-decor {
+#filter-card.is-minimized .colony-list {
   display: none;
 }
 

@@ -65,6 +65,10 @@
           </div>
 
           <div class="filter-group">
+            <div id="colony-list" class="colony-list"></div>
+          </div>
+
+          <div class="filter-group">
             <label class="filter-check is-round">
               <input type="checkbox" name="scope" value="National" checked />
               <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
@@ -82,24 +86,12 @@
             </label>
           </div>
 
-          <div class="filter-group">
-            <button type="button" class="select-row" data-toggle-target="colony-list" aria-expanded="false">
-              <span>Colonies</span>
-              <img src="/assets/icons/caret-down.svg" alt="" />
-            </button>
-            <div id="colony-list" class="colony-list" hidden></div>
-          </div>
-
           <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
         </div>
 
         <div id="filter-mobile-actions" aria-label="Filter actions">
           <button type="button" id="filter-reset-btn">Reset</button>
           <button type="button" id="filter-apply-btn">Apply</button>
-        </div>
-
-        <div id="filter-decor" aria-hidden="true">
-          <div id="filter-decor-circle"></div>
         </div>
 
         <button type="button" id="filter-minimize" aria-label="Minimize filters" aria-expanded="true">
