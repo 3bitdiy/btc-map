@@ -349,11 +349,11 @@ function seedUnitVector(seedText) {
   return { x: Math.cos(angle), y: Math.sin(angle) };
 }
 
-function relaxClusterPixels(members) {
-  const minSeparationPx = 24;
-  const maxShiftPx = 38;
-  const iterations = 28;
-  const pullStrength = 0.08;
+function relaxClusterPixels(members, options) {
+  const minSeparationPx = options.minSeparationPx;
+  const maxShiftPx = options.maxShiftPx;
+  const iterations = options.iterations;
+  const pullStrength = options.pullStrength;
 
   const points = members.map((entry) => ({
     entry,
@@ -415,7 +415,20 @@ function arrangeMarkerEntries(entries) {
     return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
   }
 
-  const thresholdPx = 44;
+  const zoom = state.map.getZoom();
+  if (zoom < 8) {
+    return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
+  }
+
+  const zoomFactor = Math.min(1, Math.max(0, (zoom - 8) / 4));
+  const thresholdPx = 12 + zoomFactor * 10;
+  const relaxOptions = {
+    minSeparationPx: 8 + zoomFactor * 9,
+    maxShiftPx: 5 + zoomFactor * 11,
+    iterations: 12,
+    pullStrength: 0.2,
+  };
+
   const projected = entries.map((entry) => {
     const point = state.map.project([entry.coords.longitude, entry.coords.latitude]);
     return { ...entry, point };
@@ -458,7 +471,7 @@ function arrangeMarkerEntries(entries) {
     }
 
     const members = [...cluster.members].sort(getStableMarkerOrder);
-    const relaxed = relaxClusterPixels(members);
+    const relaxed = relaxClusterPixels(members, relaxOptions);
 
     relaxed.forEach((item) => {
       const entry = item.entry;
@@ -832,6 +845,10 @@ async function bootstrap() {
   syncMarkerScale();
   state.map.on("zoom", syncMarkerScale);
   state.map.on("zoomend", syncMarkerScale);
+  state.map.on("zoomend", () => {
+    if (!state.colonies.length) return;
+    buildMarkers();
+  });
   state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
 
