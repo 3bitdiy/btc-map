@@ -531,7 +531,7 @@ ul {
 #filter-card.is-minimized {
   flex: 0 0 0;
   min-height: 0;
-  margin-top: 24px;
+  margin-top: 32px;
   overflow: visible;
   padding: 0;
 }
