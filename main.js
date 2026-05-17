@@ -84,8 +84,17 @@ function getColonyScope(colony) {
 }
 
 function getColonyCoordinates(colony) {
-  const latitude = Number(colony.latitude);
-  const longitude = Number(colony.longitude);
+  const rawLatitude = colony.latitude;
+  const rawLongitude = colony.longitude;
+  if (rawLatitude === null || rawLatitude === undefined) return null;
+  if (rawLongitude === null || rawLongitude === undefined) return null;
+
+  const latitudeText = String(rawLatitude).trim();
+  const longitudeText = String(rawLongitude).trim();
+  if (!latitudeText || !longitudeText) return null;
+
+  const latitude = Number(latitudeText);
+  const longitude = Number(longitudeText);
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
     return null;
   }
