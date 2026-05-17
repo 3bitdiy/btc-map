@@ -290,23 +290,65 @@ function getVisibleColonies() {
   });
 }
 
+function coordinateGroupKey(coords) {
+  // Group by near-identical positions to avoid marker overlap for same-place events.
+  return `${coords.latitude.toFixed(6)}:${coords.longitude.toFixed(6)}`;
+}
+
+function getSpreadCoordinates(coords, index, total) {
+  if (total <= 1) return coords;
+
+  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+  const radiusMeters = Math.min(180, 70 + total * 14);
+  const latRad = (coords.latitude * Math.PI) / 180;
+  const metersPerDegreeLat = 111320;
+  const metersPerDegreeLng = Math.max(1e-6, metersPerDegreeLat * Math.cos(latRad));
+
+  const deltaLat = (Math.sin(angle) * radiusMeters) / metersPerDegreeLat;
+  const deltaLng = (Math.cos(angle) * radiusMeters) / metersPerDegreeLng;
+
+  return {
+    latitude: coords.latitude + deltaLat,
+    longitude: coords.longitude + deltaLng,
+  };
+}
+
 function buildMarkers() {
   state.markers.forEach(({ marker }) => marker.remove());
   state.markers = [];
 
   const visible = getVisibleColonies();
+  const grouped = new Map();
+
   visible.forEach((colony) => {
     const coords = getColonyCoordinates(colony);
     if (!coords) return;
 
-    const marker = new maplibregl.Marker({
-      element: createMarkerElement(colony),
-      anchor: "center",
-    })
-      .setLngLat([coords.longitude, coords.latitude])
-      .addTo(state.map);
+    const key = coordinateGroupKey(coords);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push({ colony, coords });
+  });
 
-    state.markers.push({ marker, colony });
+  grouped.forEach((entries) => {
+    entries.sort((a, b) => {
+      const aId = Number(a.colony.id);
+      const bId = Number(b.colony.id);
+      if (Number.isFinite(aId) && Number.isFinite(bId)) return aId - bId;
+      return getColonyName(a.colony).localeCompare(getColonyName(b.colony));
+    });
+
+    entries.forEach((entry, idx) => {
+      const markerCoords = getSpreadCoordinates(entry.coords, idx, entries.length);
+
+      const marker = new maplibregl.Marker({
+        element: createMarkerElement(entry.colony),
+        anchor: "center",
+      })
+        .setLngLat([markerCoords.longitude, markerCoords.latitude])
+        .addTo(state.map);
+
+      state.markers.push({ marker, colony: entry.colony });
+    });
   });
 
   updateMarkerSelection();
