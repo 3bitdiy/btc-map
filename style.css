@@ -114,7 +114,7 @@ ul {
 #brand-card {
   position: relative;
   overflow: hidden;
-  min-height: 138px;
+  min-height: 146px;
   padding: 14px 14px 14px 16px;
 }
 
@@ -136,10 +136,10 @@ ul {
 .brand-mark-wrap {
   position: absolute;
   z-index: 3;
-  width: 54px;
-  height: 88px;
+  width: 62px;
+  height: 102px;
   left: 20px;
-  top: 14px;
+  top: 12px;
 }
 
 .brand-mark {
@@ -151,17 +151,17 @@ ul {
 #site-title {
   position: relative;
   z-index: 3;
-  margin-left: 84px;
-  margin-top: 14px;
-  max-width: 158px;
+  margin-left: 94px;
+  margin-top: 12px;
+  max-width: 166px;
   color: var(--ink);
   display: block;
-  line-height: 0.78;
+  line-height: 0.7;
 }
 
 .title-line {
   display: block;
-  line-height: 0.78;
+  line-height: 0.7;
 }
 
 .title-beyond,
@@ -184,11 +184,11 @@ ul {
 #site-subtitle {
   position: relative;
   z-index: 3;
-  margin-left: 84px;
-  margin-top: 7px;
-  width: 154px;
+  margin-left: 94px;
+  margin-top: 4px;
+  width: 166px;
   font-size: 13px;
-  line-height: 1.05;
+  line-height: 1;
   color: #2f2f2f;
 }
 
@@ -939,11 +939,23 @@ ul {
   }
 
   #brand-card {
-    min-height: 116px;
+    min-height: 122px;
+  }
+
+  .brand-mark-wrap {
+    width: 54px;
+    height: 88px;
+    top: 12px;
   }
 
   #site-title {
+    margin-left: 82px;
     margin-top: 12px;
+  }
+
+  #site-subtitle {
+    margin-left: 82px;
+    width: 150px;
   }
 
   #filter-card {
