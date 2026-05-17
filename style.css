@@ -233,6 +233,21 @@ ul {
   margin-top: 10px;
 }
 
+.filter-group--colony {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.filter-group--colony .colony-list {
+  height: 100%;
+  max-height: none;
+}
+
+.filter-group--scope {
+  margin-top: 14px;
+}
+
 #filter-content > .filter-counter {
   margin-top: auto;
   padding-top: 18px;
@@ -314,7 +329,7 @@ ul {
   margin-top: 2px;
   display: grid;
   gap: 12px;
-  max-height: 300px;
+  max-height: 360px;
   overflow-y: scroll;
   padding-right: 4px;
   scrollbar-gutter: stable;
