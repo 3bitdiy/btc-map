@@ -275,7 +275,7 @@ async function initMap() {
       type: "fill",
       source: "globalbase",
       "source-layer": "land",
-      maxzoom: 12,
+      maxzoom: 24,
       paint: {
         "fill-color": "#edd1aa",
         "fill-opacity": 1,
@@ -329,27 +329,79 @@ function getVisibleColonies() {
   });
 }
 
-function coordinateGroupKey(coords) {
-  // Group by near-identical positions to avoid marker overlap for same-place events.
-  return `${coords.latitude.toFixed(6)}:${coords.longitude.toFixed(6)}`;
+function getStableMarkerOrder(a, b) {
+  const aId = Number(a.colony.id);
+  const bId = Number(b.colony.id);
+  if (Number.isFinite(aId) && Number.isFinite(bId) && aId !== bId) {
+    return aId - bId;
+  }
+  return getColonyName(a.colony).localeCompare(getColonyName(b.colony));
 }
 
-function getSpreadCoordinates(coords, index, total) {
-  if (total <= 1) return coords;
+function arrangeMarkerEntries(entries) {
+  if (!state.map || entries.length <= 1) {
+    return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
+  }
 
-  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  const radiusMeters = Math.min(180, 70 + total * 14);
-  const latRad = (coords.latitude * Math.PI) / 180;
-  const metersPerDegreeLat = 111320;
-  const metersPerDegreeLng = Math.max(1e-6, metersPerDegreeLat * Math.cos(latRad));
+  const thresholdPx = 42;
+  const projected = entries.map((entry) => {
+    const point = state.map.project([entry.coords.longitude, entry.coords.latitude]);
+    return { ...entry, point };
+  });
 
-  const deltaLat = (Math.sin(angle) * radiusMeters) / metersPerDegreeLat;
-  const deltaLng = (Math.cos(angle) * radiusMeters) / metersPerDegreeLng;
+  projected.sort((a, b) => getStableMarkerOrder(a, b));
 
-  return {
-    latitude: coords.latitude + deltaLat,
-    longitude: coords.longitude + deltaLng,
-  };
+  const clusters = [];
+  projected.forEach((entry) => {
+    let target = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    clusters.forEach((cluster) => {
+      const dx = entry.point.x - cluster.cx;
+      const dy = entry.point.y - cluster.cy;
+      const distance = Math.hypot(dx, dy);
+      if (distance <= thresholdPx && distance < bestDistance) {
+        bestDistance = distance;
+        target = cluster;
+      }
+    });
+
+    if (!target) {
+      clusters.push({ cx: entry.point.x, cy: entry.point.y, members: [entry] });
+      return;
+    }
+
+    target.members.push(entry);
+    const n = target.members.length;
+    target.cx = ((target.cx * (n - 1)) + entry.point.x) / n;
+    target.cy = ((target.cy * (n - 1)) + entry.point.y) / n;
+  });
+
+  const arranged = [];
+  clusters.forEach((cluster) => {
+    if (cluster.members.length === 1) {
+      const entry = cluster.members[0];
+      arranged.push({ ...entry, markerCoords: entry.coords });
+      return;
+    }
+
+    const members = [...cluster.members].sort(getStableMarkerOrder);
+    const radiusPx = Math.min(110, 24 + members.length * 7);
+
+    members.forEach((entry, idx) => {
+      const angle = ((idx / members.length) * Math.PI * 2) - Math.PI / 2;
+      const x = cluster.cx + Math.cos(angle) * radiusPx;
+      const y = cluster.cy + Math.sin(angle) * radiusPx;
+      const ll = state.map.unproject([x, y]);
+
+      arranged.push({
+        ...entry,
+        markerCoords: { latitude: ll.lat, longitude: ll.lng },
+      });
+    });
+  });
+
+  return arranged;
 }
 
 function buildMarkers() {
@@ -357,37 +409,25 @@ function buildMarkers() {
   state.markers = [];
 
   const visible = getVisibleColonies();
-  const grouped = new Map();
+  const entries = [];
 
   visible.forEach((colony) => {
     const locations = getColonyLocations(colony);
     locations.forEach((coords) => {
-      const key = coordinateGroupKey(coords);
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push({ colony, coords });
+      entries.push({ colony, coords });
     });
   });
 
-  grouped.forEach((entries) => {
-    entries.sort((a, b) => {
-      const aId = Number(a.colony.id);
-      const bId = Number(b.colony.id);
-      if (Number.isFinite(aId) && Number.isFinite(bId)) return aId - bId;
-      return getColonyName(a.colony).localeCompare(getColonyName(b.colony));
-    });
+  const arranged = arrangeMarkerEntries(entries);
+  arranged.forEach((entry) => {
+    const marker = new maplibregl.Marker({
+      element: createMarkerElement(entry.colony, entry.coords),
+      anchor: "center",
+    })
+      .setLngLat([entry.markerCoords.longitude, entry.markerCoords.latitude])
+      .addTo(state.map);
 
-    entries.forEach((entry, idx) => {
-      const markerCoords = getSpreadCoordinates(entry.coords, idx, entries.length);
-
-      const marker = new maplibregl.Marker({
-        element: createMarkerElement(entry.colony, markerCoords),
-        anchor: "center",
-      })
-        .setLngLat([markerCoords.longitude, markerCoords.latitude])
-        .addTo(state.map);
-
-      state.markers.push({ marker, colony: entry.colony });
-    });
+    state.markers.push({ marker, colony: entry.colony });
   });
 
   updateMarkerSelection();
