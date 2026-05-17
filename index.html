@@ -95,8 +95,14 @@
         </div>
 
         <button type="button" id="filter-minimize" aria-label="Minimize filters" aria-expanded="true">
-          <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
-          <span class="pill-label">Filters</span>
+          <span class="minimize-caret" aria-hidden="true">
+            <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
+          </span>
+          <span class="minimize-icon minimize-icon--filters" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6h16l-6 7v4l-4 2v-6L4 6z" fill="currentColor" />
+            </svg>
+          </span>
         </button>
       </section>
     </aside>
@@ -115,8 +121,15 @@
       </button>
 
       <button type="button" id="panel-minimize" aria-label="Minimize panel" aria-expanded="true">
-        <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
-        <span class="pill-label">Details</span>
+        <span class="minimize-caret" aria-hidden="true">
+          <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
+        </span>
+        <span class="minimize-icon minimize-icon--details" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="7" r="2.3" fill="currentColor" />
+            <path d="M9.8 11h4.4v7h-2v-5.2h-2.4V11z" fill="currentColor" />
+          </svg>
+        </span>
       </button>
 
       <div id="panel-content">
