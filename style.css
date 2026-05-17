@@ -97,7 +97,7 @@ ul {
   left: 18px;
   top: 18px;
   width: 273px;
-  height: calc(100vh - 36px);
+  height: calc(100vh - 60px);
   z-index: 35;
   display: flex;
   flex-direction: column;
@@ -477,8 +477,8 @@ ul {
 #filter-minimize {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) translateY(50%);
-  bottom: 0;
+  transform: translateX(-50%);
+  bottom: -24px;
   width: 38px;
   height: 24px;
   border-radius: 0 0 8px 8px;
@@ -518,6 +518,12 @@ ul {
   display: block;
 }
 
+.minimize-icon img {
+  width: 20px;
+  height: 14px;
+  display: block;
+}
+
 #filter-minimize .pill-label {
   display: none;
   font-size: 12px;
@@ -547,7 +553,7 @@ ul {
   justify-content: center;
   background: rgba(246, 232, 213, 0.96);
   border: 1px solid rgba(141, 49, 58, 0.28);
-  box-shadow: 0 8px 18px rgba(141, 49, 58, 0.2);
+  box-shadow: none;
 }
 
 #filter-card.is-minimized #filter-minimize .minimize-caret {
@@ -652,7 +658,7 @@ ul {
   align-items: center;
   justify-content: center;
   gap: 0;
-  box-shadow: 0 8px 18px rgba(141, 49, 58, 0.2);
+  box-shadow: none;
 }
 
 #detail-panel.is-minimized #panel-minimize .minimize-caret {
