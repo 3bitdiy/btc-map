@@ -338,12 +338,84 @@ function getStableMarkerOrder(a, b) {
   return getColonyName(a.colony).localeCompare(getColonyName(b.colony));
 }
 
+function seedUnitVector(seedText) {
+  let hash = 2166136261;
+  for (let i = 0; i < seedText.length; i += 1) {
+    hash ^= seedText.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const ratio = (hash >>> 0) / 4294967295;
+  const angle = ratio * Math.PI * 2;
+  return { x: Math.cos(angle), y: Math.sin(angle) };
+}
+
+function relaxClusterPixels(members) {
+  const minSeparationPx = 24;
+  const maxShiftPx = 38;
+  const iterations = 28;
+  const pullStrength = 0.08;
+
+  const points = members.map((entry) => ({
+    entry,
+    x: entry.point.x,
+    y: entry.point.y,
+    ox: entry.point.x,
+    oy: entry.point.y,
+  }));
+
+  for (let step = 0; step < iterations; step += 1) {
+    for (let i = 0; i < points.length; i += 1) {
+      for (let j = i + 1; j < points.length; j += 1) {
+        const a = points[i];
+        const b = points[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let distance = Math.hypot(dx, dy);
+
+        if (distance >= minSeparationPx) continue;
+
+        if (distance < 1e-4) {
+          const vec = seedUnitVector(`${a.entry.colony.id}:${b.entry.colony.id}`);
+          dx = vec.x;
+          dy = vec.y;
+          distance = 1;
+        }
+
+        const push = (minSeparationPx - distance) * 0.5;
+        const ux = dx / distance;
+        const uy = dy / distance;
+
+        a.x -= ux * push;
+        a.y -= uy * push;
+        b.x += ux * push;
+        b.y += uy * push;
+      }
+    }
+
+    points.forEach((p) => {
+      p.x += (p.ox - p.x) * pullStrength;
+      p.y += (p.oy - p.y) * pullStrength;
+
+      const offX = p.x - p.ox;
+      const offY = p.y - p.oy;
+      const offLen = Math.hypot(offX, offY);
+      if (offLen > maxShiftPx) {
+        const scale = maxShiftPx / offLen;
+        p.x = p.ox + offX * scale;
+        p.y = p.oy + offY * scale;
+      }
+    });
+  }
+
+  return points;
+}
+
 function arrangeMarkerEntries(entries) {
   if (!state.map || entries.length <= 1) {
     return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
   }
 
-  const thresholdPx = 42;
+  const thresholdPx = 44;
   const projected = entries.map((entry) => {
     const point = state.map.project([entry.coords.longitude, entry.coords.latitude]);
     return { ...entry, point };
@@ -386,12 +458,12 @@ function arrangeMarkerEntries(entries) {
     }
 
     const members = [...cluster.members].sort(getStableMarkerOrder);
-    const radiusPx = Math.min(110, 24 + members.length * 7);
+    const relaxed = relaxClusterPixels(members);
 
-    members.forEach((entry, idx) => {
-      const angle = ((idx / members.length) * Math.PI * 2) - Math.PI / 2;
-      const x = cluster.cx + Math.cos(angle) * radiusPx;
-      const y = cluster.cy + Math.sin(angle) * radiusPx;
+    relaxed.forEach((item) => {
+      const entry = item.entry;
+      const x = item.x;
+      const y = item.y;
       const ll = state.map.unproject([x, y]);
 
       arranged.push({
