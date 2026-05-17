@@ -36,8 +36,8 @@ const MARKER_ICONS = [
 ];
 
 // Small visual nudge so markers don't sit exactly on top of city-name anchors.
-const MARKER_BASE_OFFSET_METERS_EAST = 200;
-const MARKER_BASE_OFFSET_METERS_NORTH = -150;
+const MARKER_BASE_OFFSET_METERS_EAST = 500;
+const MARKER_BASE_OFFSET_METERS_NORTH = -500;
 
 const state = {
   map: null,
