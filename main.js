@@ -38,6 +38,7 @@ const MARKER_ICONS = [
 // Small visual nudge so markers don't sit exactly on top of city-name anchors.
 const MARKER_BASE_OFFSET_METERS_EAST = 500;
 const MARKER_BASE_OFFSET_METERS_NORTH = -500;
+const COLONY_FOCUS_MIN_ZOOM = 10.5;
 
 const state = {
   map: null,
@@ -618,7 +619,7 @@ function openPanel(colony, focusMap = false, focusCoordinates = null) {
   if (focusMap && state.map && coords) {
     state.map.flyTo({
       center: [coords.longitude, coords.latitude],
-      zoom: Math.max(state.map.getZoom(), 8),
+      zoom: Math.max(state.map.getZoom(), COLONY_FOCUS_MIN_ZOOM),
     });
   }
 
