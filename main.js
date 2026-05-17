@@ -540,6 +540,72 @@ function updateMarkerSelection() {
     const selected = state.selectedColony?.id === colony.id;
     marker.getElement().classList.toggle("is-selected", selected);
   });
+  updateColonyListSelection();
+}
+
+function updateColonyListSelection() {
+  const selectedId = state.selectedColony ? String(state.selectedColony.id) : null;
+  document.querySelectorAll(".colony-item-btn").forEach((button) => {
+    if (!(button instanceof HTMLButtonElement)) return;
+    const isSelected = !!selectedId && button.dataset.colonyId === selectedId;
+    button.classList.toggle("is-selected", isSelected);
+  });
+}
+
+function renderColonyList(colonies) {
+  const wrapper = document.getElementById("colony-list");
+  if (!wrapper) return;
+  wrapper.innerHTML = "";
+
+  const sorted = [...colonies].sort((a, b) => {
+    const countryCmp = getColonyCountry(a).localeCompare(getColonyCountry(b));
+    if (countryCmp !== 0) return countryCmp;
+    return getColonyName(a).localeCompare(getColonyName(b));
+  });
+
+  if (!sorted.length) {
+    const empty = document.createElement("p");
+    empty.className = "colony-empty";
+    empty.textContent = "No colonies for current filters.";
+    wrapper.appendChild(empty);
+    return;
+  }
+
+  const groups = new Map();
+  sorted.forEach((colony) => {
+    const country = getColonyCountry(colony) || "Other";
+    if (!groups.has(country)) groups.set(country, []);
+    groups.get(country).push(colony);
+  });
+
+  groups.forEach((entries, country) => {
+    const group = document.createElement("section");
+    group.className = "colony-country-group";
+
+    const heading = document.createElement("h4");
+    heading.className = "colony-country-title";
+    heading.textContent = country;
+    group.appendChild(heading);
+
+    const list = document.createElement("ul");
+    list.className = "colony-items";
+
+    entries.forEach((colony) => {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "colony-item-btn";
+      button.dataset.colonyId = String(colony.id);
+      button.textContent = getColonyName(colony);
+      item.appendChild(button);
+      list.appendChild(item);
+    });
+
+    group.appendChild(list);
+    wrapper.appendChild(group);
+  });
+
+  updateColonyListSelection();
 }
 
 function openPanel(colony, focusMap = false, focusCoordinates = null) {
@@ -679,6 +745,7 @@ function syncFilters() {
   );
 
   const visible = buildMarkers();
+  renderColonyList(visible);
   document.getElementById("colony-count").textContent = String(visible.length);
 
   if (
@@ -793,6 +860,24 @@ function wireFilterPanel() {
   });
 }
 
+function wireColonyList() {
+  const wrapper = document.getElementById("colony-list");
+  if (!wrapper) return;
+
+  wrapper.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest(".colony-item-btn");
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    const id = button.dataset.colonyId;
+    if (!id) return;
+    const colony = state.colonies.find((entry) => String(entry.id) === id);
+    if (!colony) return;
+    openPanel(colony, true);
+  });
+}
+
 function wirePanel() {
   document.getElementById("panel-close").addEventListener("click", closePanel);
 
@@ -876,6 +961,7 @@ async function bootstrap() {
   wireCollapsibles();
   wireFilterInputs();
   wireFilterPanel();
+  wireColonyList();
   wirePanel();
   wireMobileSidebar();
   wireMobileFilterActions();
