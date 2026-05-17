@@ -204,8 +204,45 @@
     "duration": "4-7 days",
     "scope": "International",
     "country": "Serbia",
-    "latitude": null,
-    "longitude": null,
+    "latitude": 43.57923322748015,
+    "longitude": 21.33550790533597,
+    "location_points": [
+      {
+        "label": "Kruševac",
+        "latitude": 43.57923322748015,
+        "longitude": 21.33550790533597
+      },
+      {
+        "label": "Ribarska banja",
+        "latitude": 43.42772401369249,
+        "longitude": 21.51132064976295
+      },
+      {
+        "label": "Kraljevo",
+        "latitude": 43.72526612085234,
+        "longitude": 20.68780401742921
+      },
+      {
+        "label": "Vrnjačka banja",
+        "latitude": 43.62762138556031,
+        "longitude": 20.89384946799888
+      },
+      {
+        "label": "Niš",
+        "latitude": 43.322168229163644,
+        "longitude": 21.894825136659627
+      },
+      {
+        "label": "Sićevo",
+        "latitude": 43.33971369406758,
+        "longitude": 22.08547986306137
+      },
+      {
+        "label": "Čačak",
+        "latitude": 43.89292515511981,
+        "longitude": 20.35306356550526
+      }
+    ],
     "photos": []
   },
   {

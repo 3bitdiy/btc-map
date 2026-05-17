@@ -83,22 +83,52 @@ function getColonyScope(colony) {
   return "Unspecified";
 }
 
+function parseCoordinateValue(value) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  const num = Number(text);
+  return Number.isFinite(num) ? num : null;
+}
+
 function getColonyCoordinates(colony) {
-  const rawLatitude = colony.latitude;
-  const rawLongitude = colony.longitude;
-  if (rawLatitude === null || rawLatitude === undefined) return null;
-  if (rawLongitude === null || rawLongitude === undefined) return null;
-
-  const latitudeText = String(rawLatitude).trim();
-  const longitudeText = String(rawLongitude).trim();
-  if (!latitudeText || !longitudeText) return null;
-
-  const latitude = Number(latitudeText);
-  const longitude = Number(longitudeText);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return null;
-  }
+  const latitude = parseCoordinateValue(colony.latitude);
+  const longitude = parseCoordinateValue(colony.longitude);
+  if (latitude === null || longitude === null) return null;
   return { latitude, longitude };
+}
+
+function getColonyLocations(colony) {
+  const locations = [];
+  const seen = new Set();
+
+  const pushLocation = (latitude, longitude, label = "") => {
+    const key = `${latitude.toFixed(6)}:${longitude.toFixed(6)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    locations.push({ latitude, longitude, label });
+  };
+
+  const primary = getColonyCoordinates(colony);
+  if (primary) {
+    pushLocation(
+      primary.latitude,
+      primary.longitude,
+      getColonyCity(colony) || getColonyPlace(colony),
+    );
+  }
+
+  if (Array.isArray(colony.location_points)) {
+    colony.location_points.forEach((point) => {
+      if (!point || typeof point !== "object") return;
+      const lat = parseCoordinateValue(point.latitude);
+      const lon = parseCoordinateValue(point.longitude);
+      if (lat === null || lon === null) return;
+      pushLocation(lat, lon, normalizeText(point.label));
+    });
+  }
+
+  return locations;
 }
 
 function getColonyDisciplines(colony) {
@@ -268,7 +298,7 @@ async function initMap() {
   return map;
 }
 
-function createMarkerElement(colony) {
+function createMarkerElement(colony, focusCoords = null) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = "map-marker";
@@ -277,7 +307,7 @@ function createMarkerElement(colony) {
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
-    openPanel(colony, true);
+    openPanel(colony, true, focusCoords);
   });
 
   return el;
@@ -285,7 +315,7 @@ function createMarkerElement(colony) {
 
 function getVisibleColonies() {
   return state.colonies.filter((colony) => {
-    if (!getColonyCoordinates(colony)) return false;
+    if (!getColonyLocations(colony).length) return false;
     if (!state.activeCountries.has(getColonyCountry(colony))) return false;
 
     const scope = getColonyScope(colony);
@@ -330,12 +360,12 @@ function buildMarkers() {
   const grouped = new Map();
 
   visible.forEach((colony) => {
-    const coords = getColonyCoordinates(colony);
-    if (!coords) return;
-
-    const key = coordinateGroupKey(coords);
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push({ colony, coords });
+    const locations = getColonyLocations(colony);
+    locations.forEach((coords) => {
+      const key = coordinateGroupKey(coords);
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push({ colony, coords });
+    });
   });
 
   grouped.forEach((entries) => {
@@ -350,7 +380,7 @@ function buildMarkers() {
       const markerCoords = getSpreadCoordinates(entry.coords, idx, entries.length);
 
       const marker = new maplibregl.Marker({
-        element: createMarkerElement(entry.colony),
+        element: createMarkerElement(entry.colony, markerCoords),
         anchor: "center",
       })
         .setLngLat([markerCoords.longitude, markerCoords.latitude])
@@ -371,11 +401,12 @@ function updateMarkerSelection() {
   });
 }
 
-function openPanel(colony, focusMap = false) {
+function openPanel(colony, focusMap = false, focusCoordinates = null) {
   state.selectedColony = colony;
   updateMarkerSelection();
 
-  const coords = getColonyCoordinates(colony);
+  const fallback = getColonyLocations(colony)[0] || null;
+  const coords = focusCoordinates || getColonyCoordinates(colony) || fallback;
 
   if (focusMap && state.map && coords) {
     state.map.flyTo({
