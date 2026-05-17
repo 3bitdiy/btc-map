@@ -16,9 +16,9 @@ const DISCIPLINE_LABELS = {
 
 const DEFAULT_SCOPES = ["National", "Regional", "International"];
 const DEFAULT_COUNTRIES = [
-  "Serbia",
   "Bosnia and Herzegovina",
   "North Macedonia",
+  "Serbia",
 ];
 
 const MARKER_ICONS = [
