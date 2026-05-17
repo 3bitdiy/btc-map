@@ -164,13 +164,16 @@
         "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
         "text-font": ["Noto Sans Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 7, 11, 10, 13, 12, 15],
-        "text-anchor": "bottom",
-        "text-offset": [0, -0.3]
+        "text-variable-anchor": ["top", "bottom", "left", "right"],
+        "text-radial-offset": ["interpolate", ["linear"], ["zoom"], 7, 0.45, 12, 0.9],
+        "text-justify": "auto",
+        "text-allow-overlap": false
       },
       "paint": {
         "text-color": "#8d313a",
-        "text-halo-width": 0,
-        "text-opacity": 0.76
+        "text-halo-color": "#f6e8d5",
+        "text-halo-width": 1.2,
+        "text-opacity": 0.92
       }
     }
   ]
