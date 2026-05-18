@@ -39,6 +39,7 @@ const MARKER_ICONS = [
 const MARKER_BASE_OFFSET_METERS_EAST = 500;
 const MARKER_BASE_OFFSET_METERS_NORTH = -500;
 const COLONY_FOCUS_MIN_ZOOM = 10.5;
+const COLONY_LIST_FOCUS_ZOOM = 9.2;
 
 const state = {
   map: null,
@@ -609,7 +610,12 @@ function renderColonyList(colonies) {
   updateColonyListSelection();
 }
 
-function openPanel(colony, focusMap = false, focusCoordinates = null) {
+function openPanel(
+  colony,
+  focusMap = false,
+  focusCoordinates = null,
+  focusZoom = COLONY_FOCUS_MIN_ZOOM,
+) {
   state.selectedColony = colony;
   updateMarkerSelection();
 
@@ -619,7 +625,7 @@ function openPanel(colony, focusMap = false, focusCoordinates = null) {
   if (focusMap && state.map && coords) {
     state.map.flyTo({
       center: [coords.longitude, coords.latitude],
-      zoom: Math.max(state.map.getZoom(), COLONY_FOCUS_MIN_ZOOM),
+      zoom: Math.max(state.map.getZoom(), focusZoom),
     });
   }
 
@@ -699,6 +705,38 @@ function closePanel() {
   updateMarkerSelection();
 }
 
+function syncPanelMaximizeButtons() {
+  const isMobile = window.matchMedia("(max-width: 767px)").matches;
+  const filterButton = document.getElementById("filter-minimize");
+  const panelButton = document.getElementById("panel-minimize");
+  const app = document.getElementById("app");
+
+  if (!isMobile) {
+    app.classList.remove("both-panels-minimized");
+    if (filterButton) {
+      filterButton.disabled = false;
+      filterButton.setAttribute("aria-hidden", "false");
+    }
+    if (panelButton) {
+      panelButton.disabled = false;
+      panelButton.setAttribute("aria-hidden", "false");
+    }
+    return;
+  }
+
+  if (!isMobile) return;
+
+  app.classList.remove("both-panels-minimized");
+  if (filterButton) {
+    filterButton.disabled = false;
+    filterButton.setAttribute("aria-hidden", "false");
+  }
+  if (panelButton) {
+    panelButton.disabled = false;
+    panelButton.setAttribute("aria-hidden", "false");
+  }
+}
+
 function setPanelMinimized(minimized) {
   state.panelMinimized = minimized;
   const panel = document.getElementById("detail-panel");
@@ -706,6 +744,7 @@ function setPanelMinimized(minimized) {
 
   const button = document.getElementById("panel-minimize");
   button.setAttribute("aria-expanded", minimized ? "false" : "true");
+  syncPanelMaximizeButtons();
 }
 
 function setFilterPanelMinimized(minimized) {
@@ -715,6 +754,7 @@ function setFilterPanelMinimized(minimized) {
 
   const button = document.getElementById("filter-minimize");
   button.setAttribute("aria-expanded", minimized ? "false" : "true");
+  syncPanelMaximizeButtons();
 }
 
 function syncFilterCardVisualState() {
@@ -840,6 +880,15 @@ function wireCollapsibles() {
       const panel = document.getElementById(targetId);
       if (!panel) return;
       const expanded = button.getAttribute("aria-expanded") === "true";
+      document.querySelectorAll(".select-row").forEach((otherButton) => {
+        if (otherButton === button) return;
+        const otherTargetId = otherButton.getAttribute("data-toggle-target");
+        if (!otherTargetId) return;
+        const otherPanel = document.getElementById(otherTargetId);
+        if (!otherPanel) return;
+        otherPanel.hidden = true;
+        otherButton.setAttribute("aria-expanded", "false");
+      });
       panel.hidden = expanded;
       button.setAttribute("aria-expanded", expanded ? "false" : "true");
       syncFilterCardVisualState();
@@ -885,7 +934,7 @@ function wireColonyList() {
     if (!id) return;
     const colony = state.colonies.find((entry) => String(entry.id) === id);
     if (!colony) return;
-    openPanel(colony, true);
+    openPanel(colony, true, null, COLONY_LIST_FOCUS_ZOOM);
   });
 }
 
@@ -893,11 +942,13 @@ function wirePanel() {
   document.getElementById("panel-close").addEventListener("click", closePanel);
 
   document.getElementById("panel-minimize").addEventListener("click", () => {
-    if (
-      document.getElementById("detail-panel").getAttribute("aria-hidden") ===
-      "true"
-    )
+    const panel = document.getElementById("detail-panel");
+    if (panel.getAttribute("aria-hidden") === "true") {
+      panel.setAttribute("aria-hidden", "false");
+      panel.classList.add("is-open");
+      setPanelMinimized(false);
       return;
+    }
     setPanelMinimized(!state.panelMinimized);
   });
 }
@@ -952,6 +1003,43 @@ function wireMobileFilterActions() {
   });
 }
 
+let viewportMode = null;
+
+function getViewportMode() {
+  if (window.matchMedia("(max-width: 767px)").matches) return "mobile";
+  if (window.matchMedia("(max-width: 1199px)").matches) return "tablet";
+  return "desktop";
+}
+
+function applyResponsivePanelDefaults() {
+  const mode = getViewportMode();
+  if (mode === viewportMode) return;
+  viewportMode = mode;
+
+  const sidebar = document.getElementById("left-sidebar");
+  const toggle = document.getElementById("filter-toggle");
+
+  if (mode !== "mobile") {
+    sidebar.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+  }
+
+  if (mode === "tablet") {
+    setFilterPanelMinimized(true);
+    setPanelMinimized(true);
+    return;
+  }
+
+  if (mode === "mobile") {
+    setFilterPanelMinimized(true);
+    setPanelMinimized(true);
+    return;
+  }
+
+  setFilterPanelMinimized(false);
+  setPanelMinimized(false);
+}
+
 async function bootstrap() {
   state.map = await initMap();
   syncMarkerScale();
@@ -976,6 +1064,8 @@ async function bootstrap() {
   wirePanel();
   wireMobileSidebar();
   wireMobileFilterActions();
+  applyResponsivePanelDefaults();
+  window.addEventListener("resize", applyResponsivePanelDefaults);
   updateFilterToggleBadge();
 
   state.map.once("load", () => {
@@ -984,6 +1074,9 @@ async function bootstrap() {
     if (visible.length) {
       const idx = Math.floor(Math.random() * visible.length);
       openPanel(visible[idx], false);
+      if (getViewportMode() === "tablet" || getViewportMode() === "mobile") {
+        setPanelMinimized(true);
+      }
     }
   });
 }
