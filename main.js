@@ -107,11 +107,16 @@ function getColonyCoordinates(colony) {
 function applyBaseMarkerOffset(coords) {
   const metersPerDegreeLat = 111320;
   const latRad = (coords.latitude * Math.PI) / 180;
-  const metersPerDegreeLng = Math.max(1e-6, metersPerDegreeLat * Math.cos(latRad));
+  const metersPerDegreeLng = Math.max(
+    1e-6,
+    metersPerDegreeLat * Math.cos(latRad),
+  );
 
   return {
-    latitude: coords.latitude + (MARKER_BASE_OFFSET_METERS_NORTH / metersPerDegreeLat),
-    longitude: coords.longitude + (MARKER_BASE_OFFSET_METERS_EAST / metersPerDegreeLng),
+    latitude:
+      coords.latitude + MARKER_BASE_OFFSET_METERS_NORTH / metersPerDegreeLat,
+    longitude:
+      coords.longitude + MARKER_BASE_OFFSET_METERS_EAST / metersPerDegreeLng,
   };
 }
 
@@ -124,7 +129,11 @@ function getColonyLocations(colony) {
     const key = `${offset.latitude.toFixed(6)}:${offset.longitude.toFixed(6)}`;
     if (seen.has(key)) return;
     seen.add(key);
-    locations.push({ latitude: offset.latitude, longitude: offset.longitude, label });
+    locations.push({
+      latitude: offset.latitude,
+      longitude: offset.longitude,
+      label,
+    });
   };
 
   const primary = getColonyCoordinates(colony);
@@ -237,7 +246,10 @@ async function loadColoniesData() {
     const fromManifest = await loadByFiles(files);
     if (fromManifest.length) return fromManifest;
   } catch (error) {
-    console.warn("Using fallback colony data due to manifest load error:", error);
+    console.warn(
+      "Using fallback colony data due to manifest load error:",
+      error,
+    );
   }
 
   try {
@@ -274,7 +286,9 @@ async function initMap() {
       "© <a href='https://www.naturalearthdata.com'>Natural Earth</a>",
   };
 
-  const backgroundLayer = style.layers.find((layer) => layer.id === "background");
+  const backgroundLayer = style.layers.find(
+    (layer) => layer.id === "background",
+  );
   if (backgroundLayer?.type === "background") {
     backgroundLayer.paint = {
       ...(backgroundLayer.paint || {}),
@@ -393,7 +407,9 @@ function relaxClusterPixels(members, options) {
         if (distance >= minSeparationPx) continue;
 
         if (distance < 1e-4) {
-          const vec = seedUnitVector(`${a.entry.colony.id}:${b.entry.colony.id}`);
+          const vec = seedUnitVector(
+            `${a.entry.colony.id}:${b.entry.colony.id}`,
+          );
           dx = vec.x;
           dy = vec.y;
           distance = 1;
@@ -448,7 +464,10 @@ function arrangeMarkerEntries(entries) {
   };
 
   const projected = entries.map((entry) => {
-    const point = state.map.project([entry.coords.longitude, entry.coords.latitude]);
+    const point = state.map.project([
+      entry.coords.longitude,
+      entry.coords.latitude,
+    ]);
     return { ...entry, point };
   });
 
@@ -476,8 +495,8 @@ function arrangeMarkerEntries(entries) {
 
     target.members.push(entry);
     const n = target.members.length;
-    target.cx = ((target.cx * (n - 1)) + entry.point.x) / n;
-    target.cy = ((target.cy * (n - 1)) + entry.point.y) / n;
+    target.cx = (target.cx * (n - 1) + entry.point.x) / n;
+    target.cy = (target.cy * (n - 1) + entry.point.y) / n;
   });
 
   const arranged = [];
@@ -546,7 +565,9 @@ function updateMarkerSelection() {
 }
 
 function updateColonyListSelection() {
-  const selectedId = state.selectedColony ? String(state.selectedColony.id) : null;
+  const selectedId = state.selectedColony
+    ? String(state.selectedColony.id)
+    : null;
   document.querySelectorAll(".colony-item-btn").forEach((button) => {
     if (!(button instanceof HTMLButtonElement)) return;
     const isSelected = !!selectedId && button.dataset.colonyId === selectedId;
@@ -901,13 +922,17 @@ function wireCollapsibles() {
 function wireFilterInputs() {
   document.querySelectorAll('input[name="scope"]').forEach((input) => {
     if (input instanceof HTMLInputElement) {
-      input.closest(".filter-check")?.classList.toggle("is-off", !input.checked);
+      input
+        .closest(".filter-check")
+        ?.classList.toggle("is-off", !input.checked);
     }
 
     input.addEventListener("change", (event) => {
       const target = event.target;
       if (target instanceof HTMLInputElement) {
-        target.closest(".filter-check")?.classList.toggle("is-off", !target.checked);
+        target
+          .closest(".filter-check")
+          ?.classList.toggle("is-off", !target.checked);
       }
       syncFilters();
     });

@@ -210,7 +210,11 @@ async function main() {
   const rows = await loadRows();
   const missing = getMissingRows(rows);
 
-  await writeFile(REPORT_JSON_PATH, JSON.stringify(missing, null, 2) + "\n", "utf8");
+  await writeFile(
+    REPORT_JSON_PATH,
+    JSON.stringify(missing, null, 2) + "\n",
+    "utf8",
+  );
   await writeFile(REPORT_MD_PATH, writeMarkdownReport(missing), "utf8");
 
   console.log(`Wrote ${REPORT_JSON_PATH}`);

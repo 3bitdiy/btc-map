@@ -58,10 +58,7 @@ function normalizeScope(value) {
 function deriveCityFromPlace(place) {
   const text = clean(place);
   if (!text) return "";
-  const first = text
-    .split(/[\/|]/)[0]
-    .split(",")[0]
-    .trim();
+  const first = text.split(/[\/|]/)[0].split(",")[0].trim();
   return first;
 }
 
