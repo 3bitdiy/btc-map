@@ -4,15 +4,76 @@ import { Protocol } from "pmtiles";
 const protocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile.bind(protocol));
 
-const DISCIPLINE_LABELS = {
-  "Vizuelne umetnosti": "Visual arts",
-  Zanatstvo: "Craft",
-  Književnost: "Literature",
-  Muzika: "Music",
-  Pozorište: "Theatre",
-  Multidisciplinarno: "Multidisciplinary",
-  "Digitalne umetnosti": "Digital arts",
+// Canonical discipline taxonomy. Raw `art_field` values are messy (mixed case,
+// typos, synonyms, audience/theme qualifiers), so every token is normalized and
+// mapped onto this fixed set for both filtering and display. Order here is the
+// curated order used for the filter chips.
+const CANONICAL_DISCIPLINES = [
+  "Painting",
+  "Sculpture",
+  "Visual arts",
+  "Graphic arts",
+  "Photography",
+  "Film & video",
+  "Multimedia",
+  "Literature",
+  "Calligraphy",
+  "Applied arts",
+  "Crafts & pottery",
+  "Street art",
+  "Folk & naive art",
+  "Performance",
+  "Dance",
+  "Multidisciplinary",
+];
+
+// Maps a normalized token (lowercased, single-spaced) to a canonical discipline.
+const DISCIPLINE_SYNONYMS = {
+  painting: "Painting",
+  paiting: "Painting",
+  sculpture: "Sculpture",
+  "visual arts": "Visual arts",
+  "visual art": "Visual arts",
+  visual: "Visual arts",
+  "contemporary visual arts": "Visual arts",
+  "contemporary arts": "Visual arts",
+  installations: "Visual arts",
+  "graphic arts": "Graphic arts",
+  "graphic art": "Graphic arts",
+  photography: "Photography",
+  film: "Film & video",
+  "video art": "Film & video",
+  multimedia: "Multimedia",
+  literature: "Literature",
+  literrature: "Literature",
+  "literary criticism": "Literature",
+  publishing: "Literature",
+  poetry: "Literature",
+  calligraphy: "Calligraphy",
+  "applied arts": "Applied arts",
+  "art pottery": "Crafts & pottery",
+  pottery: "Crafts & pottery",
+  "street art": "Street art",
+  murals: "Street art",
+  naive: "Folk & naive art",
+  "folk arts": "Folk & naive art",
+  performance: "Performance",
+  "experimental practices": "Performance",
+  "contemporary dance": "Dance",
+  multidisciplinary: "Multidisciplinary",
+  "interdisciplinary arts": "Multidisciplinary",
 };
+
+// Tokens that are qualifiers (audience, theme, activity) rather than a
+// discipline. They are stripped so they never become filter chips.
+const DISCIPLINE_IGNORE = new Set([
+  "kids",
+  "open topics",
+  "art education",
+  "cultural heritage",
+]);
+
+const warnedDisciplines = new Set();
 
 const DEFAULT_SCOPES = ["National", "Regional", "International"];
 const DEFAULT_COUNTRIES = [
@@ -54,8 +115,27 @@ const state = {
   filterPanelMinimized: false,
 };
 
-function toEnglishDiscipline(label) {
-  return DISCIPLINE_LABELS[label] || label;
+function titleCaseDiscipline(key) {
+  return key.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+// Resolves a single raw token to a canonical discipline, or null if it is a
+// qualifier to be dropped. Unknown tokens fall back to a title-cased version
+// (so future data is never silently lost) and are logged once for follow-up.
+function canonicalizeDiscipline(token) {
+  const key = normalizeText(token).toLowerCase().replace(/\s+/g, " ").trim();
+  if (!key || DISCIPLINE_IGNORE.has(key)) return null;
+
+  const canonical = DISCIPLINE_SYNONYMS[key];
+  if (canonical) return canonical;
+
+  if (!warnedDisciplines.has(key)) {
+    warnedDisciplines.add(key);
+    console.warn(
+      `Unmapped discipline token "${token}" — using "${titleCaseDiscipline(key)}". Add it to DISCIPLINE_SYNONYMS or DISCIPLINE_IGNORE.`,
+    );
+  }
+  return titleCaseDiscipline(key);
 }
 
 function normalizeText(value) {
@@ -77,6 +157,20 @@ function getColonyCity(colony) {
 
 function getColonyPlace(colony) {
   return normalizeText(colony.place);
+}
+
+function getColonyDisplayLocation(colony) {
+  const city = getColonyCity(colony);
+  const place = getColonyPlace(colony);
+
+  if (city && place) {
+    if (city.localeCompare(place, undefined, { sensitivity: "base" }) === 0) {
+      return city;
+    }
+    return `${city} · ${place}`;
+  }
+
+  return city || place || getColonyCountry(colony);
 }
 
 function getColonyScope(colony) {
@@ -141,7 +235,7 @@ function getColonyLocations(colony) {
     pushLocation(
       primary.latitude,
       primary.longitude,
-      getColonyCity(colony) || getColonyPlace(colony),
+      getColonyDisplayLocation(colony),
     );
   }
 
@@ -160,18 +254,25 @@ function getColonyLocations(colony) {
 
 function getColonyDisciplines(colony) {
   const artField = normalizeText(colony.art_field);
-  if (!artField && Array.isArray(colony.disciplines)) {
-    return colony.disciplines
-      .map((entry) => toEnglishDiscipline(normalizeText(entry)))
-      .filter(Boolean);
-  }
-  if (!artField) return [];
 
-  return artField
-    .split(/,|;|\//)
-    .flatMap((part) => part.split(/\s+and\s+|\s*&\s*/i))
-    .map((part) => toEnglishDiscipline(normalizeText(part)))
-    .filter(Boolean);
+  const rawTokens =
+    !artField && Array.isArray(colony.disciplines)
+      ? colony.disciplines.map((entry) => normalizeText(entry))
+      : artField
+          .split(/[,;/\-]/)
+          .flatMap((part) => part.split(/\s+and\s+|\s*&\s*/i));
+
+  const seen = new Set();
+  const result = [];
+  rawTokens.forEach((token) => {
+    const canonical = canonicalizeDiscipline(token);
+    if (canonical && !seen.has(canonical)) {
+      seen.add(canonical);
+      result.push(canonical);
+    }
+  });
+
+  return result;
 }
 
 function markerIconFor(colony) {
@@ -665,7 +766,7 @@ function openPanel(
 
   document.getElementById("panel-name").textContent = getColonyName(colony);
   document.getElementById("panel-location").textContent =
-    getColonyCity(colony) || getColonyPlace(colony) || getColonyCountry(colony);
+    getColonyDisplayLocation(colony);
 
   const disciplinesEl = document.getElementById("panel-disciplines");
   disciplinesEl.innerHTML = "";
@@ -829,7 +930,13 @@ function buildDisciplineFilters() {
     getColonyDisciplines(colony).forEach((d) => all.add(d));
   });
 
-  const sorted = Array.from(all).sort((a, b) => a.localeCompare(b));
+  const order = new Map(CANONICAL_DISCIPLINES.map((label, i) => [label, i]));
+  const sorted = Array.from(all).sort((a, b) => {
+    const ia = order.has(a) ? order.get(a) : Number.MAX_SAFE_INTEGER;
+    const ib = order.has(b) ? order.get(b) : Number.MAX_SAFE_INTEGER;
+    if (ia !== ib) return ia - ib;
+    return a.localeCompare(b);
+  });
   state.allDisciplines = new Set(sorted);
   state.activeDisciplines = new Set(sorted);
 
