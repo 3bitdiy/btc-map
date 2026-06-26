@@ -420,8 +420,10 @@ async function initMap() {
     container: "map",
     style,
     renderWorldCopies: false,
-    center: [20.0, 44.0],
-    zoom: 4.2,
+    // Regional default so the first painted frame is already near the project
+    // area; fitBounds() refines the exact framing once the map has loaded.
+    center: [19.4, 43.6],
+    zoom: 5.6,
     minZoom: 1.2,
     maxZoom: 14,
     dragRotate: true,
@@ -429,6 +431,48 @@ async function initMap() {
   });
 
   return map;
+}
+
+// Bounding box around every marker location, used to frame the whole project
+// region on load regardless of viewport size.
+function getRegionBounds(colonies) {
+  const bounds = new maplibregl.LngLatBounds();
+  let extended = false;
+
+  colonies.forEach((colony) => {
+    getColonyLocations(colony).forEach((loc) => {
+      bounds.extend([loc.longitude, loc.latitude]);
+      extended = true;
+    });
+  });
+
+  return extended ? bounds : null;
+}
+
+// Padding (px) kept clear of the overlay panels so the region is never hidden
+// behind the left sidebar (~291px) or the open detail panel (~341px).
+function getFitPadding() {
+  const mode = getViewportMode();
+  if (mode === "desktop") {
+    return { top: 96, right: 360, bottom: 48, left: 312 };
+  }
+  if (mode === "tablet") {
+    return { top: 80, right: 60, bottom: 80, left: 60 };
+  }
+  return { top: 72, right: 24, bottom: 120, left: 24 };
+}
+
+function fitToRegion(colonies, animate = false) {
+  if (!state.map) return;
+  const source = colonies.length ? colonies : state.colonies;
+  const bounds = getRegionBounds(source);
+  if (!bounds) return;
+
+  state.map.fitBounds(bounds, {
+    padding: getFitPadding(),
+    maxZoom: 9,
+    animate,
+  });
 }
 
 function createMarkerElement(colony, focusCoords = null) {
@@ -1209,6 +1253,7 @@ async function bootstrap() {
   const renderInitial = () => {
     syncFilters();
     const visible = getVisibleColonies();
+    fitToRegion(visible);
     if (visible.length) {
       const idx = Math.floor(Math.random() * visible.length);
       openPanel(visible[idx], false);
