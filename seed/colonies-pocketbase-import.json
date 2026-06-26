@@ -1,0 +1,992 @@
+[
+  {
+    "name": "Slikanje u parku Zuzke Medvedjove",
+    "country": "Serbia",
+    "city": "Bački Petrovac",
+    "latitude": 45.36056,
+    "longitude": 19.59167,
+    "website": "",
+    "email": "tanja.turanova3@gmail.com",
+    "description": "Art field: Painting\nScope: Unspecified\nTime period: August\nDuration: 1-3 days\nOrganisers: Udruženje petrovackih likovnih umetnika\nContact person: Tatiana Milina Turanova"
+  },
+  {
+    "name": "Tri Morave",
+    "country": "Serbia",
+    "city": "Ćičevac",
+    "latitude": 43.71882,
+    "longitude": 21.44085,
+    "website": "",
+    "email": "nbc.direktor@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: July\nDuration: 4-7 days\nOrganisers: Narodne biblioteka Ćičevac\nContact person: Marko Aleksić"
+  },
+  {
+    "name": "\"I ia volim Novu Pazovu\"",
+    "country": "Serbia",
+    "city": "Nova Pazova",
+    "latitude": 44.94366,
+    "longitude": 20.21931,
+    "website": "",
+    "email": "lj.sekimic@gmail.com",
+    "description": "Art field: Visual arts & poetry\nScope: National\nTime period: September\nDuration: 1-3 days\nOrganisers: Umetničko udruženje Nova Pazova\nContact person: Ljiljana Sekimić"
+  },
+  {
+    "name": "\"Dečija likovna kolonija\"",
+    "country": "Serbia",
+    "city": "Petkovica monastery",
+    "latitude": 45.125874,
+    "longitude": 19.533366,
+    "website": "",
+    "email": "prnjavorskola@gmail.com",
+    "description": "Art field: Calligraphy, painting, sculpture\nScope: Unspecified\nTime period: May\nDuration: 1-3 days\nOrganisers: Osnovna škola \"Kralj Aleksandar Karađorđević\" Prnjavor\nContact person: Dušica Komanović"
+  },
+  {
+    "name": "Internacionalni simpozijum skulpture u terakoti Terra",
+    "country": "Serbia",
+    "city": "Kikinda",
+    "latitude": 45.82972,
+    "longitude": 20.46528,
+    "website": "https://terra.rs/about-symposium-terra/",
+    "email": "aleksandar.lipovan@terra.rs",
+    "description": "Art field: Visual arts, sculpture\nScope: International\nTime period: July\nDuration: 1 month\nOrganisers: Centar za likovnu i primenjenu umetnost Terra\nContact person: Aleksandar Lipovan"
+  },
+  {
+    "name": "Likovna  kolonija \"Lovćenački koloriti\"",
+    "country": "Serbia",
+    "city": "Lovćenac",
+    "latitude": 45.6816,
+    "longitude": 19.69205,
+    "website": "",
+    "email": "stenli.stevovic@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: October\nDuration: 1-3 days\nOrganisers: Crnogorsko kulturno prosvjetno društvo \"Princeza Ksenija\"\nContact person: Nenad Stevović"
+  },
+  {
+    "name": "Vajarska kolonija Jasenovo",
+    "country": "Serbia",
+    "city": "Jasenovo village",
+    "latitude": 44.935779,
+    "longitude": 21.299587,
+    "website": "",
+    "email": "jolsposao@gmail.com",
+    "description": "Art field: Sculpture\nScope: International\nTime period: August\nDuration: 8-14 days\nOrganisers: Ekološko društvo Karaš, Jasenovo\nContact person: Jovana Vasiljević"
+  },
+  {
+    "name": "Jalovička likovna kolonija",
+    "country": "Serbia",
+    "city": "Jalovik village",
+    "latitude": 44.598536,
+    "longitude": 19.828773,
+    "website": "",
+    "email": "sujicdjena76@gmail.com",
+    "description": "Art field: Contemporary arts\nScope: International\nTime period: August\nDuration: 8-14 days\nOrganisers: Biblioteka Diša Atić Vladimirci\nContact person: Djenadija Šujić"
+  },
+  {
+    "name": "Kostolac 2025.",
+    "country": "Serbia",
+    "city": "Kostolac",
+    "latitude": 44.71356,
+    "longitude": 21.16929,
+    "website": "",
+    "email": "milosevicsnezana5@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Udruženje likovnih stvaralaca Kostolac ,,SPEKTAR\"\nContact person: Snežana Milošević"
+  },
+  {
+    "name": "Umetnička kolonija Ečka",
+    "country": "Serbia",
+    "city": "Ečka",
+    "latitude": 45.32328,
+    "longitude": 20.44294,
+    "website": "www.galerija.rs",
+    "email": "suncicalf@gmail.com & slavicappv@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Savremena galerija Umetničke kolonije Ečka-Zrenjanin\nContact person: Sunčica Lambić Fenjčev and Slavica Žarković"
+  },
+  {
+    "name": "Prepoznavanje",
+    "country": "Serbia",
+    "city": "Kruševac",
+    "latitude": 43.57923322748015,
+    "longitude": 21.33550790533597,
+    "website": "",
+    "email": "grkovicbiljana@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: October - November\nDuration: 4-7 days\nOrganisers: Umetnička galerija - Narodni muzej Kruševac\nContact person: Biljana Grković"
+  },
+  {
+    "name": "IVA.lab",
+    "country": "Serbia",
+    "city": "Požega",
+    "latitude": 43.760433,
+    "longitude": 19.468836,
+    "website": "https://www.interaction.rs/en/iva-lab/",
+    "email": "office@film-art.org",
+    "description": "Art field: Visual art- video art\nScope: Regional\nTime period: August\nDuration: 4-7 days\nOrganisers: Nezavisni filmski centar Filmart\nContact person: Dejan Petrović and Slađana Petrović Varagić"
+  },
+  {
+    "name": "Ars Timacum",
+    "country": "Serbia",
+    "city": "Svrljig",
+    "latitude": 43.41333,
+    "longitude": 22.12111,
+    "website": "",
+    "email": "vanjaspasitj@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: Centar za kulturu \"Prof. Dr Sreten Petrović Iče\"\"\nContact person: Vanja Spasić"
+  },
+  {
+    "name": "NAIVA ART KULT",
+    "country": "Serbia",
+    "city": "Kovačica",
+    "latitude": 45.11167,
+    "longitude": 20.62139,
+    "website": "",
+    "email": "naiva.art.kult@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: September\nDuration: 4-7 days\nOrganisers: Udruženje Naiva Art Kult Kovačica\nContact person: Boško Nedeljkov"
+  },
+  {
+    "name": "Likovna  kolonija Tekije",
+    "country": "Serbia",
+    "city": "Novi Sad",
+    "latitude": 45.25167,
+    "longitude": 19.83694,
+    "website": "",
+    "email": "hkc.ns.0@gmail.com & ns.0@gmail.com",
+    "description": "Art field: Paiting and sculpture\nScope: International\nTime period: August\nDuration: 1-3 days\nOrganisers: Hrvatski kulturni centar\nContact person: Jasna Deranja"
+  },
+  {
+    "name": "Likovna kolonija \"Jegricka\"",
+    "country": "Serbia",
+    "city": "Temerin",
+    "latitude": 45.40861,
+    "longitude": 19.88917,
+    "website": "www.kctemerin.org.rs",
+    "email": "kctemerin@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: July\nDuration: 4-7 days\nOrganisers: Kulturni centar \"Lukijan Musicki\" Temerin\nContact person: Bozidar Prolic & Milica Marceta"
+  },
+  {
+    "name": "Mina Vukomanović Karadzic",
+    "country": "Serbia",
+    "city": "Savinac",
+    "latitude": 44.024347,
+    "longitude": 20.360405,
+    "website": "https://www.kcgm.org.rs/pages/likovna-kolonija-mina-vukomanovic-karadzic-savinac/",
+    "email": "office@kcgm.org.rs",
+    "description": "Art field: Painting\nScope: National\nTime period: July\nDuration: 4-7 days\nOrganisers: Kulturni centar Mija Aleksić Gornji Milanovac\nContact person: Nevena Čavorović"
+  },
+  {
+    "name": "Likovna kolonija \"Gružanska jesen\"",
+    "country": "Serbia",
+    "city": "Knić",
+    "latitude": 43.92694,
+    "longitude": 20.71889,
+    "website": "www.knicturizam.org.rs",
+    "email": "turizam@knic.rs",
+    "description": "Art field: Visual arts\nScope: International\nTime period: September\nDuration: 7 days\nOrganisers: Turistička organizacija opštine Knić\nContact person: Dragica Ilić & Mirjana Milošević Veličanin"
+  },
+  {
+    "name": "Međunarodna likovna kolonija \"Sjenica\"",
+    "country": "Serbia",
+    "city": "Sjenica",
+    "latitude": 43.27306,
+    "longitude": 19.99944,
+    "website": "https://www.bnv.org.rs/",
+    "email": "eminaganic76@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Bošnjačko nacionalno vijeće u Srbiji\nContact person: Emina Ganić"
+  },
+  {
+    "name": "Likovna koolonija ,,Trnava\"",
+    "country": "Serbia",
+    "city": "Trnava",
+    "latitude": 43.949249,
+    "longitude": 19.906467,
+    "website": "",
+    "email": "kczlatibor@cajetina.org.rs",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Kulturni centar ,,Zlatibor\"\nContact person: Ksenija Kovač"
+  },
+  {
+    "name": "Likovna kolonija Dondo - Bački Monoštor",
+    "country": "Serbia",
+    "city": "Bački Monoštor",
+    "latitude": 45.79441,
+    "longitude": 18.93402,
+    "website": "https://youtu.be/dLNeztkfylE?si=SAlby2ua2SfvRj92",
+    "email": "ugbodrog@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: September\nDuration: 1-3 days\nOrganisers: UG Bodrog Bački Monoštor\nContact person: Dalibor Forgić"
+  },
+  {
+    "name": "Likovna kolonija grafike",
+    "country": "Serbia",
+    "city": "Smederevo",
+    "latitude": 44.66436,
+    "longitude": 20.92763,
+    "website": "www.sdkultura.rs",
+    "email": "milan.rankovic@gmail.com",
+    "description": "Art field: Graphic arts\nScope: International\nTime period: September\nDuration: 4-7 days\nOrganisers: Centar za kulturu Smederevo\nContact person: Milan Ranković"
+  },
+  {
+    "name": "Međunarodna umjetnička kolonija \" Stipan Šabić\"",
+    "country": "Serbia",
+    "city": "Subotica",
+    "latitude": 46.1,
+    "longitude": 19.66667,
+    "website": "https:// www.croart.org",
+    "email": "office@croart.org",
+    "description": "Art field: Painting\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Hrvatska likovna udruga CroArt\nContact person: Nela Horvat"
+  },
+  {
+    "name": "KEC Art Box",
+    "country": "Serbia",
+    "city": "Novi Sad-Petrovaradin",
+    "latitude": 45.261967,
+    "longitude": 19.860028,
+    "website": "https://artboxportal.com/r/",
+    "email": "ljiljanamv@artboxportal.com",
+    "description": "Art field: Multimedia\nScope: International\nTime period: Flexible\nDuration: Flexible\nOrganisers: Ljiljana Maletin Vojvodić, Dragan Vojvodić\nContact person: Ljiljana Maletin Vojvodić"
+  },
+  {
+    "name": "Medjunarodna likovna kolonija \"Vidici\"",
+    "country": "Serbia",
+    "city": "Šid",
+    "latitude": 45.128165,
+    "longitude": 19.225912,
+    "website": "",
+    "email": "micodjukic64@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Udruženje srpsko-ruskog prijateljstva \"Šid\"\nContact person: Mićo Djukić"
+  },
+  {
+    "name": "ARC (Alternativni rezidencijalni centar) Dve Babe",
+    "country": "Serbia",
+    "city": "Babe village",
+    "latitude": 44.529556,
+    "longitude": 20.528405,
+    "website": "www.zmuc.org",
+    "email": "zmuc@zmuc.org",
+    "description": "Art field: interdisciplinary arts\nScope: International\nTime period: Whole year\nDuration: Flexible\nOrganisers: ZMUC (Zemunski mali umetnički centar)\nContact person: Goran Denić"
+  },
+  {
+    "name": "Eho muzike",
+    "country": "Serbia",
+    "city": "Negotin",
+    "latitude": 44.123566,
+    "longitude": 22.565596,
+    "website": "https://domkulture-negotin.rs",
+    "email": "dkmokranjac@gmail.com",
+    "description": "Art field: Painting\nScope: National\nTime period: June-July\nDuration: 4-7 days\nOrganisers: Dom kulture Stevan Mokranjac u Negotinu\nContact person: Milan Radosavljević"
+  },
+  {
+    "name": "Program NOISM (without ~ism) i program 'Tehnologije umetnickog stvaralastva'",
+    "country": "Serbia",
+    "city": "Novi Sad",
+    "latitude": 45.25167,
+    "longitude": 19.83694,
+    "website": "www.kuda.org",
+    "email": "zoran@kuda.org;",
+    "description": "Art field: Multimedia\nScope: International\nTime period: Flexible\nDuration: Flexible\nOrganisers: Centar_kuda.org\nContact person: Zoran Pantelić"
+  },
+  {
+    "name": "StationOne, rezidencija za savremeni ples",
+    "country": "Serbia",
+    "city": "Beograd",
+    "latitude": 44.80401,
+    "longitude": 20.46513,
+    "website": "https://dancestation.org/program-stationone/",
+    "email": "marijana.cvetkovic@gmai.com",
+    "description": "Art field: Contemporary dance\nScope: Unspecified\nTime period: Whole year\nDuration: Flexible\nOrganisers: Stanica Servis za savremeni ples\nContact person: Marijana Cvetković"
+  },
+  {
+    "name": "Slikarska kolonija u Lipovcu",
+    "country": "Serbia",
+    "city": "Lipovac village",
+    "latitude": 44.252915,
+    "longitude": 20.634127,
+    "website": "https://www.kctopola.org.rs/index.php/virtuelna-galerija",
+    "email": "kulturnicentartopola@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: June\nDuration: 4-7 days\nOrganisers: Kulturni centar Topola\nContact person: Ljubica Popović"
+  },
+  {
+    "name": "Filmska kolonija Delibradski pesak",
+    "country": "Serbia",
+    "city": "Delibradska peščara",
+    "latitude": 44.90143,
+    "longitude": 21.108312,
+    "website": "https://www.rctpupin.edu.rs/",
+    "email": "rct_pupin@rctpupin.edu.rs",
+    "description": "Art field: Film\nScope: National\nTime period: July\nDuration: 8-14 days\nOrganisers: Regionalni centar za talente Pančevo\nContact person: Dragoljub Cucič"
+  },
+  {
+    "name": "Umetnička kolonija ,,Mileševa\"",
+    "country": "Serbia",
+    "city": "Prijepolje",
+    "latitude": 43.38996,
+    "longitude": 19.6487,
+    "website": "www.mileseva.org",
+    "email": "malesic@gmail.com,",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Dom kulture Prijepolje\nContact person: Mirko Malešić"
+  },
+  {
+    "name": "Likovna kolonija Sićevo",
+    "country": "Serbia",
+    "city": "Sićevo village",
+    "latitude": 43.3419873284601,
+    "longitude": 22.085803057508713,
+    "website": "www.gslunis.rs",
+    "email": "gslu.ema@gmail.com;",
+    "description": "Art field: Visual arts\nScope: International\nTime period: September\nDuration: 8-14 days\nOrganisers: Galerija savremene likovne umetnosti Niš\nContact person: Ema Bilić"
+  },
+  {
+    "name": "Inspiration Belgrade _ artist in residence program",
+    "country": "Serbia",
+    "city": "Beograd",
+    "latitude": 44.80401,
+    "longitude": 20.46513,
+    "website": "www.kcgrad.rs",
+    "email": "ljudmila@gradbeograd.eu",
+    "description": "Art field: Visual arts, literature, performance\nScope: Unspecified\nTime period: Jul-August and January-February\nDuration: 1 month\nOrganisers: Kulturni Front / Kc Grad\nContact person: Ljudmila Stratimirović"
+  },
+  {
+    "name": "Симпозијум скулптуре \"Бели Венчац\"",
+    "country": "Serbia",
+    "city": "Аранђеловац",
+    "latitude": 44.307151,
+    "longitude": 20.557705,
+    "website": "www.mermerizvuci.com",
+    "email": "smotraumetnostimermerizvuci@gmail.com",
+    "description": "Art field: Applied arts\nScope: International\nTime period: August\nDuration: 1 month\nOrganisers: Смотра уметности \"Мермер и звуци\"\nContact person: Katarina Perović"
+  },
+  {
+    "name": "Street Art Residencies",
+    "country": "Serbia",
+    "city": "Different cities in Serbia",
+    "latitude": 44.87297196052243,
+    "longitude": 20.649728685407506,
+    "website": "www.streetartresidencies.wordpress.com",
+    "email": "vladimirpalibrk@gmail.com",
+    "description": "Art field: Street art, murals\nScope: International\nTime period: May-November\nDuration: 5 -10 days\nOrganisers: Elektrika, Pančevo\nContact person: Vladimir Palibrk"
+  },
+  {
+    "name": "Jesen u Sirinićkoj župi",
+    "country": "Serbia",
+    "city": "Štrpci",
+    "latitude": 43.50506,
+    "longitude": 22.31928,
+    "website": "",
+    "email": "risticb14@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: October\nDuration: 4-7 days\nOrganisers: Branislav Ristić\nContact person: Branislav Ristić"
+  },
+  {
+    "name": "Likovna kolonija \"Koprijan\" Doljevac",
+    "country": "Serbia",
+    "city": "Doljevac i Orljane",
+    "latitude": 43.223604,
+    "longitude": 21.836025,
+    "website": "https://bibliotekadoljevac.org/",
+    "email": "bogibis@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: July\nDuration: 4-7 days\nOrganisers: Javna biblioteka Doljevac\nContact person: Bogi Mitić"
+  },
+  {
+    "name": "Prva kolonija naive u tehnici slame",
+    "country": "Serbia",
+    "city": "Donji Tavankut",
+    "latitude": 46.047712,
+    "longitude": 19.492622,
+    "website": "matijagubec.org.rs",
+    "email": "ljubvukovic@gmail.com",
+    "description": "Art field: Naive and folk arts\nScope: International\nTime period: July\nDuration: 4-7 days\nOrganisers: Galerija Prve kolonije naive u tehnici slame, Donji Tavankut; HKPD Matija Gubec Donji Tavankut\nContact person: Ljubica Vuković Dulić,"
+  },
+  {
+    "name": "Nature & Art",
+    "country": "Serbia",
+    "city": "Osečina",
+    "latitude": 44.37306,
+    "longitude": 19.60139,
+    "website": "www.nature-and-art.rs",
+    "email": "djordje.stanojevic@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Udruženje građana Priroda i umetnost, Beograd\nContact person: Đorđe Stanojević"
+  },
+  {
+    "name": "Likovna kolonija \"Vlasina\"",
+    "country": "Serbia",
+    "city": "Vlasina lake",
+    "latitude": 42.711136,
+    "longitude": 22.342484,
+    "website": "lkc.org.rs",
+    "email": "ivana.ristic1@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: July-August\nDuration: 4-7 days\nOrganisers: Leskovački kulturni centar\nContact person: Ivana Ristić"
+  },
+  {
+    "name": "Međunarodna kolonija umetničke keramika Zlakusa Užice",
+    "country": "Serbia",
+    "city": "Zlakusa village",
+    "latitude": 43.802234,
+    "longitude": 19.952395,
+    "website": "www.keramika-zlakusa.org",
+    "email": "sofijaue@gmail.com",
+    "description": "Art field: Art pottery\nScope: International\nTime period: August\nDuration: 10 days\nOrganisers: Udruženje Keramika Zlakusa Užice\nContact person: Sofija Bunardžić"
+  },
+  {
+    "name": "Likovna kolonija  Dani romske kulture i običaja",
+    "country": "Serbia",
+    "city": "Smederevska Palanka",
+    "latitude": 44.36548,
+    "longitude": 20.95885,
+    "website": "",
+    "email": "zdravka.nasput@gmail.com",
+    "description": "Art field: Visual arts - kids\nScope: Unspecified\nTime period: April\nDuration: 4-7 days\nOrganisers: CRRZ Amaro drom\nContact person: Zdravka Simić"
+  },
+  {
+    "name": "Umetnička kolonija \"Sopoćanska viđenja\"",
+    "country": "Serbia",
+    "city": "Novi Pazar",
+    "latitude": 43.13667,
+    "longitude": 20.51222,
+    "website": "www.kcnovipazar.rs",
+    "email": "info@kcnp.rs",
+    "description": "Art field: Visual and applied arts\nScope: International\nTime period: July\nDuration: 4-7 days\nOrganisers: Galerija MMC, Kulturni centar Novi Pazar\nContact person: Amra Hodžić Jejna"
+  },
+  {
+    "name": "Booking residence - Booking Rezidencije",
+    "country": "Serbia",
+    "city": "Beograd",
+    "latitude": 44.80401,
+    "longitude": 20.46513,
+    "website": "https://www.kcgrad.rs",
+    "email": "jelena@gradbeograd.eu",
+    "description": "Art field: Literature and literary criticism\nScope: Regional\nTime period: Three to four times per year\nDuration: 2 - 6 weeks\nOrganisers: Kulturni centar Grad and TRADUKI (Berlin)\nContact person: Jelena Pavlović"
+  },
+  {
+    "name": "Likovna kolonija u sklopu SANDŽAK ART FESTIVALA (ex \"Sandžak inspiracija umjetnika\")",
+    "country": "Serbia",
+    "city": "Novi Pazar",
+    "latitude": 43.13667,
+    "longitude": 20.51222,
+    "website": "www.kcnovipazar.rs",
+    "email": "galerija.mmc.np@gmail.com",
+    "description": "Art field: Visual and applied arts\nScope: International\nTime period: August-September\nDuration: 4-7 days\nOrganisers: Galerija MMC, Kulturni centar Novi Pazar\nContact person: Amra Hodžić Jejna"
+  },
+  {
+    "name": "Lazina kuća za pisce",
+    "country": "Serbia",
+    "city": "Šabac",
+    "latitude": 44.74667,
+    "longitude": 19.69,
+    "website": "kulturni-centar.rs",
+    "email": "kcentar17@gmail.com & katcka74@gmail.com",
+    "description": "Art field: Literature\nScope: Unspecified\nTime period: October\nDuration: 4-7 days\nOrganisers: Kulturni centar, Šabac\nContact person: Katarina Janković Popović"
+  },
+  {
+    "name": "Feministička likovna kolonija",
+    "country": "Serbia",
+    "city": "Sićevo village",
+    "latitude": 43.3419873284601,
+    "longitude": 22.085803057508713,
+    "website": "https://centarzadevojke.org.rs/feministicka-likovna-kolonija/",
+    "email": "centarzadevojke@gmail.com",
+    "description": "Art field: Visual arts\nScope: Regional\nTime period: July-August\nDuration: 4-7 days\nOrganisers: Centar za devojke, Niš\nContact person: Tatjana Nikolić"
+  },
+  {
+    "name": "Likovna kolonija RESAVA",
+    "country": "Serbia",
+    "city": "Despotovac",
+    "latitude": 44.101864,
+    "longitude": 21.640521,
+    "website": "",
+    "email": "sv.stefandespotovac@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: June-July\nDuration: 4-7 days\nOrganisers: Centar za kulturu ‚‚Sveti Stefan, despot srpski‚‚ Despotovac\nContact person: Vlatka Milenković"
+  },
+  {
+    "name": "umetnička kolonija \"Mali korak\" Ogladjenovac",
+    "country": "Serbia",
+    "city": "Valjevo",
+    "latitude": 44.39496,
+    "longitude": 19.755212,
+    "website": "https://uut-mali-korak.jimdosite.com/",
+    "email": "uutmalikorak@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: July-September\nDuration: 4-7 days\nOrganisers: Legat slika i skulptura Spomenke Molly Alečković i Milijane Juce Jovanović\nContact person: Spomenka Molly Aleckovic"
+  },
+  {
+    "name": "Likovna kolonija Vranje",
+    "country": "Serbia",
+    "city": "Vranje",
+    "latitude": 42.55139,
+    "longitude": 21.90028,
+    "website": "narodniuniverzitetvranje.edu.rs",
+    "email": "narodniuniverzitet@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: July\nDuration: 4-7 days\nOrganisers: JU Narodni univerzitet Vranje\nContact person: Vesna Marinković Stanković"
+  },
+  {
+    "name": "Ликовна колонија Видовдан",
+    "country": "Serbia",
+    "city": "Gračanica",
+    "latitude": 43.308004,
+    "longitude": 19.674626,
+    "website": "https://www.facebook.com/domkulturegracanica/",
+    "email": "domkulturegracanica@gmail.com",
+    "description": "Art field: Contemporary visual arts\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: Дом културе \"Грачаница\" и Галерија уметности Приштина\nContact person: Milena Zdravković"
+  },
+  {
+    "name": "Međunarodna književna kolonija SKD-Krupara",
+    "country": "Serbia",
+    "city": "Bačko Dušanovo near Subotica",
+    "latitude": 45.905165,
+    "longitude": 19.785045,
+    "website": "https://www.skd.rs/?s=krupara",
+    "email": "dejan.simonovic@gmail.com",
+    "description": "Art field: Literature\nScope: International\nTime period: September\nDuration: 4-7 days\nOrganisers: Srpsko književno društvo\nContact person: Dejan Simonović"
+  },
+  {
+    "name": "Međunarodna likovna kolonija \"SOVLJAK\"",
+    "country": "Serbia",
+    "city": "Sovljak",
+    "latitude": 44.864901,
+    "longitude": 19.430697,
+    "website": "https://kocbogatic.rs",
+    "email": "kocbogatic2016@gmail.com",
+    "description": "Art field: Painting, sculpture, photography\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: Kulturno-obrazovni centar Bogatić\nContact person: Miloš Simić & Damir Vučetić"
+  },
+  {
+    "name": "Koreni",
+    "country": "Serbia",
+    "city": "Žitorađa",
+    "latitude": 43.19,
+    "longitude": 21.71306,
+    "website": "",
+    "email": "nbzito@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: July\nDuration: 4-7 days\nOrganisers: Narodna biblioteka Žitorađa\nContact person: Dejan Miletić"
+  },
+  {
+    "name": "Likovna kolonija \"Ravništarka - Svetlost Homolja\"",
+    "country": "Serbia",
+    "city": "Ravništarka cave",
+    "latitude": 44.40868212904901,
+    "longitude": 21.618385525282935,
+    "website": "https://www.tokucevo.org/",
+    "email": "tokiucevo@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: National\nTime period: August\nDuration: 4-7 days\nOrganisers: Turistička organizacija Kučevo\nContact person: Uroš Tričković"
+  },
+  {
+    "name": "Likovna kolonija Obrenovac",
+    "country": "Serbia",
+    "city": "Obrenovac",
+    "latitude": 44.65486,
+    "longitude": 20.20017,
+    "website": "https://www.obrenovac-info.co.rs/",
+    "email": "galeria.skcobrenovac@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: August\nDuration: 4-7 days\nOrganisers: Javno preduzeće Sportsko kulturni centar \"Obrenovac\"\nContact person: Ivana Gavrić"
+  },
+  {
+    "name": "Likovna kolonija SPEKTAR",
+    "country": "Serbia",
+    "city": "Čučuge kod Uba",
+    "latitude": 44.418570480332995,
+    "longitude": 19.951729554987853,
+    "website": "",
+    "email": "trindicd@gmail.com",
+    "description": "Art field: Painting and art education\nScope: National\nTime period: July-August\nDuration: 1-3 days\nOrganisers: Društvo mladih istraživača Čučuge likovna sekcija SPEKTAR pri društvu\nContact person: Dragoljub Trindić"
+  },
+  {
+    "name": "Četiri vode",
+    "country": "Serbia",
+    "city": "Ljubanje village near Užice",
+    "latitude": 43.81424580540608,
+    "longitude": 19.854349632371324,
+    "website": "https://4vode.com/eng/home/",
+    "email": "cetirivode.fourwaters@gmail.com",
+    "description": "Art field: Experimental practices, visual arts, performance\nScope: International\nTime period: Summer - Automn\nDuration: Flexible\nOrganisers: Četiri vode\nContact person: Jelena i Nataša Prljević"
+  },
+  {
+    "name": "Međunarodna likovna kolonija Krušnica",
+    "country": "Bosnia and Herzegovina",
+    "city": "Grad Bosanska Krupa",
+    "latitude": 44.883159,
+    "longitude": 16.157498,
+    "website": "centarzakulturubk.ba",
+    "email": "centarzakulturu.bk@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: July-August\nDuration: 4-7 days\nOrganisers: JU Kulturno sportski centar Bosanska Krupa\nContact person: Tarik Halkić & Zumreta Porić"
+  },
+  {
+    "name": "Medjunarodna umjetnicke kolonije\" KOLO\"",
+    "country": "Bosnia and Herzegovina",
+    "city": "Trebinje",
+    "latitude": 42.71197,
+    "longitude": 18.34362,
+    "website": "",
+    "email": "artspaiz@gmail.com",
+    "description": "Art field: Painting, sculpture and pottery\nScope: International\nTime period: May\nDuration: 4-7 days\nOrganisers: Dražen Milić\nContact person: Dražen Milić"
+  },
+  {
+    "name": "Likovna kolonija \"Gacko  - Klinje\"",
+    "country": "Bosnia and Herzegovina",
+    "city": "Gacko",
+    "latitude": 43.16722,
+    "longitude": 18.53528,
+    "website": "",
+    "email": "elenagsglogovac@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Javna ustanova \"Kulturno sportski centar Gacko\"\nContact person: Jelena Glogovac Savić"
+  },
+  {
+    "name": "Zelenkovac",
+    "country": "Bosnia and Herzegovina",
+    "city": "Zelenkovac",
+    "latitude": 44.39267,
+    "longitude": 16.981251,
+    "website": "www.zelenkovac.com",
+    "email": "zelenkovac@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: September\nDuration: 8-14 days\nOrganisers: Ekološki Pokret Zelenkovac\nContact person: Borislav Janković"
+  },
+  {
+    "name": "Međunarodna umjetnička kolonija \"Lastva\" Trebinje",
+    "country": "Bosnia and Herzegovina",
+    "city": "Trebinje",
+    "latitude": 42.71197,
+    "longitude": 18.34362,
+    "website": "",
+    "email": "lizdek.radmila057@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: July\nDuration: 8-14 days\nOrganisers: Radmila Lizdek\nContact person: Radmila Lizdek"
+  },
+  {
+    "name": "Likovna kolonija \"JajceArt\"",
+    "country": "Bosnia and Herzegovina",
+    "city": "Jajce",
+    "latitude": 44.34203,
+    "longitude": 17.27059,
+    "website": "www.domkulturejajce.ba",
+    "email": "domkulturejajce613@gmail.com",
+    "description": "Art field: Visual arts\nScope: Regional\nTime period: July\nDuration: 1-3 days\nOrganisers: Javna ustanova \"Dom kulture Jajce\" Jajce\nContact person: Fikret Čančar"
+  },
+  {
+    "name": "Međunarodna likovna kolonija \"Breške\"",
+    "country": "Bosnia and Herzegovina",
+    "city": "Breške (Tuzla)",
+    "latitude": 44.610393,
+    "longitude": 18.654961,
+    "website": "",
+    "email": "ivicakovacevic@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: HKD Napredak Glavna podružnica Tuzla\nContact person: Ivica Kovačević"
+  },
+  {
+    "name": "EKO KOLONIJA",
+    "country": "Bosnia and Herzegovina",
+    "city": "Park prirode Blidinje",
+    "latitude": 43.631653,
+    "longitude": 17.541408,
+    "website": "www.ekozh.org",
+    "email": "info@ekozh.org",
+    "description": "Art field: Visual arts\nScope: International\nTime period: September\nDuration: 4-7 days\nOrganisers: EKO ZH\nContact person: Mario Brekalo"
+  },
+  {
+    "name": "Likovna kolonija “Stara Bosna”",
+    "country": "Bosnia and Herzegovina",
+    "city": "Vranduk ( selo nadomak Zenice)",
+    "latitude": 44.29210876693754,
+    "longitude": 17.902801979039882,
+    "website": "www.bzk.ba",
+    "email": "galerija.zenica@bzk.ba",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 1-3 days\nOrganisers: Bošnjacka zajednica kulture-Galerija “Preporod” Zenicko -dobojskog kantona\nContact person: Amna Sofic,"
+  },
+  {
+    "name": "Art simpozijum Jahorina-Pale",
+    "country": "Bosnia and Herzegovina",
+    "city": "Pale",
+    "latitude": 43.808152,
+    "longitude": 18.569303,
+    "website": "",
+    "email": "lazosavic@gmail.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: July\nDuration: 8-14 days\nOrganisers: Lazo Savić\nContact person: Lazo Savić,"
+  },
+  {
+    "name": "LIKOVNA KOLONIJA ''SRETEN STOJANOVIĆ'' PRIJDOR",
+    "country": "Bosnia and Herzegovina",
+    "city": "NACIONALNI PARK ''KOZARA'' MRAKOVICA",
+    "latitude": 45.012997,
+    "longitude": 16.908875,
+    "website": "muzejkozare.org",
+    "email": "maticnimuzejkozare@gmail.com",
+    "description": "Art field: Visual arts\nScope: National\nTime period: August\nDuration: 4-7 days\nOrganisers: JU MUZEJ KOZARE PRIJEDOR I GRAD PRIJEDOR\nContact person: Diana Gajanović"
+  },
+  {
+    "name": "Likovna kolonija \"Rakani\"",
+    "country": "Bosnia and Herzegovina",
+    "city": "Novi Grad",
+    "latitude": 45.04643,
+    "longitude": 16.37782,
+    "website": "",
+    "email": "galerijanovigrad@hotmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: JU Kulturno-obrazovni centar Novi Grad\nContact person: Mirjana Drljača"
+  },
+  {
+    "name": "Beli vuk, Tvrdimići",
+    "country": "Bosnia and Herzegovina",
+    "city": "Istočno Sarajevo",
+    "latitude": 43.77547,
+    "longitude": 18.445895,
+    "website": "",
+    "email": "",
+    "description": "Art field: Painting\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: Kulturni centar Istočno Novo Sarajevo\nContact person: Miloš Popović,"
+  },
+  {
+    "name": "Ликовна колонија Галичник",
+    "country": "North Macedonia",
+    "city": "village Galičnik",
+    "latitude": 41.59353635601829,
+    "longitude": 20.64918727838237,
+    "website": "",
+    "email": "anafrangovska@gmail.com",
+    "description": "Art field: Contemporary arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Здружение на ликовната колонија Галичник од Скопје\nContact person: Ana Frangovska"
+  },
+  {
+    "name": "Атинска2, Уметничка резиденција",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.996216,
+    "longitude": 21.431894,
+    "website": "Makedonida.org",
+    "email": "gordana.velkov@gmail.com",
+    "description": "Art field: Visual arts, multimedia, literature and cultural heritage\nScope: International\nTime period: October\nDuration: 8-14 days\nOrganisers: Здружение Македонида , Гордана Велков\nContact person: Gordana Velkov"
+  },
+  {
+    "name": "Скопје Фелоушип програма",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.99646,
+    "longitude": 21.43141,
+    "website": "www.prozabalkan.mk",
+    "email": "dejan.trajkoski@yahoo.com",
+    "description": "Art field: Literrature and publishing\nScope: International\nTime period: Septembre\nDuration: 1-3 days\nOrganisers: издавачка куќа Прозарт медиа\nContact person: Dejan Trajkoski"
+  },
+  {
+    "name": "Ликовна колонија Михајлово-Кавадарци",
+    "country": "North Macedonia",
+    "city": "Kavadarci",
+    "latitude": 41.43344,
+    "longitude": 22.01218,
+    "website": "www.mihajlovoart.com",
+    "email": "temkovart@yahoo.com",
+    "description": "Art field: Painting and sculpture\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Здружение \"Михајлово арт Кавадарци\" Кавадарци\nContact person: Vladimir Temkov"
+  },
+  {
+    "name": "Radika Debar",
+    "country": "North Macedonia",
+    "city": "Debar",
+    "latitude": 41.52286,
+    "longitude": 20.52198,
+    "website": "",
+    "email": "artpoint@t-home.mk",
+    "description": "Art field: Painting\nScope: Unspecified\nTime period: August\nDuration: 4-7 days\nOrganisers: Art point\nContact person: Arben Jajaga"
+  },
+  {
+    "name": "Фелоушип-програма на МАИ",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.99646,
+    "longitude": 21.43141,
+    "website": "www.mai.org.mk",
+    "email": "sekretar@mai.org.mk",
+    "description": "Art field: Literature\nScope: International\nTime period: April-May\nDuration: 1-3 days\nOrganisers: Македонска асоцијација на издавачи (МАИ)\nContact person: Nataša Atanasova"
+  },
+  {
+    "name": "Галичка книжевна колонија",
+    "country": "North Macedonia",
+    "city": "village Galičnik",
+    "latitude": 41.59353635601829,
+    "longitude": 20.64918727838237,
+    "website": "",
+    "email": "yanecalo@gmail.com",
+    "description": "Art field: Literature\nScope: National\nTime period: July-Septembre\nDuration: 4-7 days\nOrganisers: ГАЛИКУЛ – Здружение за литература, култура и уметност\nContact person: Jane Čalovski"
+  },
+  {
+    "name": "АРТ ПОИНТ - ГУМНО (+ година на одржување и конкретна тема за таа година)",
+    "country": "North Macedonia",
+    "city": "Village Sloeštica",
+    "latitude": 41.267565787163385,
+    "longitude": 21.078222593362497,
+    "website": "www.artpoint-gumno.org.mk",
+    "email": "andreevska_i@yahoo.com & asergej@yahoo.com",
+    "description": "Art field: Visual arts, multimedia, literature\nScope: International\nTime period: July-October\nDuration: 8-14 days\nOrganisers: АРТ ПОИНТ - ГУМНО (Здружение - Меѓународен центар за уметност и одржлив развој АРТ ПОИНТ - ГУМНО)\nContact person: Irena Andreevska & Sergej Andreevski"
+  },
+  {
+    "name": "Цвет и корен",
+    "country": "North Macedonia",
+    "city": "Ohrid",
+    "latitude": 41.11701,
+    "longitude": 20.80175,
+    "website": "www.ikon.ngo",
+    "email": "kkorobar@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: June\nDuration: 8-14 days\nOrganisers: Асоцијација за култура ИКОН, Агенција за иселеништво, Музеј на град Скопје\nContact person: Klime Korbar"
+  },
+  {
+    "name": "Balkan Spirit",
+    "country": "North Macedonia",
+    "city": "Ohrid",
+    "latitude": 41.124075141395956,
+    "longitude": 20.80243981406217,
+    "website": "www.ikon.ngo",
+    "email": "kkorobar@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: June-July\nDuration: 8-14 days\nOrganisers: Асоцијација за култура ИКОН, Фондација за стратешки истражувања „Киро Глигоров“\nContact person: Klime Korbar"
+  },
+  {
+    "name": "Домот-хаосот (The house - the Chaos)",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.99646,
+    "longitude": 21.43141,
+    "website": "www.ikon.ngo",
+    "email": "kkorobar@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: December\nDuration: 8-14 days\nOrganisers: Асоцијација за култура ИКОН, 359 - Мрежа за локални и субалтерни херменевтики\nContact person: Klime Korbar"
+  },
+  {
+    "name": "Ликовна колонија Љубанци, Ликовна колонија Нерешки мајстори, Ликовна колонија Струга.",
+    "country": "North Macedonia",
+    "city": "Vilage Ljubanci",
+    "latitude": 42.130690580021174,
+    "longitude": 21.725103605494784,
+    "website": "",
+    "email": "stocinovski@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: June-September\nDuration: 4-7 days\nOrganisers: Детски ликовни центар - Градско здружение на ликовни педагози\nContact person: Stojče Tocinovski"
+  },
+  {
+    "name": "Megunarodna umetnicka rezidencija Brashnar",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.99646,
+    "longitude": 21.43141,
+    "website": "Www.brashnarcreativeproject.org",
+    "email": "ankica.mitrovska@gmail.com",
+    "description": "Art field: Multidisciplinary\nScope: International\nTime period: June-September\nDuration: 1 month\nOrganisers: Brashnar Kreativen Proekt Skopje\nContact person: Ankica Mitrovska"
+  },
+  {
+    "name": "Меѓународна ликовна колонија ,,Ѓуриште\"",
+    "country": "North Macedonia",
+    "city": "Sveti Nikole",
+    "latitude": 41.86956,
+    "longitude": 21.95274,
+    "website": "https://dksvn.mk/",
+    "email": "dkrstemisirkovsvn@yahoo.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: ОУ Дом на култура ,,Крсте Мисирков\"\nContact person: Nikolče Trenčev"
+  },
+  {
+    "name": "Ликовна колонија „Куманово“",
+    "country": "North Macedonia",
+    "city": "Kumanovo",
+    "latitude": 42.130690580021174,
+    "longitude": 21.725103605494784,
+    "website": "",
+    "email": "muzejkumanovo64@gmail.com & umetnickagalerija67@gmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: August\nDuration: 4-7 days\nOrganisers: Национална Установа Музеј-Куманово и Градоначалник и Совет на Општина Куманово\nContact person: Marija Živački & Dragana Spasovska"
+  },
+  {
+    "name": "НИЖОПОЛЕ 2000",
+    "country": "North Macedonia",
+    "city": "Bitola",
+    "latitude": 41.03226,
+    "longitude": 21.33553,
+    "website": "https://www.nizepole2000.mk",
+    "email": "najdr_2000@yahoo.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: July\nDuration: 8-14 days\nOrganisers: Драган Најденовски\nContact person: Dragan Nejdenovski"
+  },
+  {
+    "name": "Ликовна Колонија Аполонија",
+    "country": "North Macedonia",
+    "city": "Gevgelija",
+    "latitude": 41.14289,
+    "longitude": 22.50108,
+    "website": "",
+    "email": "ace.ristovski@apollonia.com.mk",
+    "description": "Art field: Visual arts\nScope: International\nTime period: June\nDuration: 8-14 days\nOrganisers: Фондација Аполонија\nContact person: Ace Ristevski"
+  },
+  {
+    "name": "Ликовна колонија 2026 (секоја година само годината се мене)",
+    "country": "North Macedonia",
+    "city": "Valandovo",
+    "latitude": 41.31761,
+    "longitude": 22.56303,
+    "website": "",
+    "email": "dean.isirov@yahoo.com",
+    "description": "Art field: Multidisciplinary - open topics\nScope: International\nTime period: June-July\nDuration: 4-7 days\nOrganisers: Организатор Дом на култура 25мај Валандово (секоја година има различен уметнички уметнички организатор)\nContact person: Dean Isirov"
+  },
+  {
+    "name": "МЕГУНАРОДНА ЛЕСНОВСКА ЛИКОВНА КОЛОНИЈА",
+    "country": "North Macedonia",
+    "city": "Village Lesnovo",
+    "latitude": 42.013252,
+    "longitude": 22.228294,
+    "website": "",
+    "email": "dk_probistip@yahoo.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: June\nDuration: 4-7 days\nOrganisers: ОУ ДОМ НА КУЛТУРА ЗЛЕТОВСКИ РУДАР ПРОБИШТИП\nContact person: Marija Trajčeva"
+  },
+  {
+    "name": "Ликовна колонија \"Св. Јоаким Осоговски\", Крива Паланка",
+    "country": "North Macedonia",
+    "city": "Monastary Sv: Jovan Osogovski",
+    "latitude": 42.208293,
+    "longitude": 22.363087,
+    "website": "",
+    "email": "sofija.gramatova@gmail.com & mikica318@gmail.com",
+    "description": "Art field: Painting, sculpture, installations\nScope: International\nTime period: June\nDuration: 6-8 days\nOrganisers: Здружение за култура и уметност \"Св. Јоаким Осоговски\", Кр. Паланка\nContact person: Sofija Gramatova Ristevska & Miroslava Trujanovik"
+  },
+  {
+    "name": "Здружение уметничка колонија Дебрца, Белчишта",
+    "country": "North Macedonia",
+    "city": "Village Belčišta",
+    "latitude": 41.302794,
+    "longitude": 20.831265,
+    "website": "",
+    "email": "martinaceleska@hotmail.com",
+    "description": "Art field: Painting\nScope: International\nTime period: June\nDuration: 8-14 days\nOrganisers: Мартина Целеска\nContact person: Martina Celeska"
+  },
+  {
+    "name": "Струмичка кплонија",
+    "country": "North Macedonia",
+    "city": "Strumica",
+    "latitude": 41.43763,
+    "longitude": 22.64288,
+    "website": "www.antonpanov.mk",
+    "email": "anton.panov.sr@gmail.com",
+    "description": "Art field: Visual arts\nScope: International\nTime period: August\nDuration: 8-14 days\nOrganisers: Александар филев дом на култура антон панов струмива\nContact person: Aleksandar Filev"
+  },
+  {
+    "name": "Megunarodna Likovna Kolonija De Niro",
+    "country": "North Macedonia",
+    "city": "Selo Capari Bitola",
+    "latitude": 41.056348,
+    "longitude": 21.178687,
+    "website": "",
+    "email": "d.filevski@yahoo.com",
+    "description": "Art field: Painting, sculpture, graphic art and photography\nScope: International\nTime period: June\nDuration: 8-14 days\nOrganisers: Silvana I Dragi Filevski\nContact person: Dragi Filevski"
+  },
+  {
+    "name": "Bookstar Festival",
+    "country": "North Macedonia",
+    "city": "Skopje",
+    "latitude": 41.99646,
+    "longitude": 21.43141,
+    "website": "https://bookstar.mk/",
+    "email": "valentina.antolog@gmail.com & bookstarfestival@gmail.com",
+    "description": "Art field: Literature and publishing\nScope: International\nTime period: October\nDuration: 1-3 дена\nOrganisers: Издавачка куќа „Антолог“\nContact person: Valentina Kujundžiska"
+  },
+  {
+    "name": "^ПатемByTheWay - Друштво со ограничена одговорност",
+    "country": "North Macedonia",
+    "city": "Different locations in N.Macedonia",
+    "latitude": 42.001867294190504,
+    "longitude": 21.429350168948528,
+    "website": "www.patembytheway.mk",
+    "email": "vduni@yahoo.com & pavleskis@gmail.com",
+    "description": "Art field: Multimedia\nScope: International\nTime period: Whole year\nDuration: Several times per year\nOrganisers: Уметнички тандем: Весна Дунимаглоска и Станко Павлески, со финансиска поддршка на Министерството за култура и туризам на Р.С. Македонија, спонзори, како и лични средства\nContact person: Vesna Dunimagloska & Stanko Pavleski"
+  },
+  {
+    "name": "Kolonia artistike ndërkombëtare GOSTIVAR 2025",
+    "country": "North Macedonia",
+    "city": "Gostivar",
+    "latitude": 41.79627,
+    "longitude": 20.90799,
+    "website": "www.draudacum.com",
+    "email": "078374555, arjan.rufati@draudacum.com",
+    "description": "Art field: Painting, sculpture and photography\nScope: International\nTime period: June\nDuration: 4–7 days\nOrganisers: Shoqata e Artistëve Figurativ DRAUDACUM Gostivar\nContact person: Arjan Rufati"
+  },
+  {
+    "name": "Kolonia Internacionale Artistike",
+    "country": "North Macedonia",
+    "city": "Tetovo",
+    "latitude": 42.013165,
+    "longitude": 20.881654,
+    "website": "https://galeriaeartevetetove.com/",
+    "email": "behar.ferati@yahoo.com",
+    "description": "Art field: Painting\nScope: International\nTime period: June-July\nDuration: 4–7 days\nOrganisers: I.N. Galeria e Arteve Tetovë\nContact person: Behar Ferati,"
+  }
+]
