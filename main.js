@@ -1184,6 +1184,12 @@ async function bootstrap() {
   state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
 
+  // Track load synchronously so the async data fetch below can't miss it.
+  let mapLoaded = state.map.loaded();
+  state.map.on("load", () => {
+    mapLoaded = true;
+  });
+
   state.colonies = await loadColoniesData();
 
   buildDisciplineFilters();
@@ -1200,7 +1206,7 @@ async function bootstrap() {
   window.addEventListener("resize", applyResponsivePanelDefaults);
   updateFilterToggleBadge();
 
-  state.map.once("load", () => {
+  const renderInitial = () => {
     syncFilters();
     const visible = getVisibleColonies();
     if (visible.length) {
@@ -1210,7 +1216,16 @@ async function bootstrap() {
         setPanelMinimized(true);
       }
     }
-  });
+  };
+
+  // Data loading above is async, so the map may already have fired "load" by
+  // now — in which case once("load") would never run and the map would render
+  // empty until the first filter interaction. Guard on the tracked state.
+  if (mapLoaded || state.map.loaded()) {
+    renderInitial();
+  } else {
+    state.map.once("load", renderInitial);
+  }
 }
 
 bootstrap().catch(console.error);
