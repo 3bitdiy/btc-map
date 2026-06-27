@@ -311,24 +311,83 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
-// Re-tint the map's background and land fill to match the active palette
-// (driven by the theme switcher's "btc-theme-change" event).
+// Mix a hex color toward black by `amount` (0..1).
+function darken(hex, amount) {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const channel = (i) => {
+    const v = parseInt(full.slice(i, i + 2), 16);
+    return Math.round(v * (1 - amount))
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(0)}${channel(2)}${channel(4)}`;
+}
+
+// Theme-driven colors for the vector-tile layers. The road/boundary tones are
+// progressively darker shades of the land so they read as the same earthy
+// family in every palette (the darken factors reproduce the original
+// Terracotta values exactly).
+function mapThemeColors() {
+  const land = cssVar("--map-land", "#edd1aa");
+  const bg = cssVar("--map-bg", "#c2c9bc");
+  const wine = cssVar("--wine", "#8d313a");
+  return {
+    land,
+    bg,
+    wine,
+    minor: darken(land, 0.14),
+    secondary: darken(land, 0.21),
+    primary: darken(land, 0.3),
+    motorway: darken(land, 0.39),
+    boundary: darken(land, 0.4),
+  };
+}
+
+// [layer id, paint property, color key]
+const MAP_THEME_PAINT = [
+  ["background", "background-color", "bg"],
+  ["global-land", "fill-color", "land"],
+  ["landcover-grass", "fill-color", "land"],
+  ["landuse-park", "fill-color", "land"],
+  ["water", "fill-color", "bg"],
+  ["waterway", "line-color", "bg"],
+  ["roads-minor", "line-color", "minor"],
+  ["roads-secondary", "line-color", "secondary"],
+  ["roads-primary", "line-color", "primary"],
+  ["roads-motorway", "line-color", "motorway"],
+  ["boundary-country", "line-color", "boundary"],
+  ["place-city", "text-color", "wine"],
+  ["place-state", "text-color", "wine"],
+  ["place-country", "text-color", "wine"],
+];
+
+// Paint the theme colors onto a style object before the map is created.
+function paintStyleTheme(style) {
+  const colors = mapThemeColors();
+  MAP_THEME_PAINT.forEach(([id, prop, key]) => {
+    const layer = style.layers.find((l) => l.id === id);
+    if (!layer) return;
+    layer.paint = { ...(layer.paint || {}), [prop]: colors[key] };
+  });
+}
+
+// Re-tint the live map to match the active palette (driven by the theme
+// switcher's "btc-theme-change" event).
 function applyMapTheme() {
   if (!state.map) return;
-  if (state.map.getLayer("background")) {
-    state.map.setPaintProperty(
-      "background",
-      "background-color",
-      cssVar("--map-bg", "#c2c9bc"),
-    );
-  }
-  if (state.map.getLayer("global-land")) {
-    state.map.setPaintProperty(
-      "global-land",
-      "fill-color",
-      cssVar("--map-land", "#edd1aa"),
-    );
-  }
+  const colors = mapThemeColors();
+  MAP_THEME_PAINT.forEach(([id, prop, key]) => {
+    if (state.map.getLayer(id)) {
+      state.map.setPaintProperty(id, prop, colors[key]);
+    }
+  });
 }
 
 function resolveColonyPhoto(colony) {
@@ -415,16 +474,6 @@ async function initMap() {
       "© <a href='https://www.naturalearthdata.com'>Natural Earth</a>",
   };
 
-  const backgroundLayer = style.layers.find(
-    (layer) => layer.id === "background",
-  );
-  if (backgroundLayer?.type === "background") {
-    backgroundLayer.paint = {
-      ...(backgroundLayer.paint || {}),
-      "background-color": cssVar("--map-bg", "#c2c9bc"),
-    };
-  }
-
   if (!style.layers.some((layer) => layer.id === "global-land")) {
     const backgroundIndex = style.layers.findIndex(
       (layer) => layer.id === "background",
@@ -437,12 +486,13 @@ async function initMap() {
       source: "globalbase",
       "source-layer": "land",
       maxzoom: 24,
-      paint: {
-        "fill-color": cssVar("--map-land", "#edd1aa"),
-        "fill-opacity": 1,
-      },
+      paint: { "fill-opacity": 1 },
     });
   }
+
+  // Tint background, land, landcover, water, roads, boundaries and labels to
+  // the active palette so zoomed-in detail matches (not just the base land).
+  paintStyleTheme(style);
 
   const map = new maplibregl.Map({
     container: "map",
