@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map · Beyond the Cities</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/node_modules/maplibre-gl/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <div id="app">
+
+    <aside id="left-sidebar" aria-label="Colony browser">
+      <section id="brand-card" aria-label="Project identity">
+        <a class="brand-mark-wrap" href="/" aria-label="Back to Beyond the Cities home">
+          <img src="/assets/icons/btc-logo.svg" alt="Beyond the Cities logo" class="brand-mark" />
+        </a>
+        <h1 id="site-title">
+          <span class="title-line">
+            <span class="title-beyond">BEYOND</span>
+          </span>
+          <span class="title-line">
+            <span class="title-the">the</span>
+            <span class="title-cities">CITIES</span>
+          </span>
+        </h1>
+        <p id="site-subtitle">Artists' residences<br />in the Western Balkans</p>
+      </section>
+
+      <section id="filter-card" aria-label="Map filters">
+        <div id="filter-content">
+          <!-- Country browser + filter: collapsed accordion sections, built in main.js -->
+          <div id="country-accordion" class="country-accordion"></div>
+
+          <hr class="filter-divider" />
+
+          <div class="filter-group">
+            <button type="button" class="select-row" data-toggle-target="discipline-filters" aria-expanded="false">
+              <span>Art field</span>
+              <img src="/assets/icons/caret-down.svg" alt="" />
+            </button>
+            <div id="discipline-filters" class="pill-list" hidden></div>
+          </div>
+
+          <div class="filter-group">
+            <button type="button" class="select-row" data-toggle-target="scope-filters" aria-expanded="false">
+              <span>Scope</span>
+              <img src="/assets/icons/caret-down.svg" alt="" />
+            </button>
+            <div id="scope-filters" class="pill-list" hidden>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="National" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">National</span>
+              </label>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="Regional" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">Regional</span>
+              </label>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="International" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">International</span>
+              </label>
+            </div>
+          </div>
+
+          <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
+        </div>
+
+        <div id="filter-mobile-actions" aria-label="Filter actions">
+          <button type="button" id="filter-reset-btn">Reset</button>
+          <button type="button" id="filter-apply-btn">Apply</button>
+        </div>
+
+        <button type="button" id="filter-minimize" aria-label="Minimize filters" aria-expanded="true">
+          <span class="minimize-caret" aria-hidden="true">
+            <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
+          </span>
+          <span class="minimize-icon minimize-icon--filters" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6h11v2H4V6zm0 5h16v2H4v-2zm0 5h9v2H4v-2z" fill="currentColor" />
+              <circle cx="17.5" cy="7" r="2" fill="currentColor" />
+              <circle cx="8.5" cy="12" r="2" fill="currentColor" />
+              <circle cx="15.5" cy="17" r="2" fill="currentColor" />
+            </svg>
+          </span>
+        </button>
+      </section>
+    </aside>
+
+    <main id="map-container" aria-label="Interactive map">
+      <button type="button" id="filter-toggle" aria-label="Toggle filters" aria-expanded="false">
+        <img src="/assets/icons/btc-logo.svg" alt="" class="filter-toggle-mark" />
+        <span class="filter-toggle-label">Filters</span>
+        <span id="filter-active-badge" aria-hidden="true">0</span>
+      </button>
+      <div id="map"></div>
+
+      <div id="map-zoom-controls" aria-label="Map zoom controls">
+        <button type="button" id="zoom-in" aria-label="Zoom in">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />
+          </svg>
+        </button>
+        <button type="button" id="zoom-out" aria-label="Zoom out">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />
+          </svg>
+        </button>
+        <button type="button" id="zoom-reset" aria-label="Reset map view">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <aside id="detail-panel" aria-label="Colony details" aria-hidden="true">
+      <button type="button" id="panel-close" aria-label="Close panel">
+        <img src="/assets/icons/x.svg" alt="" />
+      </button>
+
+      <button type="button" id="panel-minimize" aria-label="Minimize panel" aria-expanded="true">
+        <span class="minimize-caret" aria-hidden="true">
+          <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
+        </span>
+        <span class="minimize-icon minimize-icon--details" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 11.2L12 4l8 7.2v8.8h-5.6v-5.4H9.6V20H4v-8.8z" fill="currentColor" />
+          </svg>
+        </span>
+      </button>
+
+      <div id="panel-intro">
+        <img class="panel-intro-mark" src="/assets/icons/btc-logo.svg" alt="" />
+        <h2 class="panel-intro-title">Artists' residencies of the Western Balkans</h2>
+        <p class="panel-intro-text">
+          Explore <strong id="panel-intro-count">0</strong> art colonies across
+          Bosnia and Herzegovina, North Macedonia and Serbia.
+        </p>
+        <p class="panel-intro-hint">Select a marker on the map — or a colony from the list — to see its details.</p>
+      </div>
+
+      <div id="panel-content">
+        <div id="panel-photo-wrap">
+          <img id="panel-photo" src="" alt="" />
+        </div>
+
+        <header id="panel-header">
+          <h2 id="panel-name"></h2>
+          <p id="panel-location"></p>
+          <div id="panel-meta-inline">
+            <div id="panel-marker-badge">
+              <img id="panel-marker-icon" src="/assets/icons/house01.svg" alt="" />
+            </div>
+            <div id="panel-disciplines"></div>
+          </div>
+        </header>
+
+        <section id="panel-about">
+          <h3>Organizers</h3>
+          <p id="panel-organizer">N/A</p>
+        </section>
+
+        <section id="panel-details">
+          <h3>Details</h3>
+          <ul id="panel-details-list">
+            <li><strong>Contact person:</strong> <span id="panel-contact-person">N/A</span></li>
+            <li><strong>Time period:</strong> <span id="panel-time-period">N/A</span></li>
+            <li><strong>Duration:</strong> <span id="panel-duration">N/A</span></li>
+            <li><strong>Scope:</strong> <span id="panel-scope">N/A</span></li>
+          </ul>
+        </section>
+
+        <section id="panel-contact">
+          <h3>Contact</h3>
+          <ul id="panel-contact-list"></ul>
+        </section>
+
+        <div id="panel-social"></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>

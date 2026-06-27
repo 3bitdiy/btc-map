@@ -4,194 +4,152 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Western Balkans Artist Residencies</title>
+  <title>Beyond the Cities — Artists' Residencies of the Western Balkans</title>
+  <meta name="description"
+    content="Beyond the Cities revitalises the rural art colonies of Bosnia and Herzegovina, North Macedonia and Serbia, building an independent transnational cultural network. A Goethe-Institut project, 2026–2028." />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/node_modules/maplibre-gl/dist/maplibre-gl.css" />
-  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/landing.css" />
 </head>
 
 <body>
-  <div id="app">
+  <header class="site-bar">
+    <a class="site-bar__brand" href="/" aria-label="Beyond the Cities home">
+      <img src="/assets/icons/btc-logo.svg" alt="" class="site-bar__mark" />
+      <span class="site-bar__name">Beyond <em>the</em> Cities</span>
+    </a>
+    <a class="btn btn--small" href="/map.html">Open map<span aria-hidden="true"> →</span></a>
+  </header>
 
-    <aside id="left-sidebar" aria-label="Colony browser">
-      <section id="brand-card" aria-label="Project identity">
-        <div class="brand-mark-wrap">
-          <img src="/assets/icons/btc-logo.svg" alt="Beyond the Cities logo" class="brand-mark" />
-        </div>
-        <h1 id="site-title">
-          <span class="title-line">
-            <span class="title-beyond">BEYOND</span>
-          </span>
-          <span class="title-line">
-            <span class="title-the">the</span>
-            <span class="title-cities">CITIES</span>
-          </span>
-        </h1>
-        <p id="site-subtitle">Artists' residences<br />in the Western Balkans</p>
-      </section>
-
-      <section id="filter-card" aria-label="Map filters">
-        <div id="filter-content">
-          <!-- Country browser + filter: collapsed accordion sections, built in main.js -->
-          <div id="country-accordion" class="country-accordion"></div>
-
-          <hr class="filter-divider" />
-
-          <div class="filter-group">
-            <button type="button" class="select-row" data-toggle-target="discipline-filters" aria-expanded="false">
-              <span>Art field</span>
-              <img src="/assets/icons/caret-down.svg" alt="" />
-            </button>
-            <div id="discipline-filters" class="pill-list" hidden></div>
-          </div>
-
-          <div class="filter-group">
-            <button type="button" class="select-row" data-toggle-target="scope-filters" aria-expanded="false">
-              <span>Scope</span>
-              <img src="/assets/icons/caret-down.svg" alt="" />
-            </button>
-            <div id="scope-filters" class="pill-list" hidden>
-              <label class="filter-check is-round">
-                <input type="checkbox" name="scope" value="National" checked />
-                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-                <span class="pill-light">National</span>
-              </label>
-              <label class="filter-check is-round">
-                <input type="checkbox" name="scope" value="Regional" checked />
-                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-                <span class="pill-light">Regional</span>
-              </label>
-              <label class="filter-check is-round">
-                <input type="checkbox" name="scope" value="International" checked />
-                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-                <span class="pill-light">International</span>
-              </label>
-            </div>
-          </div>
-
-          <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
-        </div>
-
-        <div id="filter-mobile-actions" aria-label="Filter actions">
-          <button type="button" id="filter-reset-btn">Reset</button>
-          <button type="button" id="filter-apply-btn">Apply</button>
-        </div>
-
-        <button type="button" id="filter-minimize" aria-label="Minimize filters" aria-expanded="true">
-          <span class="minimize-caret" aria-hidden="true">
-            <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
-          </span>
-          <span class="minimize-icon minimize-icon--filters" aria-hidden="true">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 6h11v2H4V6zm0 5h16v2H4v-2zm0 5h9v2H4v-2z" fill="currentColor" />
-              <circle cx="17.5" cy="7" r="2" fill="currentColor" />
-              <circle cx="8.5" cy="12" r="2" fill="currentColor" />
-              <circle cx="15.5" cy="17" r="2" fill="currentColor" />
-            </svg>
-          </span>
-        </button>
-      </section>
-    </aside>
-
-    <main id="map-container" aria-label="Interactive map">
-      <button type="button" id="filter-toggle" aria-label="Toggle filters" aria-expanded="false">
-        <img src="/assets/icons/btc-logo.svg" alt="" class="filter-toggle-mark" />
-        <span class="filter-toggle-label">Filters</span>
-        <span id="filter-active-badge" aria-hidden="true">0</span>
-      </button>
-      <div id="map"></div>
-
-      <div id="map-zoom-controls" aria-label="Map zoom controls">
-        <button type="button" id="zoom-in" aria-label="Zoom in">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />
-          </svg>
-        </button>
-        <button type="button" id="zoom-out" aria-label="Zoom out">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />
-          </svg>
-        </button>
-        <button type="button" id="zoom-reset" aria-label="Reset map view">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-          </svg>
-        </button>
-      </div>
-    </main>
-
-    <aside id="detail-panel" aria-label="Colony details" aria-hidden="true">
-      <button type="button" id="panel-close" aria-label="Close panel">
-        <img src="/assets/icons/x.svg" alt="" />
-      </button>
-
-      <button type="button" id="panel-minimize" aria-label="Minimize panel" aria-expanded="true">
-        <span class="minimize-caret" aria-hidden="true">
-          <img src="/assets/icons/dropdown-caret-icon.svg" alt="" />
-        </span>
-        <span class="minimize-icon minimize-icon--details" aria-hidden="true">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 11.2L12 4l8 7.2v8.8h-5.6v-5.4H9.6V20H4v-8.8z" fill="currentColor" />
-          </svg>
-        </span>
-      </button>
-
-      <div id="panel-intro">
-        <img class="panel-intro-mark" src="/assets/icons/btc-logo.svg" alt="" />
-        <h2 class="panel-intro-title">Artists' residencies of the Western Balkans</h2>
-        <p class="panel-intro-text">
-          Explore <strong id="panel-intro-count">0</strong> art colonies across
-          Bosnia and Herzegovina, North Macedonia and Serbia.
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero__text">
+        <p class="eyebrow">Goethe-Institut · 2026–2028</p>
+        <h1 class="hero__title">Artists' Residencies of the Western Balkans</h1>
+        <p class="hero__lead">
+          Revitalising the region's rural art colonies — and weaving them into an
+          independent cultural network <em>beyond the cities</em>.
         </p>
-        <p class="panel-intro-hint">Select a marker on the map — or a colony from the list — to see its details.</p>
-      </div>
-
-      <div id="panel-content">
-        <div id="panel-photo-wrap">
-          <img id="panel-photo" src="" alt="" />
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="/map.html">Explore the interactive map<span aria-hidden="true"> →</span></a>
+          <a class="btn btn--ghost" href="#project">About the project</a>
         </div>
-
-        <header id="panel-header">
-          <h2 id="panel-name"></h2>
-          <p id="panel-location"></p>
-          <div id="panel-meta-inline">
-            <div id="panel-marker-badge">
-              <img id="panel-marker-icon" src="/assets/icons/house01.svg" alt="" />
-            </div>
-            <div id="panel-disciplines"></div>
-          </div>
-        </header>
-
-        <section id="panel-about">
-          <h3>Organizers</h3>
-          <p id="panel-organizer">N/A</p>
-        </section>
-
-        <section id="panel-details">
-          <h3>Details</h3>
-          <ul id="panel-details-list">
-            <li><strong>Contact person:</strong> <span id="panel-contact-person">N/A</span></li>
-            <li><strong>Time period:</strong> <span id="panel-time-period">N/A</span></li>
-            <li><strong>Duration:</strong> <span id="panel-duration">N/A</span></li>
-            <li><strong>Scope:</strong> <span id="panel-scope">N/A</span></li>
-          </ul>
-        </section>
-
-        <section id="panel-contact">
-          <h3>Contact</h3>
-          <ul id="panel-contact-list"></ul>
-        </section>
-
-        <div id="panel-social"></div>
+        <p class="hero__countries">Bosnia&nbsp;and&nbsp;Herzegovina · North&nbsp;Macedonia · Serbia</p>
       </div>
-    </aside>
 
-  </div>
+      <div class="hero__art" aria-hidden="true">
+        <span class="hero__blob"></span>
+        <img src="/assets/icons/btc-logo.svg" alt="" class="hero__logo" />
+        <img src="/assets/icons/house01.svg" alt="" class="hero__pin hero__pin--1" />
+        <img src="/assets/icons/house06.svg" alt="" class="hero__pin hero__pin--2" />
+        <img src="/assets/icons/house10.svg" alt="" class="hero__pin hero__pin--3" />
+      </div>
+    </section>
 
-  <script type="module" src="/main.js"></script>
+    <!-- PROJECT -->
+    <section class="section" id="project">
+      <p class="section__label">The Project</p>
+      <h2 class="section__title">A living tradition, reconnected</h2>
+      <div class="prose">
+        <p>
+          From the 1950s on, socialist Yugoslavia ran a state programme supporting cultural
+          institutions — most visible in its rural residency programmes, the so-called
+          <strong>“art colonies.”</strong> After the country's break-up, some endured: partly as
+          independent organisations, partly on modest public budgets.
+        </p>
+        <p>
+          <strong>Beyond the Cities</strong> builds on that tradition. It works to revitalise
+          existing art colonies and kindred initiatives in Serbia, Bosnia and Herzegovina and
+          North Macedonia — creating a network of independent, resilient cultural partners that
+          strengthen rural areas, and opening new room for transnational collaboration.
+        </p>
+      </div>
+    </section>
+
+    <!-- OBJECTIVES -->
+    <section class="section section--tint" id="objectives">
+      <p class="section__label">Objectives</p>
+      <h2 class="section__title">What the project sets out to do</h2>
+      <ul class="cards">
+        <li class="card">
+          <span class="card__num">01</span>
+          <h3>Build a network</h3>
+          <p>Through mapping, needs analysis and collaborative capacity-building across the three countries.</p>
+        </li>
+        <li class="card">
+          <span class="card__num">02</span>
+          <h3>Strengthen cooperation</h3>
+          <p>A shared digital platform, practical “how-to” guides and long-term coordination between organisations.</p>
+        </li>
+        <li class="card">
+          <span class="card__num">03</span>
+          <h3>Partner locally</h3>
+          <p>Cooperation agreements with regional Goethe-Instituts and a joint steering board.</p>
+        </li>
+        <li class="card">
+          <span class="card__num">04</span>
+          <h3>Sustain the field</h3>
+          <p>Long-term structural support for rural cultural organisations — lasting beyond the project itself.</p>
+        </li>
+      </ul>
+    </section>
+
+    <!-- MAP CTA -->
+    <section class="map-cta" id="map">
+      <div class="map-cta__inner">
+        <p class="section__label">The Map</p>
+        <h2 class="section__title">See every colony on one map</h2>
+        <p class="map-cta__text">
+          A comprehensive, living picture of the field — as an interactive digital map. Browse by
+          country, art field and scope, and open any colony for its location, contacts and activities.
+        </p>
+        <dl class="stats">
+          <div class="stat"><dt>99</dt><dd>colonies mapped</dd></div>
+          <div class="stat"><dt>3</dt><dd>countries</dd></div>
+          <div class="stat"><dt>2026–28</dt><dd>continuously updated</dd></div>
+        </dl>
+        <a class="btn btn--primary btn--lg" href="/map.html">Open the map<span aria-hidden="true"> →</span></a>
+      </div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section class="section" id="partners">
+      <p class="section__label">Partners</p>
+      <h2 class="section__title">Led by Goethe-Institut, built together</h2>
+      <p class="prose prose--center">
+        Beyond the Cities is run by Goethe-Institut Belgrade, with the Goethe-Instituts in Bosnia and
+        Herzegovina and North Macedonia, alongside partner organisations across the region and Germany.
+      </p>
+      <ul class="partners">
+        <li class="partner">
+          <img src="/assets/images/partners/cesk.jpg" alt="CESK" />
+          <span>Centre for Empirical Cultural Studies of South-East Europe · Niš</span>
+        </li>
+        <li class="partner">
+          <img src="/assets/images/partners/kct.png" alt="Kulturni centar Trebinje" />
+          <span>Kulturni centar Trebinje · Bosnia and Herzegovina</span>
+        </li>
+        <li class="partner">
+          <img src="/assets/images/partners/cac.jpg" alt="CAC" />
+          <span>Center for Contemporary Arts · North Macedonia</span>
+        </li>
+        <li class="partner">
+          <img src="/assets/images/partners/igbk.jpg" alt="IGBK" />
+          <span>International Association of Art (IGBK) · Germany</span>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <p class="site-foot__title">Beyond the Cities</p>
+    <p class="site-foot__sub">Towards a Transnational Network of Artists' Residences in the Western Balkans</p>
+    <p class="site-foot__meta">A project by Goethe-Institut Belgrade · 2026–2028</p>
+    <a class="btn btn--ghost btn--small" href="/map.html">Open the interactive map<span aria-hidden="true"> →</span></a>
+  </footer>
 </body>
 
 </html>

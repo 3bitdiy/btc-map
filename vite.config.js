@@ -13,7 +13,10 @@ export default defineConfig({
     outDir: "dist",
     assetsDir: "assets",
     rollupOptions: {
-      input: "index.html",
+      input: {
+        main: "index.html",
+        map: "map.html",
+      },
     },
   },
   // Optimise MapLibre for faster cold starts
