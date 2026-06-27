@@ -1147,18 +1147,21 @@ ul {
 }
 
 .map-marker__count {
+  /* Scale with the marker (clamped readable) so the badge hugs the icon at
+     zoom-out instead of dominating and looking off-centre. */
+  --badge: clamp(13px, calc(11px * var(--marker-zoom-scale)), 22px);
   position: absolute;
-  top: -7px;
-  right: -7px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
+  top: calc(var(--badge) * -0.32);
+  right: calc(var(--badge) * -0.32);
+  min-width: var(--badge);
+  height: var(--badge);
+  padding: 0 calc(var(--badge) * 0.22);
   border-radius: 999px;
   background: var(--rose);
   color: #fff;
-  font-size: 11px;
+  font-size: calc(var(--badge) * 0.6);
   font-weight: 700;
-  line-height: 18px;
+  line-height: var(--badge);
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
