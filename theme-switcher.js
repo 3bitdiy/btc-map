@@ -10,6 +10,8 @@ const THEMES = [
   { id: "olive", name: "Olive", swatch: ["#4f5d2f", "#cf7a3a", "#e9e6cf"] },
   { id: "modern", name: "Modern", swatch: ["#1c1c1c", "#ff4326", "#f1f1ee"] },
   { id: "lime", name: "Lime", swatch: ["#1f2614", "#4f7d12", "#a0c814"] },
+  { id: "clay", name: "Clay", swatch: ["#7b2525", "#ba6a4c", "#eee0cc"] },
+  { id: "navy", name: "Navy", swatch: ["#0a2947", "#8b5e3c", "#f3e4c9"] },
 ];
 const THEME_KEY = "btc-theme";
 

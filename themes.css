@@ -78,6 +78,36 @@ html[data-theme="lime"] {
   --map-bg: #c3cda6;
 }
 
+/* Clay — warm earth, from Color Hunt 607456·eee0cc·ba6a4c·7b2525 */
+html[data-theme="clay"] {
+  --ink: #2a1410;
+  --wine: #7b2525;
+  --rose: #ba6a4c;
+  --sand: #eee0cc;
+  --paper: #f6ecd8;
+  --paper-2: #efe2c9;
+  --wine-rgb: 123, 37, 37;
+  --rose-rgb: 186, 106, 76;
+  --paper-rgb: 246, 236, 216;
+  --map-land: #ece0c2;
+  --map-bg: #c6c2a2;
+}
+
+/* Navy — navy + cream + brown, from Color Hunt 0a2947·f3e4c9·d3d4c0·8b5e3c */
+html[data-theme="navy"] {
+  --ink: #061726;
+  --wine: #0a2947;
+  --rose: #8b5e3c;
+  --sand: #f3e4c9;
+  --paper: #f9efd9;
+  --paper-2: #f1e2c4;
+  --wine-rgb: 10, 41, 71;
+  --rose-rgb: 139, 94, 60;
+  --paper-rgb: 249, 239, 217;
+  --map-land: #ece0c2;
+  --map-bg: #b9c3b0;
+}
+
 /* ---------- Color-theme switcher ---------- */
 /* Floating toggle button — always available */
 .theme-toggle {
