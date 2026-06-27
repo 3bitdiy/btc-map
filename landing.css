@@ -386,8 +386,55 @@ em {
 }
 
 /* ---------- Partners ---------- */
+.lead-org {
+  max-width: 1000px;
+  margin: 40px auto 0;
+  text-align: center;
+  background: #fff;
+  border: 1px solid rgba(141, 49, 58, 0.12);
+  border-radius: 20px;
+  padding: 30px 24px;
+}
+
+.lead-org__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rose);
+  margin-bottom: 16px;
+}
+
+.lead-org__logo {
+  width: 132px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.lead-org__name {
+  margin-top: 16px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--wine);
+  max-width: 44ch;
+  margin-inline: auto;
+}
+
+.partners__label {
+  max-width: 1000px;
+  margin: 34px auto 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wine);
+  opacity: 0.7;
+}
+
 .partners {
-  margin-top: 40px;
+  margin-top: 18px;
   list-style: none;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -441,6 +488,12 @@ em {
   opacity: 0.78;
   max-width: 48ch;
   margin-inline: auto;
+}
+
+.site-foot__logo {
+  width: 116px;
+  height: auto;
+  margin: 26px auto 0;
 }
 
 .site-foot__meta {
