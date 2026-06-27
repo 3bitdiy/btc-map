@@ -304,6 +304,33 @@ function syncMarkerScale() {
   );
 }
 
+function cssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return value || fallback;
+}
+
+// Re-tint the map's background and land fill to match the active palette
+// (driven by the theme switcher's "btc-theme-change" event).
+function applyMapTheme() {
+  if (!state.map) return;
+  if (state.map.getLayer("background")) {
+    state.map.setPaintProperty(
+      "background",
+      "background-color",
+      cssVar("--map-bg", "#c2c9bc"),
+    );
+  }
+  if (state.map.getLayer("global-land")) {
+    state.map.setPaintProperty(
+      "global-land",
+      "fill-color",
+      cssVar("--map-land", "#edd1aa"),
+    );
+  }
+}
+
 function resolveColonyPhoto(colony) {
   const firstPhoto = colony.photos?.[0];
   if (!firstPhoto) return "/assets/images/colony-placeholder.png";
@@ -394,7 +421,7 @@ async function initMap() {
   if (backgroundLayer?.type === "background") {
     backgroundLayer.paint = {
       ...(backgroundLayer.paint || {}),
-      "background-color": "#c2c9bc",
+      "background-color": cssVar("--map-bg", "#c2c9bc"),
     };
   }
 
@@ -411,7 +438,7 @@ async function initMap() {
       "source-layer": "land",
       maxzoom: 24,
       paint: {
-        "fill-color": "#edd1aa",
+        "fill-color": cssVar("--map-land", "#edd1aa"),
         "fill-opacity": 1,
       },
     });
@@ -1347,6 +1374,7 @@ async function bootstrap() {
   wireMobileFilterActions();
   applyResponsivePanelDefaults();
   window.addEventListener("resize", applyResponsivePanelDefaults);
+  window.addEventListener("btc-theme-change", applyMapTheme);
 
   // Populate the country accordion, list and counts straight from the data,
   // so the panel is usable even before the map fires "load" (or if it never

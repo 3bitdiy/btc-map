@@ -66,12 +66,12 @@ ul {
   height: 40px;
   border: 0;
   border-radius: 12px;
-  background: rgba(246, 232, 213, 0.96);
+  background: rgba(var(--paper-rgb), 0.96);
   color: var(--wine);
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(141, 49, 58, 0.16);
+  box-shadow: 0 6px 16px rgba(var(--wine-rgb), 0.16);
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -106,7 +106,7 @@ ul {
   z-index: 50;
   border: 0;
   border-radius: 999px;
-  background: rgba(246, 232, 213, 0.94);
+  background: rgba(var(--paper-rgb), 0.94);
   color: var(--wine);
   font-size: 12px;
   font-weight: 700;
@@ -359,7 +359,7 @@ ul {
   font-size: 12px;
   font-weight: 700;
   color: var(--rose);
-  background: rgba(235, 81, 96, 0.12);
+  background: rgba(var(--rose-rgb), 0.12);
   border-radius: 999px;
   padding: 1px 8px;
   min-width: 24px;
@@ -397,24 +397,24 @@ ul {
 }
 
 .country-body::-webkit-scrollbar-track {
-  background: rgba(141, 49, 58, 0.08);
+  background: rgba(var(--wine-rgb), 0.08);
   border-radius: 999px;
 }
 
 .country-body::-webkit-scrollbar-thumb {
-  background: rgba(141, 49, 58, 0.42);
+  background: rgba(var(--wine-rgb), 0.42);
   border-radius: 999px;
-  border: 2px solid rgba(246, 232, 213, 0.9);
+  border: 2px solid rgba(var(--paper-rgb), 0.9);
 }
 
 .country-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 49, 58, 0.58);
+  background: rgba(var(--wine-rgb), 0.58);
 }
 
 /* Divider between the country browser and the refine filters */
 .filter-divider {
   border: 0;
-  border-top: 1px solid rgba(141, 49, 58, 0.18);
+  border-top: 1px solid rgba(var(--wine-rgb), 0.18);
   margin: 14px 0;
 }
 
@@ -515,18 +515,18 @@ ul {
 }
 
 #panel-content::-webkit-scrollbar-track {
-  background: rgba(141, 49, 58, 0.08);
+  background: rgba(var(--wine-rgb), 0.08);
   border-radius: 999px;
 }
 
 #panel-content::-webkit-scrollbar-thumb {
-  background: rgba(141, 49, 58, 0.42);
+  background: rgba(var(--wine-rgb), 0.42);
   border-radius: 999px;
-  border: 2px solid rgba(246, 232, 213, 0.9);
+  border: 2px solid rgba(var(--paper-rgb), 0.9);
 }
 
 #panel-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 49, 58, 0.58);
+  background: rgba(var(--wine-rgb), 0.58);
 }
 
 #discipline-filters {
@@ -542,18 +542,18 @@ ul {
 }
 
 #discipline-filters::-webkit-scrollbar-track {
-  background: rgba(141, 49, 58, 0.08);
+  background: rgba(var(--wine-rgb), 0.08);
   border-radius: 999px;
 }
 
 #discipline-filters::-webkit-scrollbar-thumb {
-  background: rgba(141, 49, 58, 0.42);
+  background: rgba(var(--wine-rgb), 0.42);
   border-radius: 999px;
-  border: 2px solid rgba(246, 232, 213, 0.9);
+  border: 2px solid rgba(var(--paper-rgb), 0.9);
 }
 
 #discipline-filters::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 49, 58, 0.58);
+  background: rgba(var(--wine-rgb), 0.58);
 }
 
 .colony-items {
@@ -563,7 +563,7 @@ ul {
 
 .colony-item-btn {
   width: 100%;
-  border: 1px solid rgba(141, 49, 58, 0.28);
+  border: 1px solid rgba(var(--wine-rgb), 0.28);
   background: #fff;
   color: var(--wine);
   border-radius: 10px;
@@ -579,7 +579,7 @@ ul {
 
 .colony-item-btn.is-selected {
   border-color: var(--rose);
-  box-shadow: 0 0 0 2px rgba(235, 81, 96, 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--rose-rgb), 0.2);
 }
 
 .colony-empty {
@@ -736,7 +736,7 @@ ul {
   border-radius: 999px;
   padding: 0;
   justify-content: center;
-  background: rgba(246, 232, 213, 0.96);
+  background: rgba(var(--paper-rgb), 0.96);
   border: 0;
   box-shadow: none;
 }
@@ -757,7 +757,7 @@ ul {
   bottom: 18px;
   z-index: 35;
   overflow: visible;
-  box-shadow: 0 18px 38px rgba(141, 49, 58, 0.2);
+  box-shadow: 0 18px 38px rgba(var(--wine-rgb), 0.2);
   transition:
     transform 0.24s ease,
     opacity 0.2s ease;
@@ -903,7 +903,7 @@ ul {
   min-width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: rgba(246, 232, 213, 0.96);
+  background: rgba(var(--paper-rgb), 0.96);
   border: 0;
   padding: 0;
   display: inline-flex;
@@ -1146,7 +1146,7 @@ ul {
 .maplibregl-ctrl-attrib {
   font-size: 10px !important;
   color: var(--wine) !important;
-  background: rgba(246, 232, 213, 0.88) !important;
+  background: rgba(var(--paper-rgb), 0.88) !important;
 }
 
 @media (min-width: 768px) and (max-width: 1199px) {
@@ -1252,7 +1252,7 @@ ul {
     min-width: 50px;
     height: 50px;
     border-radius: 999px;
-    background: rgba(246, 232, 213, 0.98);
+    background: rgba(var(--paper-rgb), 0.98);
     box-shadow: none;
   }
 
@@ -1353,7 +1353,7 @@ ul {
     min-width: 52px;
     height: 52px;
     border-radius: 999px;
-    background: rgba(246, 232, 213, 0.98);
+    background: rgba(var(--paper-rgb), 0.98);
     box-shadow: none;
     pointer-events: auto;
     z-index: 61;

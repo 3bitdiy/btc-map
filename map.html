@@ -11,6 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/node_modules/maplibre-gl/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/themes.css" />
+  <script>
+    try { var t = localStorage.getItem("btc-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
 </head>
 
 <body>
@@ -192,6 +196,7 @@
   </div>
 
   <script type="module" src="/main.js"></script>
+  <script type="module" src="/theme-switcher.js"></script>
 </body>
 
 </html>

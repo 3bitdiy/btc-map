@@ -10,8 +10,13 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/landing.css" />
+  <link rel="stylesheet" href="/themes.css" />
+  <script>
+    try { var t = localStorage.getItem("btc-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) { }
+  </script>
 </head>
 
 <body>
@@ -30,7 +35,7 @@
         <p class="eyebrow">Goethe-Institut · 2026–2028</p>
         <h1 class="hero__title">Artists' Residencies of the Western Balkans</h1>
         <p class="hero__lead">
-          Revitalising the region's rural art colonies — and weaving them into an
+          Revitalising the region's rural art colonies and weaving them into an
           independent cultural network <em>beyond the cities</em>.
         </p>
         <div class="hero__actions">
@@ -56,14 +61,14 @@
       <div class="prose">
         <p>
           From the 1950s on, socialist Yugoslavia ran a state programme supporting cultural
-          institutions — most visible in its rural residency programmes, the so-called
+          institutions, most visible in its rural residency programmes, the so-called
           <strong>“art colonies.”</strong> After the country's break-up, some endured: partly as
           independent organisations, partly on modest public budgets.
         </p>
         <p>
           <strong>Beyond the Cities</strong> builds on that tradition. It works to revitalise
           existing art colonies and kindred initiatives in Serbia, Bosnia and Herzegovina and
-          North Macedonia — creating a network of independent, resilient cultural partners that
+          North Macedonia, creating a network of independent, resilient cultural partners that
           strengthen rural areas, and opening new room for transnational collaboration.
         </p>
       </div>
@@ -92,7 +97,7 @@
         <li class="card">
           <span class="card__num">04</span>
           <h3>Sustain the field</h3>
-          <p>Long-term structural support for rural cultural organisations — lasting beyond the project itself.</p>
+          <p>Long-term structural support for rural cultural organisations, lasting beyond the project itself.</p>
         </li>
       </ul>
     </section>
@@ -103,13 +108,22 @@
         <p class="section__label">The Map</p>
         <h2 class="section__title">See every colony on one map</h2>
         <p class="map-cta__text">
-          A comprehensive, living picture of the field — as an interactive digital map. Browse by
+          A comprehensive, living picture of the field, as an interactive digital map. Browse by
           country, art field and scope, and open any colony for its location, contacts and activities.
         </p>
         <dl class="stats">
-          <div class="stat"><dt>99</dt><dd>colonies mapped</dd></div>
-          <div class="stat"><dt>3</dt><dd>countries</dd></div>
-          <div class="stat"><dt>2026–28</dt><dd>continuously updated</dd></div>
+          <div class="stat">
+            <dt>99</dt>
+            <dd>colonies mapped</dd>
+          </div>
+          <div class="stat">
+            <dt>3</dt>
+            <dd>countries</dd>
+          </div>
+          <div class="stat">
+            <dt>2026–28</dt>
+            <dd>continuously updated</dd>
+          </div>
         </dl>
         <a class="btn btn--primary btn--lg" href="/map.html">Open the map<span aria-hidden="true"> →</span></a>
       </div>
@@ -128,7 +142,7 @@
         <p class="lead-org__label">Project lead</p>
         <img class="lead-org__logo" src="/assets/images/goethe-institut.svg" alt="Goethe-Institut" />
         <p class="lead-org__name">
-          Goethe-Institut Belgrade — with the Goethe-Instituts in Bosnia and Herzegovina and North Macedonia
+          Goethe-Institut Belgrade with the Goethe-Instituts in Bosnia and Herzegovina and North Macedonia
         </p>
       </div>
 
@@ -161,6 +175,8 @@
     <p class="site-foot__meta">A project by Goethe-Institut Belgrade · 2026–2028</p>
     <a class="btn btn--ghost btn--small" href="/map.html">Open the interactive map<span aria-hidden="true"> →</span></a>
   </footer>
+
+  <script type="module" src="/theme-switcher.js"></script>
 </body>
 
 </html>

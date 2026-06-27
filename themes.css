@@ -1,0 +1,163 @@
+/*
+ * Color palettes for client review. The whole UI is driven by these CSS
+ * variables, so switching data-theme on <html> re-skins landing + map live.
+ * Default (no data-theme) is Terracotta, defined in each page's own :root;
+ * the --*-rgb / --map-* tokens below extend it so alpha colors and the map
+ * land/background also follow the palette.
+ */
+:root {
+  --wine-rgb: 141, 49, 58;
+  --rose-rgb: 235, 81, 96;
+  --paper-rgb: 246, 232, 213;
+  --map-land: #edd1aa;
+  --map-bg: #c2c9bc;
+}
+
+/* Adriatic — cool teal + coral, Mediterranean light */
+html[data-theme="adriatic"] {
+  --ink: #0e2a30;
+  --wine: #14616b;
+  --rose: #ef6f53;
+  --sand: #e7eef0;
+  --paper: #f5fafb;
+  --paper-2: #eef6f7;
+  --wine-rgb: 20, 97, 107;
+  --rose-rgb: 239, 111, 83;
+  --paper-rgb: 245, 250, 251;
+  --map-land: #d9e4e1;
+  --map-bg: #aabfc4;
+}
+
+/* Olive — earthy warm green */
+html[data-theme="olive"] {
+  --ink: #1e2410;
+  --wine: #4f5d2f;
+  --rose: #cf7a3a;
+  --sand: #e9e6cf;
+  --paper: #f4f1df;
+  --paper-2: #eee9d2;
+  --wine-rgb: 79, 93, 47;
+  --rose-rgb: 207, 122, 58;
+  --paper-rgb: 244, 241, 223;
+  --map-land: #e3dec2;
+  --map-bg: #b7c1a4;
+}
+
+/* Modern — high-contrast mono with a vivid accent */
+html[data-theme="modern"] {
+  --ink: #000000;
+  --wine: #1c1c1c;
+  --rose: #ff4326;
+  --sand: #f1f1ee;
+  --paper: #ffffff;
+  --paper-2: #f7f7f5;
+  --wine-rgb: 28, 28, 28;
+  --rose-rgb: 255, 67, 38;
+  --paper-rgb: 255, 255, 255;
+  --map-land: #e9e9e6;
+  --map-bg: #d0d0cc;
+}
+
+/* Goethe — green-forward, inspired by the Goethe-Institut palette */
+html[data-theme="goethe"] {
+  --ink: #0f2417;
+  --wine: #14532a;
+  --rose: #1f8f3e;
+  --sand: #e7ecdf;
+  --paper: #f4f7ed;
+  --paper-2: #eef3e4;
+  --wine-rgb: 20, 83, 42;
+  --rose-rgb: 31, 143, 62;
+  --paper-rgb: 244, 247, 237;
+  --map-land: #e1e8d2;
+  --map-bg: #b4c2a3;
+}
+
+/* ---------- Theme-preview switcher (client review, behind ?themes) ---------- */
+.theme-switcher {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 200px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(20, 20, 22, 0.92);
+  color: #fff;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(8px);
+  font-family: "Montserrat", sans-serif;
+}
+
+.theme-switcher__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.theme-switcher__close {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.theme-switcher__close:hover {
+  opacity: 1;
+}
+
+.theme-switcher__list {
+  display: grid;
+  gap: 6px;
+}
+
+.theme-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  color: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-chip.is-active {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.theme-chip__swatch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.theme-chip__swatch i {
+  display: block;
+  width: 12px;
+  height: 18px;
+}
+
+.theme-chip__name {
+  font-size: 12.5px;
+  font-weight: 600;
+}
