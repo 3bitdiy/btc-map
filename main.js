@@ -858,6 +858,7 @@ function openPanel(
   }
 
   const panel = document.getElementById("detail-panel");
+  panel.classList.remove("is-intro");
   panel.setAttribute("aria-hidden", "false");
   panel.classList.add("is-open");
   setPanelMinimized(false);
@@ -924,13 +925,28 @@ function openPanel(
   }
 }
 
-function closePanel() {
-  const panel = document.getElementById("detail-panel");
-  panel.classList.remove("is-open");
-  panel.setAttribute("aria-hidden", "true");
-  setPanelMinimized(false);
+// Resting state of the detail panel: no colony selected. On desktop the panel
+// stays present (showing the project intro) so it never flickers in/out when
+// filters change; on mobile/tablet it steps aside (map-first) until a colony
+// is picked.
+function showPanelIntro() {
   state.selectedColony = null;
   updateMarkerSelection();
+
+  const panel = document.getElementById("detail-panel");
+  panel.classList.add("is-intro");
+  document.getElementById("panel-intro-count").textContent = String(
+    state.colonies.length,
+  );
+
+  if (getViewportMode() === "desktop") {
+    panel.setAttribute("aria-hidden", "false");
+    panel.classList.add("is-open");
+    setPanelMinimized(false);
+  } else {
+    panel.classList.remove("is-open");
+    panel.setAttribute("aria-hidden", "true");
+  }
 }
 
 function syncPanelMaximizeButtons() {
@@ -1011,7 +1027,9 @@ function updateFilterResults() {
     state.selectedColony &&
     !visible.some((c) => c.id === state.selectedColony.id)
   ) {
-    closePanel();
+    // The selected colony was filtered out — fall back to the intro state
+    // (no flicker) instead of tearing the panel down.
+    showPanelIntro();
   }
 
   updateFilterToggleBadge();
@@ -1196,7 +1214,9 @@ function wireZoomControls() {
 }
 
 function wirePanel() {
-  document.getElementById("panel-close").addEventListener("click", closePanel);
+  document
+    .getElementById("panel-close")
+    .addEventListener("click", showPanelIntro);
 
   document.getElementById("panel-minimize").addEventListener("click", () => {
     const panel = document.getElementById("detail-panel");
@@ -1282,20 +1302,17 @@ function applyResponsivePanelDefaults() {
     toggle.setAttribute("aria-expanded", "false");
   }
 
-  if (mode === "tablet") {
+  if (mode === "desktop") {
+    setFilterPanelMinimized(false);
+    setPanelMinimized(false);
+  } else {
     setFilterPanelMinimized(true);
     setPanelMinimized(true);
-    return;
   }
 
-  if (mode === "mobile") {
-    setFilterPanelMinimized(true);
-    setPanelMinimized(true);
-    return;
-  }
-
-  setFilterPanelMinimized(false);
-  setPanelMinimized(false);
+  // Keep the detail panel's resting state right for the new viewport: present
+  // intro on desktop, stepped aside on mobile/tablet.
+  if (!state.selectedColony) showPanelIntro();
 }
 
 async function bootstrap() {
@@ -1338,15 +1355,9 @@ async function bootstrap() {
 
   const renderInitial = () => {
     syncFilters();
-    const visible = getVisibleColonies();
-    fitToRegion(visible);
-    if (visible.length) {
-      const idx = Math.floor(Math.random() * visible.length);
-      openPanel(visible[idx], false);
-      if (getViewportMode() === "tablet" || getViewportMode() === "mobile") {
-        setPanelMinimized(true);
-      }
-    }
+    fitToRegion(getVisibleColonies());
+    // No auto-selection: the panel rests on its intro state (set above) until
+    // the visitor picks a colony.
   };
 
   // Data loading above is async, so the map may already have fired "load" by
