@@ -1109,7 +1109,7 @@ ul {
   display: block;
   width: calc(49px * var(--marker-zoom-scale));
   height: calc(33px * var(--marker-zoom-scale));
-  background: var(--wine);
+  background: var(--ink);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
