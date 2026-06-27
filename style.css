@@ -1140,9 +1140,12 @@ ul {
   background: var(--rose);
 }
 
-/* Count badge for co-located colonies */
+/* Count badge for co-located colonies. NB: don't set position here — MapLibre
+   positions the marker with position:absolute, and overriding it to relative
+   drops the marker out of geo-positioning (it drifts by a fixed pixel offset,
+   i.e. a big geographic shift when zoomed out). The badge anchors fine to
+   MapLibre's absolute element. */
 .map-marker--cluster {
-  position: relative;
   overflow: visible;
 }
 
