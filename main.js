@@ -498,10 +498,11 @@ async function initMap() {
     container: "map",
     style,
     renderWorldCopies: false,
-    // Regional default so the first painted frame is already near the project
-    // area; fitBounds() refines the exact framing once the map has loaded.
-    center: [19.4, 43.6],
-    zoom: 5.6,
+    // Start already framed on the project region (static bbox of the colonies)
+    // so the very first painted frame is correct — no zoom jump once the
+    // markers and exact fit are computed on load.
+    bounds: REGION_BOUNDS,
+    fitBoundsOptions: { padding: getFitPadding(), maxZoom: 9 },
     minZoom: 1.2,
     maxZoom: 14,
     dragRotate: true,
@@ -510,6 +511,13 @@ async function initMap() {
 
   return map;
 }
+
+// Static bounding box of the project region (colony bbox), used to frame the
+// map at construction time. [SW, NE] as [lng, lat].
+const REGION_BOUNDS = [
+  [16.16, 41.03],
+  [22.64, 46.1],
+];
 
 // Bounding box around every marker location, used to frame the whole project
 // region on load regardless of viewport size.
@@ -1432,8 +1440,9 @@ async function bootstrap() {
   updateFilterResults();
 
   const renderInitial = () => {
+    // The map already opened framed on REGION_BOUNDS (see initMap), so no
+    // fitBounds here — that avoids the zoom jump after markers load.
     syncFilters();
-    fitToRegion(getVisibleColonies());
     // No auto-selection: the panel rests on its intro state (set above) until
     // the visitor picks a colony.
   };
