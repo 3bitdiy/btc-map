@@ -12,7 +12,6 @@ const THEMES = [
   { id: "goethe", name: "Goethe", swatch: ["#14532a", "#1f8f3e", "#e7ecdf"] },
 ];
 const THEME_KEY = "btc-theme";
-const TOOL_KEY = "btc-theme-tool";
 
 function store(key, value) {
   try {
@@ -41,12 +40,25 @@ function applyTheme(id) {
 function renderSwitcher() {
   const current = read(THEME_KEY) || "";
 
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "theme-toggle";
+  toggle.setAttribute("aria-label", "Change color theme");
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <circle cx="8.5" cy="9" r="1.5" fill="currentColor" />
+      <circle cx="15.5" cy="9" r="1.5" fill="currentColor" />
+      <circle cx="8.5" cy="15" r="1.5" fill="currentColor" />
+      <circle cx="15.5" cy="15" r="1.5" fill="currentColor" />
+    </svg>`;
+
   const wrap = document.createElement("div");
   wrap.className = "theme-switcher";
   wrap.innerHTML = `
     <div class="theme-switcher__head">
-      <span>Theme preview</span>
-      <button type="button" class="theme-switcher__close" aria-label="Hide theme preview">×</button>
+      <span>Color theme</span>
+      <button type="button" class="theme-switcher__close" aria-label="Close">×</button>
     </div>
     <div class="theme-switcher__list"></div>
   `;
@@ -72,24 +84,29 @@ function renderSwitcher() {
     list.appendChild(chip);
   });
 
-  wrap.querySelector(".theme-switcher__close").addEventListener("click", () => {
-    store(TOOL_KEY, "off");
-    wrap.remove();
-  });
+  const setOpen = (open) => {
+    wrap.classList.toggle("is-open", open);
+    toggle.classList.toggle("is-active", open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+
+  toggle.addEventListener("click", () =>
+    setOpen(!wrap.classList.contains("is-open")),
+  );
+  wrap
+    .querySelector(".theme-switcher__close")
+    .addEventListener("click", () => setOpen(false));
 
   document.body.appendChild(wrap);
+  document.body.appendChild(toggle);
 }
 
-// Activate (and persist) the tool when ?themes is present; apply a palette
-// directly when ?theme=<id> is given (handy for shareable preview links).
+// Shareable preview links: ?theme=<id> applies a palette on load.
 const params = new URLSearchParams(location.search);
-if (params.has("themes") || params.has("theme")) store(TOOL_KEY, "on");
 if (params.has("theme")) applyTheme(params.get("theme"));
 
-if (read(TOOL_KEY) === "on") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", renderSwitcher);
-  } else {
-    renderSwitcher();
-  }
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", renderSwitcher);
+} else {
+  renderSwitcher();
 }
