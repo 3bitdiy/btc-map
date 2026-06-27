@@ -304,11 +304,13 @@ function markerScaleForZoom(zoom) {
 
 function syncMarkerScale() {
   if (!state.map) return;
-  const scale = markerScaleForZoom(state.map.getZoom());
+  const zoom = state.map.getZoom();
   document.documentElement.style.setProperty(
     "--marker-zoom-scale",
-    scale.toFixed(3),
+    markerScaleForZoom(zoom).toFixed(3),
   );
+  // Show place labels under markers once zoomed in enough that they're spread.
+  document.getElementById("map")?.classList.toggle("show-marker-labels", zoom >= 9.5);
 }
 
 function cssVar(name, fallback) {
@@ -581,18 +583,65 @@ function fitToRegion(colonies, animate = false) {
   });
 }
 
+function getColonyShortPlace(colony) {
+  return (
+    getColonyCity(colony) ||
+    getColonyPlace(colony) ||
+    getColonyCountry(colony)
+  );
+}
+
+// Place label shown under the marker once zoomed in (see show-marker-labels).
+function makeMarkerLabel(text) {
+  const label = document.createElement("span");
+  label.className = "map-marker__label";
+  label.textContent = text;
+  return label;
+}
+
+// Shared hover tooltip (desktop) — built lazily, follows the cursor.
+let mapTooltipEl = null;
+
+function moveTooltip(event) {
+  if (!mapTooltipEl) return;
+  mapTooltipEl.style.left = `${event.clientX}px`;
+  mapTooltipEl.style.top = `${event.clientY}px`;
+}
+
+function attachMarkerTooltip(el, title, subtitle) {
+  el.addEventListener("mouseenter", (event) => {
+    if (!mapTooltipEl) {
+      mapTooltipEl = document.createElement("div");
+      mapTooltipEl.className = "map-tooltip";
+      mapTooltipEl.setAttribute("aria-hidden", "true");
+      mapTooltipEl.innerHTML = `<strong></strong><span></span>`;
+      document.body.appendChild(mapTooltipEl);
+    }
+    mapTooltipEl.querySelector("strong").textContent = title;
+    mapTooltipEl.querySelector("span").textContent = subtitle || "";
+    mapTooltipEl.classList.add("is-visible");
+    moveTooltip(event);
+  });
+  el.addEventListener("mousemove", moveTooltip);
+  el.addEventListener("mouseleave", () => {
+    mapTooltipEl?.classList.remove("is-visible");
+  });
+}
+
 function createMarkerElement(colony, focusCoords = null) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = "map-marker";
   el.setAttribute("aria-label", getColonyName(colony));
   el.innerHTML = markerIconMarkup(colony);
+  el.appendChild(makeMarkerLabel(getColonyShortPlace(colony)));
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
     openPanel(colony, true, focusCoords);
   });
 
+  attachMarkerTooltip(el, getColonyName(colony), getColonyDisplayLocation(colony));
   return el;
 }
 
@@ -604,12 +653,18 @@ function createClusterElement(colonies, focusCoords = null) {
   el.className = "map-marker map-marker--cluster";
   el.setAttribute("aria-label", `${colonies.length} colonies at this location`);
   el.innerHTML = `${markerIconMarkup(colonies[0])}<span class="map-marker__count">${colonies.length}</span>`;
+  el.appendChild(makeMarkerLabel(getColonyShortPlace(colonies[0])));
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
     openLocationPicker(colonies, focusCoords);
   });
 
+  attachMarkerTooltip(
+    el,
+    getColonyShortPlace(colonies[0]),
+    `${colonies.length} colonies`,
+  );
   return el;
 }
 
