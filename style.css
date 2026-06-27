@@ -51,6 +51,54 @@ ul {
   height: 100%;
 }
 
+#map-zoom-controls {
+  position: absolute;
+  z-index: 30;
+  bottom: 28px;
+  right: 356px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#map-zoom-controls button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(246, 232, 213, 0.96);
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(141, 49, 58, 0.16);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+#map-zoom-controls button:hover {
+  background: #fff;
+  color: var(--rose);
+}
+
+#map-zoom-controls svg {
+  width: 18px;
+  height: 18px;
+}
+
+#map-zoom-controls #zoom-reset svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Phones rely on native pinch-zoom; hide the buttons to keep the UI uncluttered */
+@media (max-width: 767px) {
+  #map-zoom-controls {
+    display: none;
+  }
+}
+
 #filter-toggle {
   position: absolute;
   top: 16px;
@@ -883,10 +931,14 @@ ul {
 #panel-name {
   margin-top: 8px;
   color: var(--wine);
-  font-size: 30px;
-  line-height: 1.02;
+  font-size: clamp(19px, 2.1vw, 24px);
+  line-height: 1.08;
   font-weight: 500;
   text-transform: uppercase;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  text-wrap: balance;
 }
 
 #panel-about,
@@ -953,7 +1005,7 @@ ul {
 
 @media (max-width: 1199px) {
   #panel-name {
-    font-size: 30px;
+    font-size: clamp(19px, 4.5vw, 23px);
   }
 
   #panel-marker-badge {

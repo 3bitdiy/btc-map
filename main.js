@@ -1183,6 +1183,18 @@ function wireFilterPanel() {
   });
 }
 
+function wireZoomControls() {
+  document
+    .getElementById("zoom-in")
+    ?.addEventListener("click", () => state.map?.zoomIn());
+  document
+    .getElementById("zoom-out")
+    ?.addEventListener("click", () => state.map?.zoomOut());
+  document
+    .getElementById("zoom-reset")
+    ?.addEventListener("click", () => fitToRegion(getVisibleColonies(), true));
+}
+
 function wirePanel() {
   document.getElementById("panel-close").addEventListener("click", closePanel);
 
@@ -1312,6 +1324,7 @@ async function bootstrap() {
   wireCollapsibles();
   wireFilterInputs();
   wireFilterPanel();
+  wireZoomControls();
   wirePanel();
   wireMobileSidebar();
   wireMobileFilterActions();
