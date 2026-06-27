@@ -111,6 +111,7 @@ const state = {
   activeDisciplines: new Set(),
   allDisciplines: new Set(),
   activeScopes: new Set(DEFAULT_SCOPES),
+  openCountry: null,
   panelMinimized: false,
   filterPanelMinimized: false,
 };
@@ -720,57 +721,118 @@ function updateColonyListSelection() {
   });
 }
 
-function renderColonyList(colonies) {
-  const wrapper = document.getElementById("colony-list");
-  if (!wrapper) return;
-  wrapper.innerHTML = "";
+// Colonies of one country matching the active discipline/scope filters. The
+// country toggle itself is intentionally ignored here — an unchecked country
+// still reports its count so the header stays informative; it just renders
+// dimmed and non-expandable.
+function getCountryColonies(country) {
+  return state.colonies
+    .filter((colony) => {
+      if (getColonyCountry(colony) !== country) return false;
+      if (!getColonyLocations(colony).length) return false;
 
-  const sorted = [...colonies].sort((a, b) => {
-    const countryCmp = getColonyCountry(a).localeCompare(getColonyCountry(b));
-    if (countryCmp !== 0) return countryCmp;
-    return getColonyName(a).localeCompare(getColonyName(b));
+      const scope = getColonyScope(colony);
+      if (scope !== "Unspecified" && !state.activeScopes.has(scope)) {
+        return false;
+      }
+
+      const disciplines = getColonyDisciplines(colony);
+      if (!disciplines.length) return false;
+      return disciplines.some((d) => state.activeDisciplines.has(d));
+    })
+    .sort((a, b) => getColonyName(a).localeCompare(getColonyName(b)));
+}
+
+// Single-open: applies state.openCountry across the sections without rebuilding
+// (used by the expand buttons, which don't change the map).
+function setOpenCountry(country) {
+  state.openCountry = country;
+  const wrap = document.getElementById("country-accordion");
+  if (!wrap) return;
+
+  wrap.querySelectorAll(".country-section").forEach((section) => {
+    const sectionCountry = section.dataset.country;
+    const active = state.activeCountries.has(sectionCountry);
+    const open = active && sectionCountry === country;
+    section.classList.toggle("is-open", open);
+
+    const expand = section.querySelector(".country-expand");
+    const body = section.querySelector(".country-body");
+    if (expand) expand.setAttribute("aria-expanded", open ? "true" : "false");
+    if (body) body.hidden = !open;
   });
+}
 
-  if (!sorted.length) {
-    const empty = document.createElement("p");
-    empty.className = "colony-empty";
-    empty.textContent = "No colonies for current filters.";
-    wrapper.appendChild(empty);
-    return;
-  }
+function renderCountryAccordion() {
+  const wrap = document.getElementById("country-accordion");
+  if (!wrap) return;
+  wrap.innerHTML = "";
 
-  const groups = new Map();
-  sorted.forEach((colony) => {
-    const country = getColonyCountry(colony) || "Other";
-    if (!groups.has(country)) groups.set(country, []);
-    groups.get(country).push(colony);
-  });
+  DEFAULT_COUNTRIES.forEach((country) => {
+    const colonies = getCountryColonies(country);
+    const active = state.activeCountries.has(country);
+    const isOpen = active && state.openCountry === country;
+    const bodyId = `country-body-${country.replace(/\s+/g, "-").toLowerCase()}`;
 
-  groups.forEach((entries, country) => {
-    const group = document.createElement("section");
-    group.className = "colony-country-group";
+    const section = document.createElement("section");
+    section.className = "country-section";
+    section.dataset.country = country;
+    section.classList.toggle("is-off", !active);
+    section.classList.toggle("is-open", isOpen);
 
-    const heading = document.createElement("h4");
-    heading.className = "colony-country-title";
-    heading.textContent = country;
-    group.appendChild(heading);
+    const header = document.createElement("div");
+    header.className = "country-header";
 
-    const list = document.createElement("ul");
-    list.className = "colony-items";
+    const toggle = document.createElement("label");
+    toggle.className = "country-toggle";
+    toggle.innerHTML = `<input type="checkbox" name="country" value="${country}" ${
+      active ? "checked" : ""
+    } aria-label="Show ${country} on the map" />`;
 
-    entries.forEach((colony) => {
-      const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "colony-item-btn";
-      button.dataset.colonyId = String(colony.id);
-      button.textContent = getColonyName(colony);
-      item.appendChild(button);
-      list.appendChild(item);
-    });
+    const expand = document.createElement("button");
+    expand.type = "button";
+    expand.className = "country-expand";
+    expand.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    expand.setAttribute("aria-controls", bodyId);
+    expand.disabled = !active;
+    expand.innerHTML = `
+      <span class="country-name">${country}</span>
+      <span class="country-count">${colonies.length}</span>
+      <img class="country-caret" src="/assets/icons/caret-down.svg" alt="" />
+    `;
 
-    group.appendChild(list);
-    wrapper.appendChild(group);
+    header.appendChild(toggle);
+    header.appendChild(expand);
+
+    const body = document.createElement("div");
+    body.className = "country-body";
+    body.id = bodyId;
+    body.hidden = !isOpen;
+
+    if (colonies.length) {
+      const list = document.createElement("ul");
+      list.className = "colony-items";
+      colonies.forEach((colony) => {
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "colony-item-btn";
+        button.dataset.colonyId = String(colony.id);
+        button.textContent = getColonyName(colony);
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+      body.appendChild(list);
+    } else {
+      const empty = document.createElement("p");
+      empty.className = "colony-empty";
+      empty.textContent = "No colonies for current filters.";
+      body.appendChild(empty);
+    }
+
+    section.appendChild(header);
+    section.appendChild(body);
+    wrap.appendChild(section);
   });
 
   updateColonyListSelection();
@@ -923,22 +985,9 @@ function setFilterPanelMinimized(minimized) {
   syncPanelMaximizeButtons();
 }
 
-function syncFilterCardVisualState() {
-  const filterCard = document.getElementById("filter-card");
-  const hasExpanded = Array.from(document.querySelectorAll(".select-row")).some(
-    (button) => button.getAttribute("aria-expanded") === "true",
-  );
-
-  filterCard.classList.toggle("filters-expanded", hasExpanded);
-}
-
 function syncFilters() {
-  state.activeCountries = new Set(
-    Array.from(document.querySelectorAll('input[name="country"]:checked')).map(
-      (el) => el.value,
-    ),
-  );
-
+  // activeCountries is owned by the country accordion handlers (and reset),
+  // not re-read here, because its checkboxes live in the rebuilt accordion.
   state.activeDisciplines = new Set(
     Array.from(
       document.querySelectorAll('input[name="discipline"]:checked'),
@@ -952,7 +1001,7 @@ function syncFilters() {
   );
 
   const visible = buildMarkers();
-  renderColonyList(visible);
+  renderCountryAccordion();
   document.getElementById("colony-count").textContent = String(visible.length);
 
   if (
@@ -1030,18 +1079,48 @@ function wirePillVisuals() {
     });
 }
 
-function wireCountryPills() {
-  document
-    .getElementById("country-filter-list")
-    .addEventListener("change", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLInputElement) || target.name !== "country")
-        return;
-      target
-        .closest(".country-pill")
-        ?.classList.toggle("is-off", !target.checked);
-      syncFilters();
-    });
+function wireCountryAccordion() {
+  const wrap = document.getElementById("country-accordion");
+  if (!wrap) return;
+
+  // Country checkbox = map filter.
+  wrap.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.name !== "country") {
+      return;
+    }
+
+    const country = target.value;
+    if (target.checked) {
+      state.activeCountries.add(country);
+    } else {
+      state.activeCountries.delete(country);
+      if (state.openCountry === country) state.openCountry = null;
+    }
+    syncFilters();
+  });
+
+  // Expand button = browse colonies; colony button = open detail panel.
+  wrap.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const colonyBtn = target.closest(".colony-item-btn");
+    if (colonyBtn instanceof HTMLButtonElement) {
+      const colony = state.colonies.find(
+        (entry) => String(entry.id) === colonyBtn.dataset.colonyId,
+      );
+      if (colony) openPanel(colony, true, null, COLONY_LIST_FOCUS_ZOOM);
+      return;
+    }
+
+    const expandBtn = target.closest(".country-expand");
+    if (expandBtn instanceof HTMLButtonElement && !expandBtn.disabled) {
+      const country = expandBtn.closest(".country-section")?.dataset.country;
+      if (!country) return;
+      setOpenCountry(state.openCountry === country ? null : country);
+    }
+  });
 }
 
 function wireCollapsibles() {
@@ -1063,11 +1142,8 @@ function wireCollapsibles() {
       });
       panel.hidden = expanded;
       button.setAttribute("aria-expanded", expanded ? "false" : "true");
-      syncFilterCardVisualState();
     });
   });
-
-  syncFilterCardVisualState();
 }
 
 function wireFilterInputs() {
@@ -1093,24 +1169,6 @@ function wireFilterInputs() {
 function wireFilterPanel() {
   document.getElementById("filter-minimize").addEventListener("click", () => {
     setFilterPanelMinimized(!state.filterPanelMinimized);
-  });
-}
-
-function wireColonyList() {
-  const wrapper = document.getElementById("colony-list");
-  if (!wrapper) return;
-
-  wrapper.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-    const button = target.closest(".colony-item-btn");
-    if (!(button instanceof HTMLButtonElement)) return;
-
-    const id = button.dataset.colonyId;
-    if (!id) return;
-    const colony = state.colonies.find((entry) => String(entry.id) === id);
-    if (!colony) return;
-    openPanel(colony, true, null, COLONY_LIST_FOCUS_ZOOM);
   });
 }
 
@@ -1163,16 +1221,17 @@ function wireMobileFilterActions() {
   });
 
   resetButton.addEventListener("click", () => {
+    state.activeCountries = new Set(DEFAULT_COUNTRIES);
+    state.openCountry = null;
+
     document
-      .querySelectorAll(
-        'input[name="country"], input[name="discipline"], input[name="scope"]',
-      )
+      .querySelectorAll('input[name="discipline"], input[name="scope"]')
       .forEach((input) => {
         if (input instanceof HTMLInputElement) input.checked = true;
       });
 
     document
-      .querySelectorAll(".pill-filter-item.is-off, .country-pill.is-off")
+      .querySelectorAll(".pill-filter-item.is-off, .filter-check.is-off")
       .forEach((el) => el.classList.remove("is-off"));
 
     syncFilters();
@@ -1238,11 +1297,10 @@ async function bootstrap() {
 
   buildDisciplineFilters();
   wirePillVisuals();
-  wireCountryPills();
+  wireCountryAccordion();
   wireCollapsibles();
   wireFilterInputs();
   wireFilterPanel();
-  wireColonyList();
   wirePanel();
   wireMobileSidebar();
   wireMobileFilterActions();

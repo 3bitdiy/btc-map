@@ -35,26 +35,10 @@
 
       <section id="filter-card" aria-label="Map filters">
         <div id="filter-content">
-          <div class="filter-group">
-            <button type="button" class="select-row" data-toggle-target="country-filter-list" aria-expanded="false">
-              <span>Country</span>
-              <img src="/assets/icons/caret-down.svg" alt="" />
-            </button>
-            <div id="country-filter-list" class="pill-list" hidden>
-              <label class="pill-filter-item country-pill">
-                <input type="checkbox" name="country" value="Bosnia and Herzegovina" checked />
-                <span>Bosnia and Herzegovina</span>
-              </label>
-              <label class="pill-filter-item country-pill">
-                <input type="checkbox" name="country" value="North Macedonia" checked />
-                <span>North Macedonia</span>
-              </label>
-              <label class="pill-filter-item country-pill">
-                <input type="checkbox" name="country" value="Serbia" checked />
-                <span>Serbia</span>
-              </label>
-            </div>
-          </div>
+          <!-- Country browser + filter: collapsed accordion sections, built in main.js -->
+          <div id="country-accordion" class="country-accordion"></div>
+
+          <hr class="filter-divider" />
 
           <div class="filter-group">
             <button type="button" class="select-row" data-toggle-target="discipline-filters" aria-expanded="false">
@@ -64,26 +48,28 @@
             <div id="discipline-filters" class="pill-list" hidden></div>
           </div>
 
-          <div class="filter-group filter-group--colony">
-            <div id="colony-list" class="colony-list"></div>
-          </div>
-
-          <div class="filter-group filter-group--scope">
-            <label class="filter-check is-round">
-              <input type="checkbox" name="scope" value="National" checked />
-              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-              <span class="pill-light">National</span>
-            </label>
-            <label class="filter-check is-round">
-              <input type="checkbox" name="scope" value="Regional" checked />
-              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-              <span class="pill-light">Regional</span>
-            </label>
-            <label class="filter-check is-round">
-              <input type="checkbox" name="scope" value="International" checked />
-              <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
-              <span class="pill-light">International</span>
-            </label>
+          <div class="filter-group">
+            <button type="button" class="select-row" data-toggle-target="scope-filters" aria-expanded="false">
+              <span>Scope</span>
+              <img src="/assets/icons/caret-down.svg" alt="" />
+            </button>
+            <div id="scope-filters" class="pill-list" hidden>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="National" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">National</span>
+              </label>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="Regional" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">Regional</span>
+              </label>
+              <label class="filter-check is-round">
+                <input type="checkbox" name="scope" value="International" checked />
+                <span class="round-check-icon"><img src="/assets/icons/check.svg" alt="" /></span>
+                <span class="pill-light">International</span>
+              </label>
+            </div>
           </div>
 
           <p class="filter-counter"><strong id="colony-count">0</strong> colonies</p>
