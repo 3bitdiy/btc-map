@@ -970,7 +970,8 @@ ul {
   flex-shrink: 0;
 }
 
-#panel-marker-badge img {
+#panel-marker-badge img,
+#panel-marker-icon {
   width: 44px;
   height: 30px;
 }
@@ -1104,9 +1105,17 @@ ul {
   transition: transform 0.14s ease;
 }
 
-.map-marker img {
+.map-marker__icon {
+  display: block;
   width: calc(49px * var(--marker-zoom-scale));
   height: calc(33px * var(--marker-zoom-scale));
+  background: var(--wine);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 .map-marker:hover {
@@ -1127,9 +1136,8 @@ ul {
   place-items: center;
 }
 
-.map-marker.is-selected img {
-  filter: saturate(0) brightness(0) invert(43%) sepia(31%) saturate(3399%)
-    hue-rotate(318deg) brightness(102%) contrast(84%);
+.map-marker.is-selected .map-marker__icon {
+  background: var(--rose);
 }
 
 /* Count badge for co-located colonies */
@@ -1209,8 +1217,14 @@ ul {
 }
 
 #panel-marker-icon {
-  filter: saturate(0) brightness(0) invert(43%) sepia(31%) saturate(3399%)
-    hue-rotate(318deg) brightness(102%) contrast(84%);
+  display: block;
+  background: var(--rose);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 .maplibregl-ctrl-logo,

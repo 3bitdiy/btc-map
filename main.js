@@ -283,6 +283,13 @@ function markerIconFor(colony) {
   return MARKER_ICONS[idx];
 }
 
+// The house icon as a CSS-masked span so its color follows the active palette
+// (the SVGs are single-colour silhouettes).
+function markerIconMarkup(colony) {
+  const icon = markerIconFor(colony);
+  return `<span class="map-marker__icon" style="-webkit-mask-image:url('${icon}');mask-image:url('${icon}')"></span>`;
+}
+
 function markerScaleForZoom(zoom) {
   const minZoom = 5;
   const maxZoom = 12;
@@ -510,8 +517,9 @@ async function initMap() {
     touchZoomRotate: true,
   });
 
-  // … and can't zoom out past the initial region framing.
-  map.setMinZoom(Math.max(1.2, map.getZoom() - 0.4));
+  // … and only a little past the initial framing, with enough headroom that
+  // every marker stays visible on any aspect ratio.
+  map.setMinZoom(Math.max(3.8, map.getZoom() - 1.4));
 
   return map;
 }
@@ -523,11 +531,12 @@ const REGION_BOUNDS = [
   [22.64, 46.1],
 ];
 
-// Hard limit for panning — the region plus a modest margin so a little of the
-// surroundings can show, but the user can't wander off to other continents.
+// Soft limit for panning — the region plus a generous margin so every marker
+// stays reachable on any aspect ratio, while still preventing wandering off to
+// other continents.
 const MAX_BOUNDS = [
-  [13.6, 38.8],
-  [25.2, 48.2],
+  [10.5, 35.5],
+  [28.5, 50.5],
 ];
 
 // Bounding box around every marker location, used to frame the whole project
@@ -577,7 +586,7 @@ function createMarkerElement(colony, focusCoords = null) {
   el.type = "button";
   el.className = "map-marker";
   el.setAttribute("aria-label", getColonyName(colony));
-  el.innerHTML = `<img src="${markerIconFor(colony)}" alt="" />`;
+  el.innerHTML = markerIconMarkup(colony);
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -594,7 +603,7 @@ function createClusterElement(colonies, focusCoords = null) {
   el.type = "button";
   el.className = "map-marker map-marker--cluster";
   el.setAttribute("aria-label", `${colonies.length} colonies at this location`);
-  el.innerHTML = `<img src="${markerIconFor(colonies[0])}" alt="" /><span class="map-marker__count">${colonies.length}</span>`;
+  el.innerHTML = `${markerIconMarkup(colonies[0])}<span class="map-marker__count">${colonies.length}</span>`;
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -1045,7 +1054,9 @@ function openPanel(
   document.getElementById("panel-photo-wrap").style.display = "";
 
   const panelMarkerIcon = document.getElementById("panel-marker-icon");
-  panelMarkerIcon.setAttribute("src", markerIconFor(colony));
+  const panelIcon = markerIconFor(colony);
+  panelMarkerIcon.style.webkitMaskImage = `url('${panelIcon}')`;
+  panelMarkerIcon.style.maskImage = `url('${panelIcon}')`;
 
   document.getElementById("panel-name").textContent = getColonyName(colony);
   document.getElementById("panel-location").textContent =
