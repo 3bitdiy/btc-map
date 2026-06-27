@@ -199,7 +199,7 @@ em {
 .hero__blob {
   position: absolute;
   inset: 6% 4% 10% 8%;
-  background: var(--rose);
+  background: var(--accent-2);
   border-radius: 46% 54% 57% 43% / 49% 44% 56% 51%;
 }
 
@@ -324,7 +324,7 @@ em {
 
 /* ---------- Map CTA band ---------- */
 .map-cta {
-  background: linear-gradient(135deg, var(--wine), #b3414c 60%, var(--rose));
+  background: linear-gradient(135deg, var(--wine), var(--rose));
   color: #fff;
   padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 64px);
   text-align: center;

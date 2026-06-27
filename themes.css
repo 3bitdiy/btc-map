@@ -11,6 +11,9 @@
   --paper-rgb: 246, 232, 213;
   --map-land: #edd1aa;
   --map-bg: #c2c9bc;
+  /* Decorative accent (hero blob / brand blob). Tracks --rose unless a theme
+     sets its own bolder shade. */
+  --accent-2: var(--rose);
 }
 
 /* Adriatic — cool teal + coral, Mediterranean light */
@@ -58,19 +61,21 @@ html[data-theme="modern"] {
   --map-bg: #d0d0cc;
 }
 
-/* Goethe — green-forward, inspired by the Goethe-Institut palette */
-html[data-theme="goethe"] {
-  --ink: #0f2417;
-  --wine: #14532a;
-  --rose: #1f8f3e;
-  --sand: #e7ecdf;
-  --paper: #f4f7ed;
-  --paper-2: #eef3e4;
-  --wine-rgb: 20, 83, 42;
-  --rose-rgb: 31, 143, 62;
-  --paper-rgb: 244, 247, 237;
-  --map-land: #e1e8d2;
-  --map-bg: #b4c2a3;
+/* Lime — Goethe-Institut inspired: near-black text, deep grass-green accent,
+   and the signature lime (#a0c814) as the decorative blob */
+html[data-theme="lime"] {
+  --ink: #11140b;
+  --wine: #1f2614;
+  --rose: #4f7d12;
+  --accent-2: #a0c814;
+  --sand: #f1f3e8;
+  --paper: #fbfcf6;
+  --paper-2: #f3f6e6;
+  --wine-rgb: 31, 38, 20;
+  --rose-rgb: 79, 125, 18;
+  --paper-rgb: 251, 252, 246;
+  --map-land: #e7eed0;
+  --map-bg: #c3cda6;
 }
 
 /* ---------- Color-theme switcher ---------- */

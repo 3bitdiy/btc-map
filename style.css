@@ -181,7 +181,7 @@ ul {
   width: 210px;
   height: 190px;
   border-radius: 999px;
-  background: var(--rose);
+  background: var(--accent-2);
 }
 
 #brand-card::before {
