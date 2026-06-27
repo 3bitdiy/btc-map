@@ -615,8 +615,18 @@ function createClusterElement(colonies, focusCoords = null) {
 
 let activeLocationPicker = null;
 
+function closeLocationPicker() {
+  if (activeLocationPicker) {
+    activeLocationPicker.remove();
+    activeLocationPicker = null;
+  }
+}
+
 function openLocationPicker(colonies, coords) {
-  if (activeLocationPicker) activeLocationPicker.remove();
+  closeLocationPicker();
+  // Clear any current selection so the previously selected marker doesn't stay
+  // highlighted while the visitor is choosing from this cluster.
+  if (state.selectedColony) showPanelIntro();
 
   const content = document.createElement("div");
   content.className = "loc-picker";
@@ -648,6 +658,7 @@ function openLocationPicker(colonies, coords) {
   const popup = new maplibregl.Popup({
     offset: 22,
     closeButton: true,
+    closeOnClick: true,
     className: "loc-popup",
     maxWidth: "260px",
   })
@@ -1029,6 +1040,7 @@ function openPanel(
   focusCoordinates = null,
   focusZoom = COLONY_FOCUS_MIN_ZOOM,
 ) {
+  closeLocationPicker();
   state.selectedColony = colony;
   updateMarkerSelection();
 
