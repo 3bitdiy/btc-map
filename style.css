@@ -260,8 +260,8 @@ ul {
   display: flex;
   align-items: center;
   gap: 9px;
-  height: 36px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 7px 12px;
 }
 
 .country-toggle {
@@ -303,9 +303,7 @@ ul {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.18;
 }
 
 .country-count {

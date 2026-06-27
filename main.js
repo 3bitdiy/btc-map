@@ -985,7 +985,10 @@ function setFilterPanelMinimized(minimized) {
   syncPanelMaximizeButtons();
 }
 
-function syncFilters() {
+// Map-independent: reads the filter inputs and refreshes the colony list,
+// count and badge. Runs as soon as the data is ready so the panel works even
+// before (or without) the map finishing its load. Returns the visible colonies.
+function updateFilterResults() {
   // activeCountries is owned by the country accordion handlers (and reset),
   // not re-read here, because its checkboxes live in the rebuilt accordion.
   state.activeDisciplines = new Set(
@@ -1000,7 +1003,7 @@ function syncFilters() {
     ),
   );
 
-  const visible = buildMarkers();
+  const visible = getVisibleColonies();
   renderCountryAccordion();
   document.getElementById("colony-count").textContent = String(visible.length);
 
@@ -1012,6 +1015,14 @@ function syncFilters() {
   }
 
   updateFilterToggleBadge();
+  return visible;
+}
+
+function syncFilters() {
+  const visible = updateFilterResults();
+  // Markers need the map; the list/counts above do not.
+  if (state.map) buildMarkers();
+  return visible;
 }
 
 function buildDisciplineFilters() {
@@ -1306,7 +1317,11 @@ async function bootstrap() {
   wireMobileFilterActions();
   applyResponsivePanelDefaults();
   window.addEventListener("resize", applyResponsivePanelDefaults);
-  updateFilterToggleBadge();
+
+  // Populate the country accordion, list and counts straight from the data,
+  // so the panel is usable even before the map fires "load" (or if it never
+  // does). Markers and region framing still wait for the map below.
+  updateFilterResults();
 
   const renderInitial = () => {
     syncFilters();
