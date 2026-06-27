@@ -388,12 +388,9 @@ em {
 /* ---------- Partners ---------- */
 .lead-org {
   max-width: 1000px;
-  margin: 40px auto 0;
+  margin: 36px auto 0;
   text-align: center;
-  background: #fff;
-  border: 1px solid rgba(var(--wine-rgb), 0.12);
-  border-radius: 20px;
-  padding: 30px 24px;
+  padding: 8px 24px;
 }
 
 .lead-org__label {
@@ -409,6 +406,7 @@ em {
   width: 132px;
   height: auto;
   margin: 0 auto;
+  mix-blend-mode: multiply;
 }
 
 .lead-org__name {
@@ -445,10 +443,7 @@ em {
   display: flex;
   align-items: center;
   gap: 18px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 18px 22px;
-  border: 1px solid rgba(var(--wine-rgb), 0.12);
+  padding: 14px 18px;
 }
 
 .partner img {
@@ -456,6 +451,7 @@ em {
   height: 56px;
   object-fit: contain;
   flex: 0 0 auto;
+  mix-blend-mode: multiply;
 }
 
 .partner span {

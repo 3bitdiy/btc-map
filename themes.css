@@ -108,6 +108,70 @@ html[data-theme="navy"] {
   --map-bg: #b9c3b0;
 }
 
+/* Emerald — green/teal/mint/cream, from Color Hunt 1a312c·428475·89d7b7·fff4e1 */
+html[data-theme="emerald"] {
+  --ink: #102019;
+  --wine: #1a312c;
+  --rose: #428475;
+  --accent-2: #89d7b7;
+  --sand: #fff4e1;
+  --paper: #fff9ec;
+  --paper-2: #f6efda;
+  --wine-rgb: 26, 49, 44;
+  --rose-rgb: 66, 132, 117;
+  --paper-rgb: 255, 249, 236;
+  --map-land: #e3efdc;
+  --map-bg: #b6cabf;
+}
+
+/* Terra — cream/sage/ochre/brown, from Color Hunt f7f1de·b0ba99·9d6638·4e220f */
+html[data-theme="terra"] {
+  --ink: #2a1408;
+  --wine: #4e220f;
+  --rose: #9d6638;
+  --accent-2: #b0ba99;
+  --sand: #f7f1de;
+  --paper: #fbf7e9;
+  --paper-2: #f2ecd6;
+  --wine-rgb: 78, 34, 15;
+  --rose-rgb: 157, 102, 56;
+  --paper-rgb: 251, 247, 233;
+  --map-land: #ece4cb;
+  --map-bg: #c3c3a6;
+}
+
+/* Cobalt — blues, from Color Hunt 112e81·4647ae·4382df·aaccd6 */
+html[data-theme="cobalt"] {
+  --ink: #0a1840;
+  --wine: #112e81;
+  --rose: #4647ae;
+  --accent-2: #4382df;
+  --sand: #eaf1f6;
+  --paper: #f6f9fb;
+  --paper-2: #e6eef5;
+  --wine-rgb: 17, 46, 129;
+  --rose-rgb: 70, 71, 174;
+  --paper-rgb: 246, 249, 251;
+  --map-land: #dce7ef;
+  --map-bg: #aebfcf;
+}
+
+/* Forest — muted greens + slate, from Color Hunt 9cb080·618764·2b5748·273338 */
+html[data-theme="forest"] {
+  --ink: #1a2226;
+  --wine: #273338;
+  --rose: #618764;
+  --accent-2: #9cb080;
+  --sand: #e9efe0;
+  --paper: #f3f7ee;
+  --paper-2: #e2ebd6;
+  --wine-rgb: 39, 51, 56;
+  --rose-rgb: 97, 135, 100;
+  --paper-rgb: 243, 247, 238;
+  --map-land: #e0e8d4;
+  --map-bg: #b4c1ab;
+}
+
 /* ---------- Color-theme switcher ---------- */
 /* Floating toggle button — always available */
 .theme-toggle {
@@ -198,6 +262,8 @@ html[data-theme="navy"] {
 .theme-switcher__list {
   display: grid;
   gap: 6px;
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
 }
 
 .theme-chip {
