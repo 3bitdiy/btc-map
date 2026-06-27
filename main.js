@@ -503,11 +503,15 @@ async function initMap() {
     // markers and exact fit are computed on load.
     bounds: REGION_BOUNDS,
     fitBoundsOptions: { padding: getFitPadding(), maxZoom: 9 },
-    minZoom: 1.2,
+    // Keep the view on the region: can't roam into far neighbours …
+    maxBounds: MAX_BOUNDS,
     maxZoom: 14,
     dragRotate: true,
     touchZoomRotate: true,
   });
+
+  // … and can't zoom out past the initial region framing.
+  map.setMinZoom(Math.max(1.2, map.getZoom() - 0.4));
 
   return map;
 }
@@ -517,6 +521,13 @@ async function initMap() {
 const REGION_BOUNDS = [
   [16.16, 41.03],
   [22.64, 46.1],
+];
+
+// Hard limit for panning — the region plus a modest margin so a little of the
+// surroundings can show, but the user can't wander off to other continents.
+const MAX_BOUNDS = [
+  [13.6, 38.8],
+  [25.2, 48.2],
 ];
 
 // Bounding box around every marker location, used to frame the whole project
@@ -574,6 +585,71 @@ function createMarkerElement(colony, focusCoords = null) {
   });
 
   return el;
+}
+
+// A marker for several colonies at the same spot: the house icon plus a count
+// badge. Clicking it opens a picker so the visitor can choose one.
+function createClusterElement(colonies, focusCoords = null) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "map-marker map-marker--cluster";
+  el.setAttribute("aria-label", `${colonies.length} colonies at this location`);
+  el.innerHTML = `<img src="${markerIconFor(colonies[0])}" alt="" /><span class="map-marker__count">${colonies.length}</span>`;
+
+  el.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openLocationPicker(colonies, focusCoords);
+  });
+
+  return el;
+}
+
+let activeLocationPicker = null;
+
+function openLocationPicker(colonies, coords) {
+  if (activeLocationPicker) activeLocationPicker.remove();
+
+  const content = document.createElement("div");
+  content.className = "loc-picker";
+
+  const sorted = [...colonies].sort((a, b) =>
+    getColonyName(a).localeCompare(getColonyName(b)),
+  );
+
+  const title = document.createElement("p");
+  title.className = "loc-picker__title";
+  title.textContent = `${colonies.length} colonies here`;
+  content.appendChild(title);
+
+  const list = document.createElement("div");
+  list.className = "loc-picker__list";
+  sorted.forEach((colony) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "loc-picker__item";
+    item.textContent = getColonyName(colony);
+    item.addEventListener("click", () => {
+      popup.remove();
+      openPanel(colony, true, coords, COLONY_LIST_FOCUS_ZOOM);
+    });
+    list.appendChild(item);
+  });
+  content.appendChild(list);
+
+  const popup = new maplibregl.Popup({
+    offset: 22,
+    closeButton: true,
+    className: "loc-popup",
+    maxWidth: "260px",
+  })
+    .setLngLat([coords.longitude, coords.latitude])
+    .setDOMContent(content)
+    .addTo(state.map);
+
+  activeLocationPicker = popup;
+  popup.on("close", () => {
+    if (activeLocationPicker === popup) activeLocationPicker = null;
+  });
 }
 
 function getVisibleColonies() {
@@ -771,16 +847,30 @@ function buildMarkers() {
     });
   });
 
-  const arranged = arrangeMarkerEntries(entries);
-  arranged.forEach((entry) => {
-    const marker = new maplibregl.Marker({
-      element: createMarkerElement(entry.colony, entry.coords),
-      anchor: "center",
-    })
-      .setLngLat([entry.markerCoords.longitude, entry.markerCoords.latitude])
+  // Merge colonies that share a location (same/near-identical coordinates —
+  // e.g. several colonies in one town) into a single unit, so they never stack
+  // invisibly. A unit with >1 colony becomes a counted marker with a picker.
+  const groups = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.coords.latitude.toFixed(4)}:${entry.coords.longitude.toFixed(4)}`;
+    if (!groups.has(key)) {
+      groups.set(key, { coords: entry.coords, colony: entry.colony, colonies: [] });
+    }
+    groups.get(key).colonies.push(entry.colony);
+  });
+
+  const arranged = arrangeMarkerEntries([...groups.values()]);
+  arranged.forEach((unit) => {
+    const element =
+      unit.colonies.length > 1
+        ? createClusterElement(unit.colonies, unit.coords)
+        : createMarkerElement(unit.colonies[0], unit.coords);
+
+    const marker = new maplibregl.Marker({ element, anchor: "center" })
+      .setLngLat([unit.markerCoords.longitude, unit.markerCoords.latitude])
       .addTo(state.map);
 
-    state.markers.push({ marker, colony: entry.colony });
+    state.markers.push({ marker, colonies: unit.colonies });
   });
 
   updateMarkerSelection();
@@ -788,8 +878,9 @@ function buildMarkers() {
 }
 
 function updateMarkerSelection() {
-  state.markers.forEach(({ marker, colony }) => {
-    const selected = state.selectedColony?.id === colony.id;
+  const selectedId = state.selectedColony?.id;
+  state.markers.forEach(({ marker, colonies }) => {
+    const selected = colonies.some((colony) => colony.id === selectedId);
     marker.getElement().classList.toggle("is-selected", selected);
   });
   updateColonyListSelection();

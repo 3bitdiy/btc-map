@@ -1132,6 +1132,82 @@ ul {
     hue-rotate(318deg) brightness(102%) contrast(84%);
 }
 
+/* Count badge for co-located colonies */
+.map-marker--cluster {
+  position: relative;
+  overflow: visible;
+}
+
+.map-marker__count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--rose);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Location picker popup */
+.loc-popup .maplibregl-popup-content {
+  background: var(--paper);
+  border-radius: 14px;
+  padding: 12px 14px 11px;
+  box-shadow: 0 14px 32px rgba(var(--wine-rgb), 0.24);
+  font-family: "Montserrat", sans-serif;
+}
+
+.loc-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+.loc-popup .maplibregl-popup-close-button {
+  color: var(--wine);
+  font-size: 18px;
+  padding: 0 7px;
+}
+
+.loc-picker__title {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rose);
+}
+
+.loc-picker__list {
+  display: grid;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.loc-picker__item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(var(--wine-rgb), 0.28);
+  background: #fff;
+  color: var(--wine);
+  border-radius: 9px;
+  padding: 7px 9px;
+  font-size: 12.5px;
+  line-height: 1.25;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.loc-picker__item:hover {
+  border-color: var(--rose);
+}
+
 #panel-marker-icon {
   filter: saturate(0) brightness(0) invert(43%) sepia(31%) saturate(3399%)
     hue-rotate(318deg) brightness(102%) contrast(84%);
