@@ -1287,6 +1287,18 @@ ul {
   border-color: var(--rose);
 }
 
+/* Replace the browser's blue focus ring (the popup focuses the first item on
+   open) with a themed one, shown only for keyboard navigation. */
+.loc-picker__item:focus {
+  outline: none;
+}
+
+.loc-picker__item:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 1px;
+  border-color: var(--rose);
+}
+
 #panel-marker-icon {
   display: block;
   background: var(--rose);
