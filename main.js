@@ -890,16 +890,24 @@ function onClusterClick(cluster) {
   }
 }
 
+// Identity of a single marker entry: a colony AT a specific location. Keyed by
+// colony + coords so a multi-location colony (location_points) matches the
+// right marker per spot during the slide animation.
+function entryKey(colony, coords) {
+  return `${colony.id}@${coords.latitude.toFixed(5)},${coords.longitude.toFixed(5)}`;
+}
+
 function buildMarkers() {
-  // Remember where each colony's marker sat (screen pixels) so the rebuilt
-  // markers can slide from there to their new spot — i.e. animate apart on
-  // zoom-in and together on zoom-out.
+  // Remember where each marker entry sat (screen pixels) so the rebuilt markers
+  // can slide from there to their new spot — i.e. animate apart on zoom-in and
+  // together on zoom-out.
   const prevPositions = new Map();
   if (state.map) {
-    state.markers.forEach(({ marker, colonies }) => {
+    state.markers.forEach(({ marker, members }) => {
       const point = state.map.project(marker.getLngLat());
-      colonies.forEach((colony) => {
-        if (!prevPositions.has(colony.id)) prevPositions.set(colony.id, point);
+      members.forEach((member) => {
+        const key = entryKey(member.colony, member.coords);
+        if (!prevPositions.has(key)) prevPositions.set(key, point);
       });
     });
   }
@@ -933,7 +941,11 @@ function buildMarkers() {
       .addTo(state.map);
 
     animateMarkerFrom(element, cluster, prevPositions);
-    state.markers.push({ marker, colonies: cluster.colonies });
+    state.markers.push({
+      marker,
+      colonies: cluster.colonies,
+      members: cluster.members,
+    });
   });
 
   updateMarkerSelection();
@@ -946,9 +958,10 @@ function animateMarkerFrom(element, cluster, prevPositions) {
   if (!state.map || prevPositions.size === 0) return;
 
   let source = null;
-  for (const colony of cluster.colonies) {
-    if (prevPositions.has(colony.id)) {
-      source = prevPositions.get(colony.id);
+  for (const member of cluster.members) {
+    const key = entryKey(member.colony, member.coords);
+    if (prevPositions.has(key)) {
+      source = prevPositions.get(key);
       break;
     }
   }
