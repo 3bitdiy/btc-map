@@ -936,6 +936,9 @@ function buildMarkers() {
   });
 
   const arranged = arrangeMarkerEntries([...groups.values()]);
+  // Render single markers first, count clusters last, so a cluster (and its
+  // badge) always stacks above overlapping single markers.
+  arranged.sort((a, b) => a.colonies.length - b.colonies.length);
   arranged.forEach((unit) => {
     const element =
       unit.colonies.length > 1

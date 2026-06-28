@@ -1110,6 +1110,10 @@ ul {
   width: calc(49px * var(--marker-zoom-scale));
   height: calc(33px * var(--marker-zoom-scale));
   background: var(--ink);
+  /* Light halo so the silhouette separates from the map and from overlapping
+     markers (their lines no longer read as part of this one). */
+  filter: drop-shadow(0 0 1.1px rgba(var(--paper-rgb), 1))
+    drop-shadow(0 0 1.1px rgba(var(--paper-rgb), 1));
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -1212,6 +1216,7 @@ ul {
    MapLibre's absolute element. */
 .map-marker--cluster {
   overflow: visible;
+  z-index: 1;
 }
 
 .map-marker__count {
