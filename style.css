@@ -1497,6 +1497,14 @@ ul {
     max-height: calc(100dvh - 20px);
     transform: translateX(-50%);
     z-index: 48;
+    /* The sidebar box spans the full height but is mostly empty when the
+       filter is minimized; let those empty areas pass taps/pinch to the map. */
+    pointer-events: none;
+  }
+
+  #brand-card,
+  #filter-card {
+    pointer-events: auto;
   }
 
   #left-sidebar.is-open {
