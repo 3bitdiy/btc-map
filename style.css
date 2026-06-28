@@ -1216,7 +1216,6 @@ ul {
    MapLibre's absolute element. */
 .map-marker--cluster {
   overflow: visible;
-  z-index: 1;
 }
 
 .map-marker__count {
