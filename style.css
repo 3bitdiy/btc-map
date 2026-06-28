@@ -1180,8 +1180,9 @@ ul {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.12s ease;
-  white-space: nowrap;
+  width: max-content;
   max-width: 240px;
+  overflow-wrap: break-word;
 }
 
 .map-tooltip.is-visible {

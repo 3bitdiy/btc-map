@@ -1581,6 +1581,12 @@ async function bootstrap() {
   state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
 
+  // Clicking empty map deselects (markers stop propagation, so this only fires
+  // on the bare map, not on a marker).
+  state.map.on("click", () => {
+    if (state.selectedColony) showPanelIntro();
+  });
+
   // Track load synchronously so the async data fetch below can't miss it.
   let mapLoaded = state.map.loaded();
   state.map.on("load", () => {
