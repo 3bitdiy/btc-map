@@ -785,8 +785,26 @@ ul {
     bottom: 18px;
   }
 
+  /* Detail panel slides in from the right on selection, out on deselect */
   #detail-panel {
     top: 18px;
+    transform: translateX(calc(100% + 30px));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.24s ease;
+  }
+
+  #detail-panel.is-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Override the global aria-hidden visibility so it animates out, not snaps */
+  #detail-panel[aria-hidden="true"] {
+    visibility: visible;
   }
 
   #filter-minimize,
@@ -794,7 +812,7 @@ ul {
     display: none;
   }
 
-  #detail-panel:not(.is-intro) #panel-close {
+  #detail-panel.is-open #panel-close {
     display: grid;
     place-items: center;
     position: absolute;
@@ -810,7 +828,7 @@ ul {
     cursor: pointer;
   }
 
-  #detail-panel:not(.is-intro) #panel-close img {
+  #detail-panel.is-open #panel-close img {
     width: 12px;
     height: 12px;
   }

@@ -557,12 +557,12 @@ function getRegionBounds(colonies) {
   return extended ? bounds : null;
 }
 
-// Padding (px) kept clear of the overlay panels so the region is never hidden
-// behind the left sidebar (~291px) or the open detail panel (~341px).
+// Padding (px) kept clear of the left sidebar (~291px). The detail panel now
+// slides in only on selection, so the region is framed for the full width.
 function getFitPadding() {
   const mode = getViewportMode();
   if (mode === "desktop") {
-    return { top: 96, right: 360, bottom: 48, left: 312 };
+    return { top: 96, right: 60, bottom: 48, left: 312 };
   }
   if (mode === "tablet") {
     return { top: 80, right: 60, bottom: 80, left: 60 };
@@ -698,7 +698,7 @@ function openLocationPicker(colonies, coords) {
   closeLocationPicker();
   // Clear any current selection so the previously selected marker doesn't stay
   // highlighted while the visitor is choosing from this cluster.
-  if (state.selectedColony) showPanelIntro();
+  if (state.selectedColony) closePanel();
 
   const content = document.createElement("div");
   content.className = "loc-picker";
@@ -1221,24 +1221,16 @@ function openPanel(
 // stays present (showing the project intro) so it never flickers in/out when
 // filters change; on mobile/tablet it steps aside (map-first) until a colony
 // is picked.
-function showPanelIntro() {
+// Nothing selected → slide the detail panel away (more map). It slides back in
+// when a colony is picked (openPanel). Same model on desktop and mobile.
+function closePanel() {
   state.selectedColony = null;
   updateMarkerSelection();
 
   const panel = document.getElementById("detail-panel");
-  panel.classList.add("is-intro");
-  document.getElementById("panel-intro-count").textContent = String(
-    state.colonies.length,
-  );
-
-  if (getViewportMode() === "desktop") {
-    panel.setAttribute("aria-hidden", "false");
-    panel.classList.add("is-open");
-    setPanelMinimized(false);
-  } else {
-    panel.classList.remove("is-open");
-    panel.setAttribute("aria-hidden", "true");
-  }
+  panel.classList.remove("is-open");
+  panel.classList.remove("is-intro");
+  panel.setAttribute("aria-hidden", "true");
 }
 
 function syncPanelMaximizeButtons() {
@@ -1321,7 +1313,7 @@ function updateFilterResults() {
   ) {
     // The selected colony was filtered out — fall back to the intro state
     // (no flicker) instead of tearing the panel down.
-    showPanelIntro();
+    closePanel();
   }
 
   updateFilterToggleBadge();
@@ -1508,7 +1500,7 @@ function wireZoomControls() {
 function wirePanel() {
   document
     .getElementById("panel-close")
-    .addEventListener("click", showPanelIntro);
+    .addEventListener("click", closePanel);
 
   document.getElementById("panel-minimize").addEventListener("click", () => {
     const panel = document.getElementById("detail-panel");
@@ -1604,7 +1596,7 @@ function applyResponsivePanelDefaults() {
 
   // Keep the detail panel's resting state right for the new viewport: present
   // intro on desktop, stepped aside on mobile/tablet.
-  if (!state.selectedColony) showPanelIntro();
+  if (!state.selectedColony) closePanel();
 }
 
 async function bootstrap() {
@@ -1629,7 +1621,7 @@ async function bootstrap() {
   // Clicking empty map deselects (markers stop propagation, so this only fires
   // on the bare map, not on a marker).
   state.map.on("click", () => {
-    if (state.selectedColony) showPanelIntro();
+    if (state.selectedColony) closePanel();
   });
 
   // Track load synchronously so the async data fetch below can't miss it.
