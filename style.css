@@ -1456,6 +1456,37 @@ ul {
     height: 16px;
   }
 
+  /* Slim brand bar: small logo + name in a row, no blob / subtitle */
+  #brand-card {
+    min-height: 0;
+    padding: 9px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #brand-card::after {
+    display: none;
+  }
+
+  .brand-mark-wrap {
+    position: static;
+    width: 26px;
+    height: 44px;
+    flex: 0 0 auto;
+  }
+
+  #site-title {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+  }
+
+  #site-subtitle {
+    display: none;
+  }
+
   #left-sidebar {
     left: 50%;
     right: auto;
