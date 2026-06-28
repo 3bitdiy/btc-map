@@ -832,10 +832,32 @@ function onClusterClick(cluster) {
     maxLng = Math.max(maxLng, coords.longitude);
   });
 
-  const span = Math.max(maxLat - minLat, maxLng - minLng);
-  const atMaxZoom = state.map.getZoom() >= state.map.getMaxZoom() - 0.4;
+  // Would the members actually separate if we zoomed all the way in? Compare
+  // their widest pairwise gap (in pixels at the deepest fit zoom) to the
+  // cluster threshold there. If they'd still be one cluster, zooming is
+  // pointless — show the picker instead.
+  const fitMaxZoom = 13;
+  const thresholdPx = Math.max(13, 36 * markerScaleForZoom(fitMaxZoom));
+  const worldSize = 512 * Math.pow(2, fitMaxZoom);
+  const points = cluster.members.map(({ coords }) => {
+    const sin = Math.sin((coords.latitude * Math.PI) / 180);
+    return {
+      x: (worldSize * (coords.longitude + 180)) / 360,
+      y: worldSize * (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)),
+    };
+  });
+  let maxGap = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      maxGap = Math.max(
+        maxGap,
+        Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y),
+      );
+    }
+  }
 
-  if (span < 0.0008 || atMaxZoom) {
+  const atMaxZoom = state.map.getZoom() >= state.map.getMaxZoom() - 0.4;
+  if (maxGap <= thresholdPx || atMaxZoom) {
     openLocationPicker(cluster.colonies, cluster.coords);
   } else {
     state.map.fitBounds(
@@ -843,7 +865,7 @@ function onClusterClick(cluster) {
         [minLng, minLat],
         [maxLng, maxLat],
       ],
-      { padding: 110, maxZoom: 13, animate: true },
+      { padding: 110, maxZoom: fitMaxZoom, animate: true },
     );
   }
 }
