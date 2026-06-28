@@ -813,8 +813,8 @@ ul {
     visibility: visible;
   }
 
-  #filter-minimize,
-  #panel-minimize {
+  #filter-card #filter-minimize,
+  #detail-panel #panel-minimize {
     display: none;
   }
 
