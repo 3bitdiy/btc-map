@@ -625,6 +625,10 @@ function moveTooltip(event) {
 }
 
 function attachMarkerTooltip(el, title, subtitle) {
+  // Touch devices fire mouseenter on tap but never mouseleave, so the tooltip
+  // would stick forever. Only wire it where real hovering exists.
+  if (!window.matchMedia("(hover: hover)").matches) return;
+
   el.addEventListener("mouseenter", (event) => {
     if (!mapTooltipEl) {
       mapTooltipEl = document.createElement("div");
