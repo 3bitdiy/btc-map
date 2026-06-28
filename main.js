@@ -1598,9 +1598,16 @@ async function bootstrap() {
   syncMarkerScale();
   state.map.on("zoom", syncMarkerScale);
   state.map.on("zoomend", syncMarkerScale);
+  // Wheel/pinch zoom fires zoomend repeatedly while scrolling; debounce the
+  // re-cluster so markers rebuild (and animate) once, after the zoom settles.
+  let rebuildTimer = null;
   state.map.on("zoomend", () => {
     if (!state.colonies.length) return;
-    buildMarkers();
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(() => {
+      rebuildTimer = null;
+      buildMarkers();
+    }, 160);
   });
   state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
