@@ -645,26 +645,23 @@ function createMarkerElement(colony, focusCoords = null) {
   return el;
 }
 
-// A marker for several colonies at the same spot: the house icon plus a count
-// badge. Clicking it opens a picker so the visitor can choose one.
-function createClusterElement(colonies, focusCoords = null) {
+// A count marker for several nearby colonies. Clicking it zooms to split them
+// (or shows a picker when they can't be separated — see onClusterClick).
+function createClusterElement(cluster) {
+  const count = cluster.colonies.length;
   const el = document.createElement("button");
   el.type = "button";
   el.className = "map-marker map-marker--cluster";
-  el.setAttribute("aria-label", `${colonies.length} colonies at this location`);
-  el.innerHTML = `${markerIconMarkup(colonies[0])}<span class="map-marker__count">${colonies.length}</span>`;
-  el.appendChild(makeMarkerLabel(getColonyShortPlace(colonies[0])));
+  el.setAttribute("aria-label", `${count} colonies in this area`);
+  el.innerHTML = `${markerIconMarkup(cluster.colonies[0])}<span class="map-marker__count">${count}</span>`;
+  el.appendChild(makeMarkerLabel(getColonyShortPlace(cluster.colonies[0])));
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
-    openLocationPicker(colonies, focusCoords);
+    onClusterClick(cluster);
   });
 
-  attachMarkerTooltip(
-    el,
-    getColonyShortPlace(colonies[0]),
-    `${colonies.length} colonies`,
-  );
+  attachMarkerTooltip(el, `${count} colonies`, getColonyShortPlace(cluster.colonies[0]));
   return el;
 }
 
@@ -753,160 +750,102 @@ function getStableMarkerOrder(a, b) {
   return getColonyName(a.colony).localeCompare(getColonyName(b.colony));
 }
 
-function seedUnitVector(seedText) {
-  let hash = 2166136261;
-  for (let i = 0; i < seedText.length; i += 1) {
-    hash ^= seedText.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+// Zoom-based proximity clustering: group markers within a pixel threshold of
+// each other at the current zoom into one cluster. As you zoom in the same
+// geographic gaps grow in pixels, so clusters split apart. A one-colony group
+// renders as a normal marker.
+function clusterEntries(entries) {
+  if (!state.map || entries.length === 0) {
+    return entries.map((entry) => ({
+      coords: entry.coords,
+      members: [entry],
+      colonies: [entry.colony],
+    }));
   }
-  const ratio = (hash >>> 0) / 4294967295;
-  const angle = ratio * Math.PI * 2;
-  return { x: Math.cos(angle), y: Math.sin(angle) };
-}
 
-function relaxClusterPixels(members, options) {
-  const minSeparationPx = options.minSeparationPx;
-  const maxShiftPx = options.maxShiftPx;
-  const iterations = options.iterations;
-  const pullStrength = options.pullStrength;
+  const scale = markerScaleForZoom(state.map.getZoom());
+  // ~75% of a marker's width — merge markers that clearly overlap.
+  const thresholdPx = Math.max(13, 36 * scale);
 
-  const points = members.map((entry) => ({
-    entry,
-    x: entry.point.x,
-    y: entry.point.y,
-    ox: entry.point.x,
-    oy: entry.point.y,
+  const projected = entries.map((entry) => ({
+    ...entry,
+    point: state.map.project([entry.coords.longitude, entry.coords.latitude]),
   }));
+  projected.sort(getStableMarkerOrder);
 
-  for (let step = 0; step < iterations; step += 1) {
-    for (let i = 0; i < points.length; i += 1) {
-      for (let j = i + 1; j < points.length; j += 1) {
-        const a = points[i];
-        const b = points[j];
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        let distance = Math.hypot(dx, dy);
-
-        if (distance >= minSeparationPx) continue;
-
-        if (distance < 1e-4) {
-          const vec = seedUnitVector(
-            `${a.entry.colony.id}:${b.entry.colony.id}`,
-          );
-          dx = vec.x;
-          dy = vec.y;
-          distance = 1;
-        }
-
-        const push = (minSeparationPx - distance) * 0.5;
-        const ux = dx / distance;
-        const uy = dy / distance;
-
-        a.x -= ux * push;
-        a.y -= uy * push;
-        b.x += ux * push;
-        b.y += uy * push;
-      }
-    }
-
-    points.forEach((p) => {
-      p.x += (p.ox - p.x) * pullStrength;
-      p.y += (p.oy - p.y) * pullStrength;
-
-      const offX = p.x - p.ox;
-      const offY = p.y - p.oy;
-      const offLen = Math.hypot(offX, offY);
-      if (offLen > maxShiftPx) {
-        const scale = maxShiftPx / offLen;
-        p.x = p.ox + offX * scale;
-        p.y = p.oy + offY * scale;
-      }
-    });
-  }
-
-  return points;
-}
-
-function arrangeMarkerEntries(entries) {
-  if (!state.map || entries.length <= 1) {
-    return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
-  }
-
-  const zoom = state.map.getZoom();
-  if (zoom < 8) {
-    return entries.map((entry) => ({ ...entry, markerCoords: entry.coords }));
-  }
-
-  const zoomFactor = Math.min(1, Math.max(0, (zoom - 8) / 4));
-  const thresholdPx = 12 + zoomFactor * 10;
-  const relaxOptions = {
-    minSeparationPx: 8 + zoomFactor * 9,
-    maxShiftPx: 5 + zoomFactor * 11,
-    iterations: 12,
-    pullStrength: 0.2,
-  };
-
-  const projected = entries.map((entry) => {
-    const point = state.map.project([
-      entry.coords.longitude,
-      entry.coords.latitude,
-    ]);
-    return { ...entry, point };
-  });
-
-  projected.sort((a, b) => getStableMarkerOrder(a, b));
-
-  const clusters = [];
+  const groups = [];
   projected.forEach((entry) => {
     let target = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
-
-    clusters.forEach((cluster) => {
-      const dx = entry.point.x - cluster.cx;
-      const dy = entry.point.y - cluster.cy;
-      const distance = Math.hypot(dx, dy);
-      if (distance <= thresholdPx && distance < bestDistance) {
-        bestDistance = distance;
-        target = cluster;
+    let best = Number.POSITIVE_INFINITY;
+    groups.forEach((group) => {
+      const d = Math.hypot(entry.point.x - group.cx, entry.point.y - group.cy);
+      if (d <= thresholdPx && d < best) {
+        best = d;
+        target = group;
       }
     });
 
     if (!target) {
-      clusters.push({ cx: entry.point.x, cy: entry.point.y, members: [entry] });
+      groups.push({ cx: entry.point.x, cy: entry.point.y, members: [entry] });
       return;
     }
-
     target.members.push(entry);
     const n = target.members.length;
     target.cx = (target.cx * (n - 1) + entry.point.x) / n;
     target.cy = (target.cy * (n - 1) + entry.point.y) / n;
   });
 
-  const arranged = [];
-  clusters.forEach((cluster) => {
-    if (cluster.members.length === 1) {
-      const entry = cluster.members[0];
-      arranged.push({ ...entry, markerCoords: entry.coords });
-      return;
+  return groups.map((group) => {
+    let coords;
+    if (group.members.length === 1) {
+      coords = group.members[0].coords;
+    } else {
+      const ll = state.map.unproject([group.cx, group.cy]);
+      coords = { latitude: ll.lat, longitude: ll.lng };
     }
 
-    const members = [...cluster.members].sort(getStableMarkerOrder);
-    const relaxed = relaxClusterPixels(members, relaxOptions);
-
-    relaxed.forEach((item) => {
-      const entry = item.entry;
-      const x = item.x;
-      const y = item.y;
-      const ll = state.map.unproject([x, y]);
-
-      arranged.push({
-        ...entry,
-        markerCoords: { latitude: ll.lat, longitude: ll.lng },
-      });
+    const seen = new Set();
+    const colonies = [];
+    group.members.forEach((member) => {
+      if (!seen.has(member.colony.id)) {
+        seen.add(member.colony.id);
+        colonies.push(member.colony);
+      }
     });
+
+    return { coords, members: group.members, colonies };
+  });
+}
+
+// Click on a count cluster: if its colonies are spread, zoom to fit them so
+// they split apart; if they share (almost) the same spot — or we're already at
+// max zoom — let the visitor pick from a list instead.
+function onClusterClick(cluster) {
+  let minLat = 90;
+  let maxLat = -90;
+  let minLng = 180;
+  let maxLng = -180;
+  cluster.members.forEach(({ coords }) => {
+    minLat = Math.min(minLat, coords.latitude);
+    maxLat = Math.max(maxLat, coords.latitude);
+    minLng = Math.min(minLng, coords.longitude);
+    maxLng = Math.max(maxLng, coords.longitude);
   });
 
-  return arranged;
+  const span = Math.max(maxLat - minLat, maxLng - minLng);
+  const atMaxZoom = state.map.getZoom() >= state.map.getMaxZoom() - 0.4;
+
+  if (span < 0.0008 || atMaxZoom) {
+    openLocationPicker(cluster.colonies, cluster.coords);
+  } else {
+    state.map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: 110, maxZoom: 13, animate: true },
+    );
+  }
 }
 
 function buildMarkers() {
@@ -923,33 +862,21 @@ function buildMarkers() {
     });
   });
 
-  // Merge colonies that share a location (same/near-identical coordinates —
-  // e.g. several colonies in one town) into a single unit, so they never stack
-  // invisibly. A unit with >1 colony becomes a counted marker with a picker.
-  const groups = new Map();
-  entries.forEach((entry) => {
-    const key = `${entry.coords.latitude.toFixed(4)}:${entry.coords.longitude.toFixed(4)}`;
-    if (!groups.has(key)) {
-      groups.set(key, { coords: entry.coords, colony: entry.colony, colonies: [] });
-    }
-    groups.get(key).colonies.push(entry.colony);
-  });
-
-  const arranged = arrangeMarkerEntries([...groups.values()]);
+  const clusters = clusterEntries(entries);
   // Render single markers first, count clusters last, so a cluster (and its
   // badge) always stacks above overlapping single markers.
-  arranged.sort((a, b) => a.colonies.length - b.colonies.length);
-  arranged.forEach((unit) => {
+  clusters.sort((a, b) => a.colonies.length - b.colonies.length);
+  clusters.forEach((cluster) => {
     const element =
-      unit.colonies.length > 1
-        ? createClusterElement(unit.colonies, unit.coords)
-        : createMarkerElement(unit.colonies[0], unit.coords);
+      cluster.colonies.length > 1
+        ? createClusterElement(cluster)
+        : createMarkerElement(cluster.colonies[0], cluster.coords);
 
     const marker = new maplibregl.Marker({ element, anchor: "center" })
-      .setLngLat([unit.markerCoords.longitude, unit.markerCoords.latitude])
+      .setLngLat([cluster.coords.longitude, cluster.coords.latitude])
       .addTo(state.map);
 
-    state.markers.push({ marker, colonies: unit.colonies });
+    state.markers.push({ marker, colonies: cluster.colonies });
   });
 
   updateMarkerSelection();
