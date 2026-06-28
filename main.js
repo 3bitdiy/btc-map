@@ -1151,6 +1151,7 @@ function openPanel(
   panel.classList.remove("is-intro");
   panel.setAttribute("aria-hidden", "false");
   panel.classList.add("is-open");
+  document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
 
   const photo = document.getElementById("panel-photo");
@@ -1231,6 +1232,7 @@ function closePanel() {
   panel.classList.remove("is-open");
   panel.classList.remove("is-intro");
   panel.setAttribute("aria-hidden", "true");
+  document.getElementById("app").classList.remove("panel-open");
 }
 
 function syncPanelMaximizeButtons() {
