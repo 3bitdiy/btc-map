@@ -788,6 +788,11 @@ ul {
   display: none;
 }
 
+/* Drag grabber — only the mobile bottom sheet shows it */
+#panel-handle {
+  display: none;
+}
+
 /* Desktop panel tidy-up: align both columns top/bottom, drop the manual
    minimize (the panels don't obscure the region anyway), and give the detail
    panel a clear close (×) so a selected colony has an obvious dismiss. */
@@ -1609,81 +1614,84 @@ ul {
     display: none;
   }
 
+  /* Detail = bottom sheet. Drag the handle to snap between full / half / peek;
+     drag below peek to dismiss. --sheet-y (set in JS) is the translate. */
   #detail-panel {
-    top: var(--mobile-panel-top);
-    right: 0;
-    left: 0;
-    bottom: auto;
-    margin: 0 auto;
-    width: min(calc(100vw - 20px), 340px);
-    height: var(--mobile-panel-max-height);
-    max-height: var(--mobile-panel-max-height);
-    transform: translateY(114%);
-    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-    will-change: transform;
-  }
-
-  #detail-panel.is-minimized {
     top: auto;
     right: 0;
     left: 0;
-    bottom: calc(env(safe-area-inset-bottom) + 12px);
-    width: auto;
-    height: 0;
-    background: transparent;
-    box-shadow: none;
-    transform: none;
-    pointer-events: auto;
+    bottom: 0;
+    margin: 0;
+    width: 100%;
+    height: 86dvh;
+    max-height: 86dvh;
+    border-radius: 18px 18px 0 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
     z-index: 60;
   }
 
   #detail-panel.is-open {
-    transform: translateY(0);
+    transform: translateY(var(--sheet-y, 48%));
   }
 
-  #detail-panel.is-minimized #panel-content {
-    display: none;
+  #detail-panel.is-dragging {
+    transition: none;
   }
 
-  #detail-panel.is-minimized #panel-photo-wrap,
-  #detail-panel.is-minimized #panel-about,
-  #detail-panel.is-minimized #panel-details,
-  #detail-panel.is-minimized #panel-contact,
-  #detail-panel.is-minimized #panel-social {
-    display: none;
+  #panel-handle {
+    display: block;
+    flex: 0 0 auto;
+    height: 24px;
+    position: relative;
+    cursor: grab;
+    touch-action: none;
   }
 
-  #detail-panel.is-minimized #panel-header {
-    margin-top: 8px;
-  }
-
-  #detail-panel.is-minimized #panel-name {
-    font-size: 20px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  #detail-panel.is-minimized #panel-location {
-    margin-top: 2px;
-    font-size: 11px;
-  }
-
-  #detail-panel.is-minimized #panel-minimize {
-    position: fixed;
-    top: auto;
-    right: auto;
+  #panel-handle::before {
+    content: "";
+    position: absolute;
     left: 50%;
-    bottom: calc(env(safe-area-inset-bottom) + 14px);
-    margin: 0;
+    top: 9px;
     transform: translateX(-50%);
-    width: 52px;
-    min-width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 4px;
     border-radius: 999px;
-    background: rgba(var(--paper-rgb), 0.98);
-    box-shadow: none;
-    pointer-events: auto;
-    z-index: 61;
+    background: rgba(var(--wine-rgb), 0.32);
+  }
+
+  #panel-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sheet uses the drag handle; hide the old minimize FAB, show a clear close */
+  #detail-panel #panel-minimize {
+    display: none;
+  }
+
+  #detail-panel #panel-close {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 16px;
+    right: 14px;
+    z-index: 4;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(var(--paper-rgb), 0.92);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  #detail-panel #panel-close img {
+    width: 12px;
+    height: 12px;
   }
 }

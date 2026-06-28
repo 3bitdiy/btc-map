@@ -1153,6 +1153,7 @@ function openPanel(
   panel.classList.add("is-open");
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
+  if (isMobileViewport()) setSheetSnap(48); // open the sheet at half height
 
   const photo = document.getElementById("panel-photo");
   photo.src = resolveColonyPhoto(colony);
@@ -1233,6 +1234,79 @@ function closePanel() {
   panel.classList.remove("is-intro");
   panel.setAttribute("aria-hidden", "true");
   document.getElementById("app").classList.remove("panel-open");
+}
+
+// Mobile bottom-sheet snap positions (% translateY): full / half / peek.
+const SHEET_SNAPS = [0, 48, 82];
+
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
+
+function setSheetSnap(pct) {
+  document
+    .getElementById("detail-panel")
+    .style.setProperty("--sheet-y", `${pct}%`);
+}
+
+// Drag the handle to move the sheet; on release snap to the nearest point, or
+// dismiss if dragged below the peek.
+function wireSheetDrag() {
+  const panel = document.getElementById("detail-panel");
+  const handle = document.getElementById("panel-handle");
+  if (!panel || !handle) return;
+
+  let dragging = false;
+  let startY = 0;
+  let startPct = 48;
+  let height = 1;
+
+  const currentPct = () =>
+    parseFloat(panel.style.getPropertyValue("--sheet-y")) || 48;
+
+  const onDown = (event) => {
+    if (!isMobileViewport()) return;
+    dragging = true;
+    startY = event.touches ? event.touches[0].clientY : event.clientY;
+    startPct = currentPct();
+    height = panel.offsetHeight || 1;
+    panel.classList.add("is-dragging");
+    event.preventDefault();
+  };
+
+  const onMove = (event) => {
+    if (!dragging) return;
+    const y = event.touches ? event.touches[0].clientY : event.clientY;
+    const pct = Math.min(
+      100,
+      Math.max(0, startPct + ((y - startY) / height) * 100),
+    );
+    setSheetSnap(pct);
+    event.preventDefault();
+  };
+
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.classList.remove("is-dragging");
+    const pct = currentPct();
+    if (pct > 90) {
+      closePanel();
+      return;
+    }
+    setSheetSnap(
+      SHEET_SNAPS.reduce((a, b) =>
+        Math.abs(b - pct) < Math.abs(a - pct) ? b : a,
+      ),
+    );
+  };
+
+  handle.addEventListener("touchstart", onDown, { passive: false });
+  handle.addEventListener("mousedown", onDown);
+  window.addEventListener("touchmove", onMove, { passive: false });
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("touchend", onUp);
+  window.addEventListener("mouseup", onUp);
 }
 
 function syncPanelMaximizeButtons() {
@@ -1650,6 +1724,7 @@ async function bootstrap() {
   wireFilterPanel();
   wireZoomControls();
   wirePanel();
+  wireSheetDrag();
   wireMobileSidebar();
   wireMobileFilterActions();
   applyResponsivePanelDefaults();
