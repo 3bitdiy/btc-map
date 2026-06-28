@@ -906,6 +906,7 @@ function buildMarkers() {
 
   state.markers.forEach(({ marker }) => marker.remove());
   state.markers = [];
+  if (state.map) state.markerZoom = state.map.getZoom();
 
   const visible = getVisibleColonies();
   const entries = [];
@@ -1598,16 +1599,16 @@ async function bootstrap() {
   syncMarkerScale();
   state.map.on("zoom", syncMarkerScale);
   state.map.on("zoomend", syncMarkerScale);
-  // Wheel/pinch zoom fires zoomend repeatedly while scrolling; debounce the
-  // re-cluster so markers rebuild (and animate) once, after the zoom settles.
-  let rebuildTimer = null;
-  state.map.on("zoomend", () => {
+  // Re-cluster on moveend (fires once after the whole gesture — zoom + inertia —
+  // settles), and only when the zoom actually changed, so markers rebuild and
+  // animate exactly once per zoom and never on a plain pan.
+  state.map.on("moveend", () => {
     if (!state.colonies.length) return;
-    if (rebuildTimer) clearTimeout(rebuildTimer);
-    rebuildTimer = setTimeout(() => {
-      rebuildTimer = null;
-      buildMarkers();
-    }, 160);
+    const zoom = state.map.getZoom();
+    if (state.markerZoom != null && Math.abs(zoom - state.markerZoom) < 0.05) {
+      return;
+    }
+    buildMarkers();
   });
   state.map.on("move", syncMarkerScale);
   state.map.on("load", syncMarkerScale);
