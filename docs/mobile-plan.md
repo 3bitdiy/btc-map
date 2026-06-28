@@ -1,8 +1,22 @@
-# Phase 4 — Mobile redesign plan
+# Phase 4 — Responsive redesign + desktop panel review
 
 Goal: replace the two floating circular FABs (sliders + home) with one
-**bottom sheet** for browse/details + a clear **Filters** button, using a
-drag handle instead of the tiny minimize triangle.
+**bottom sheet** for browse/details + a clear **Filters** button (drag handle
+instead of the tiny minimize triangle), AND tidy the desktop panels so desktop
+and mobile share one "panel slides in on selection" model.
+
+## Desktop panel review
+- **Minimize inconsistency:** left filter panel shows a minimize arrow; the
+  right detail panel's minimize is hidden in the intro state, so it looks like
+  only the left has one. Fix by unifying behaviour, not adding a second arrow.
+- **Vertical misalignment:** left sidebar starts at top:18, right panel at
+  top:92 → the right column sits ~74px lower. Align both to the same top/bottom.
+- **Widths:** left 273 / right 322 — the wider detail panel is fine (photo +
+  content); only minor tuning if any.
+- **Target model:** right detail panel slides in on selection / out on
+  deselect (like the mobile sheet); no manual minimize on desktop. Left filter
+  panel stays (primary control). The empty/intro state shows when nothing is
+  selected.
 
 ## Current problems
 - Two similar circles (sliders + home) → confusing.
@@ -70,12 +84,15 @@ On mobile, **split filter from browse**:
 (Desktop keeps the merged country accordion; mobile is cleaner when split.)
 
 ## Build order (incremental, commit each step)
-1. Slim top bar + "Filters" pill (replace `#filter-toggle`).
-2. Bottom-sheet shell + 3 snap points + drag handle (CSS + small JS for gestures).
-3. Browse mode (list) in the sheet.
-4. Detail mode in the sheet + tap-marker → half.
-5. Filters overlay (Country/Art/Scope + Apply).
-6. Remove old FABs; check tablet.
+1. **Desktop:** align panel tops/bottoms + hide the manual minimize on desktop
+   (consistency). Low risk.
+2. **Desktop:** right detail panel slides in on selection / out on deselect;
+   drop the inconsistent minimize arrow. (Mirrors the mobile sheet.)
+3. Mobile: slim top bar + "Filters" pill (replace `#filter-toggle`).
+4. Mobile: bottom-sheet shell + 3 snap points + drag handle (CSS + small JS).
+5. Mobile: browse (list) + detail in the sheet; tap-marker → half.
+6. Mobile: Filters overlay (Country/Art/Scope + Apply).
+7. Remove old FABs; check tablet.
 
 ## Notes / open questions
 - Reuse desktop intro/empty-state copy for the sheet's empty state.
