@@ -714,6 +714,7 @@ function openLocationPicker(colonies, coords) {
     offset: 22,
     closeButton: true,
     closeOnClick: true,
+    focusAfterOpen: false,
     className: "loc-popup",
     maxWidth: "260px",
   })

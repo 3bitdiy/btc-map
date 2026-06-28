@@ -1287,16 +1287,16 @@ ul {
   border-color: var(--rose);
 }
 
-/* Replace the browser's blue focus ring (the popup focuses the first item on
-   open) with a themed one, shown only for keyboard navigation. */
+/* Themed keyboard focus ring (single line, not the browser blue). The popup no
+   longer auto-focuses on open, so this only shows on keyboard navigation. */
 .loc-picker__item:focus {
   outline: none;
 }
 
 .loc-picker__item:focus-visible {
-  outline: 2px solid var(--rose);
-  outline-offset: 1px;
+  outline: none;
   border-color: var(--rose);
+  box-shadow: 0 0 0 1px var(--rose);
 }
 
 #panel-marker-icon {
