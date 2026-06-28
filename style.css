@@ -704,6 +704,12 @@ ul {
   color: var(--rose);
 }
 
+/* "Filters" pill bits — only shown on the minimized mobile filter button */
+.minimize-label,
+.minimize-badge {
+  display: none;
+}
+
 .minimize-icon svg {
   width: 22px;
   height: 22px;
@@ -1496,17 +1502,47 @@ ul {
 
   #filter-card.is-minimized #filter-minimize {
     display: inline-flex;
+    align-items: center;
+    gap: 9px;
     position: absolute;
     left: 50%;
     top: 10px;
     bottom: auto;
     transform: translateX(-50%);
-    width: 50px;
-    min-width: 50px;
-    height: 50px;
+    width: auto;
+    min-width: 0;
+    height: 46px;
+    padding: 0 18px;
     border-radius: 999px;
     background: rgba(var(--paper-rgb), 0.98);
-    box-shadow: none;
+    box-shadow: 0 6px 18px rgba(var(--wine-rgb), 0.2);
+  }
+
+  #filter-card.is-minimized #filter-minimize .minimize-icon {
+    color: var(--wine);
+  }
+
+  #filter-card.is-minimized #filter-minimize .minimize-label {
+    display: inline;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--wine);
+  }
+
+  #filter-card.is-minimized #filter-minimize.has-active .minimize-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--rose);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   #filter-content {

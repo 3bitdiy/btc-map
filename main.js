@@ -1360,24 +1360,32 @@ function buildDisciplineFilters() {
 }
 
 function updateFilterToggleBadge() {
-  const badge = document.getElementById("filter-active-badge");
-  const toggle = document.getElementById("filter-toggle");
-  if (!badge || !toggle) return;
-
   const activeCount =
     Math.max(0, DEFAULT_COUNTRIES.length - state.activeCountries.size) +
     Math.max(0, state.allDisciplines.size - state.activeDisciplines.size) +
     Math.max(0, DEFAULT_SCOPES.length - state.activeScopes.size);
 
-  badge.textContent = String(activeCount);
-  badge.classList.toggle("is-visible", activeCount > 0);
-  badge.setAttribute("aria-hidden", activeCount > 0 ? "false" : "true");
-  toggle.setAttribute(
-    "aria-label",
-    activeCount > 0
-      ? `Toggle filters (${activeCount} active)`
-      : "Toggle filters",
-  );
+  const badge = document.getElementById("filter-active-badge");
+  const toggle = document.getElementById("filter-toggle");
+  if (badge && toggle) {
+    badge.textContent = String(activeCount);
+    badge.classList.toggle("is-visible", activeCount > 0);
+    badge.setAttribute("aria-hidden", activeCount > 0 ? "false" : "true");
+    toggle.setAttribute(
+      "aria-label",
+      activeCount > 0
+        ? `Toggle filters (${activeCount} active)`
+        : "Toggle filters",
+    );
+  }
+
+  // Mobile "Filters" pill (the minimized filter button)
+  const pillBadge = document.getElementById("filter-minimize-badge");
+  const pill = document.getElementById("filter-minimize");
+  if (pillBadge && pill) {
+    pillBadge.textContent = String(activeCount);
+    pill.classList.toggle("has-active", activeCount > 0);
+  }
 }
 
 function wirePillVisuals() {
