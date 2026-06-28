@@ -599,6 +599,22 @@ function makeMarkerLabel(text) {
   return label;
 }
 
+// Inner wrapper holding the icon, optional count badge and place label. It's
+// the part we slide on rebuild so markers animate apart/together on zoom.
+function makeMarkerInner(iconColony, countText, placeText) {
+  const inner = document.createElement("div");
+  inner.className = "map-marker__inner";
+  inner.innerHTML = markerIconMarkup(iconColony);
+  if (countText != null) {
+    const count = document.createElement("span");
+    count.className = "map-marker__count";
+    count.textContent = countText;
+    inner.appendChild(count);
+  }
+  inner.appendChild(makeMarkerLabel(placeText));
+  return inner;
+}
+
 // Shared hover tooltip (desktop) — built lazily, follows the cursor.
 let mapTooltipEl = null;
 
@@ -633,8 +649,7 @@ function createMarkerElement(colony, focusCoords = null) {
   el.type = "button";
   el.className = "map-marker";
   el.setAttribute("aria-label", getColonyName(colony));
-  el.innerHTML = markerIconMarkup(colony);
-  el.appendChild(makeMarkerLabel(getColonyShortPlace(colony)));
+  el.appendChild(makeMarkerInner(colony, null, getColonyShortPlace(colony)));
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -653,8 +668,13 @@ function createClusterElement(cluster) {
   el.type = "button";
   el.className = "map-marker map-marker--cluster";
   el.setAttribute("aria-label", `${count} colonies in this area`);
-  el.innerHTML = `${markerIconMarkup(cluster.colonies[0])}<span class="map-marker__count">${count}</span>`;
-  el.appendChild(makeMarkerLabel(getColonyShortPlace(cluster.colonies[0])));
+  el.appendChild(
+    makeMarkerInner(
+      cluster.colonies[0],
+      String(count),
+      getColonyShortPlace(cluster.colonies[0]),
+    ),
+  );
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -871,6 +891,19 @@ function onClusterClick(cluster) {
 }
 
 function buildMarkers() {
+  // Remember where each colony's marker sat (screen pixels) so the rebuilt
+  // markers can slide from there to their new spot — i.e. animate apart on
+  // zoom-in and together on zoom-out.
+  const prevPositions = new Map();
+  if (state.map) {
+    state.markers.forEach(({ marker, colonies }) => {
+      const point = state.map.project(marker.getLngLat());
+      colonies.forEach((colony) => {
+        if (!prevPositions.has(colony.id)) prevPositions.set(colony.id, point);
+      });
+    });
+  }
+
   state.markers.forEach(({ marker }) => marker.remove());
   state.markers = [];
 
@@ -898,11 +931,49 @@ function buildMarkers() {
       .setLngLat([cluster.coords.longitude, cluster.coords.latitude])
       .addTo(state.map);
 
+    animateMarkerFrom(element, cluster, prevPositions);
     state.markers.push({ marker, colonies: cluster.colonies });
   });
 
   updateMarkerSelection();
   return visible;
+}
+
+// Slide a freshly-built marker from where one of its colonies previously sat to
+// its new position, so clusters visibly split/merge on zoom instead of snapping.
+function animateMarkerFrom(element, cluster, prevPositions) {
+  if (!state.map || prevPositions.size === 0) return;
+
+  let source = null;
+  for (const colony of cluster.colonies) {
+    if (prevPositions.has(colony.id)) {
+      source = prevPositions.get(colony.id);
+      break;
+    }
+  }
+  if (!source) return;
+
+  const target = state.map.project([
+    cluster.coords.longitude,
+    cluster.coords.latitude,
+  ]);
+  const dx = source.x - target.x;
+  const dy = source.y - target.y;
+  if (Math.hypot(dx, dy) < 2) return;
+
+  const inner = element.querySelector(".map-marker__inner");
+  if (!inner) return;
+
+  inner.style.transition = "none";
+  inner.style.transform = `translate(${dx}px, ${dy}px)`;
+  inner.style.opacity = "0.55";
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      inner.style.transition = "";
+      inner.style.transform = "";
+      inner.style.opacity = "";
+    });
+  });
 }
 
 function updateMarkerSelection() {
