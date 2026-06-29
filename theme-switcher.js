@@ -104,7 +104,10 @@ function renderSwitcher() {
     .addEventListener("click", () => setOpen(false));
 
   document.body.appendChild(wrap);
-  document.body.appendChild(toggle);
+  // On the map, tuck the palette button into the zoom-control stack so all map
+  // controls sit together (and move together when the detail panel opens).
+  const zoomControls = document.getElementById("map-zoom-controls");
+  (zoomControls || document.body).appendChild(toggle);
 }
 
 // Shareable preview links: ?theme=<id> applies a palette on load.

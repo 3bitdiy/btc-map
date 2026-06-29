@@ -98,11 +98,43 @@ ul {
   height: 17px;
 }
 
-/* Phones rely on native pinch-zoom; hide the buttons to keep the UI uncluttered */
+/* Phones rely on native pinch-zoom; keep only reset-to-region (+ palette) */
 @media (max-width: 767px) {
-  #map-zoom-controls {
+  #map-zoom-controls #zoom-in,
+  #map-zoom-controls #zoom-out {
     display: none;
   }
+}
+
+/* Palette toggle tucked into the zoom-control stack (see theme-switcher.js) */
+#map-zoom-controls .theme-toggle {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+#map-zoom-controls .theme-toggle:hover {
+  transform: none;
+}
+
+/* Palette panel opens to the left of the control stack, bottom-right */
+.map-page .theme-switcher {
+  left: auto;
+  right: 72px;
+  bottom: 28px;
+  transform: translateY(8px);
+}
+
+.map-page .theme-switcher.is-open {
+  transform: translateY(0);
+}
+
+.map-page #app.panel-open ~ .theme-switcher {
+  right: 408px;
 }
 
 #filter-toggle {
