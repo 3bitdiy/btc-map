@@ -755,7 +755,7 @@ function openLocationPicker(colonies, coords) {
   content.appendChild(list);
 
   const popup = new maplibregl.Popup({
-    offset: 22,
+    offset: 72, // clear the marker and its place-name label pill
     anchor: "top", // open below the (now centred) marker
     closeButton: true,
     closeOnClick: true,
@@ -1190,7 +1190,7 @@ function openPanel(
     // On mobile the half sheet covers the bottom; lift the target up so the
     // colony lands centred in the map strip that stays visible above it.
     if (isMobileViewport()) {
-      flyOpts.offset = [0, -Math.round(window.innerHeight * 0.23)];
+      flyOpts.offset = [0, -Math.round(window.innerHeight * 0.14)];
     }
     state.map.flyTo(flyOpts);
   }
