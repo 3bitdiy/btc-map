@@ -1109,7 +1109,7 @@ function renderCountryAccordion() {
     expand.innerHTML = `
       <span class="country-name">${country}</span>
       <span class="country-count">${colonies.length}</span>
-      <img class="country-caret" src="/assets/icons/caret-down.svg" alt="" />
+      <span class="country-caret" aria-hidden="true"></span>
     `;
 
     header.appendChild(toggle);

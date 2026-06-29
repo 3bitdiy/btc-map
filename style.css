@@ -421,11 +421,43 @@ ul {
   text-align: center;
 }
 
-.country-caret {
+/* Masked icons so the accent colour follows the theme (the SVGs are red) */
+.country-caret,
+.row-caret,
+.panel-x {
+  display: inline-block;
   flex: 0 0 auto;
+  background: var(--rose);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.country-caret,
+.row-caret {
+  -webkit-mask-image: url(/assets/icons/caret-down.svg);
+  mask-image: url(/assets/icons/caret-down.svg);
+  transition: transform 0.18s ease;
+}
+
+.country-caret {
   width: 13px;
   height: 13px;
-  transition: transform 0.18s ease;
+}
+
+.row-caret {
+  width: 14px;
+  height: 14px;
+}
+
+.panel-x {
+  width: 12px;
+  height: 12px;
+  -webkit-mask-image: url(/assets/icons/x.svg);
+  mask-image: url(/assets/icons/x.svg);
 }
 
 .country-expand[aria-expanded="true"] .country-caret {
@@ -509,13 +541,7 @@ ul {
   padding: 0 13px;
 }
 
-.select-row img {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.18s ease;
-}
-
-.select-row[aria-expanded="true"] img {
+.select-row[aria-expanded="true"] .row-caret {
   transform: rotate(180deg);
 }
 
@@ -1366,7 +1392,7 @@ ul {
   padding: 0 calc(var(--badge) * 0.22);
   border-radius: 999px;
   background: var(--rose);
-  color: #fff;
+  color: var(--on-accent);
   font-size: calc(var(--badge) * 0.6);
   font-weight: 700;
   line-height: var(--badge);

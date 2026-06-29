@@ -14,6 +14,9 @@
   /* Decorative accent (hero blob / brand blob). Tracks --rose unless a theme
      sets its own bolder shade. */
   --accent-2: var(--rose);
+  /* Text/icon colour that sits on top of the --rose accent (count badges,
+     selected marker). White by default; themes with a light accent override. */
+  --on-accent: #fff;
 }
 
 /* Adriatic — cool teal + coral, Mediterranean light */
@@ -31,21 +34,6 @@ html[data-theme="adriatic"] {
   --map-bg: #aabfc4;
 }
 
-/* Olive — earthy warm green */
-html[data-theme="olive"] {
-  --ink: #1e2410;
-  --wine: #4f5d2f;
-  --rose: #cf7a3a;
-  --sand: #e9e6cf;
-  --paper: #f4f1df;
-  --paper-2: #eee9d2;
-  --wine-rgb: 79, 93, 47;
-  --rose-rgb: 207, 122, 58;
-  --paper-rgb: 244, 241, 223;
-  --map-land: #e3dec2;
-  --map-bg: #b7c1a4;
-}
-
 /* Modern — high-contrast mono with a vivid accent */
 html[data-theme="modern"] {
   --ink: #000000;
@@ -61,51 +49,23 @@ html[data-theme="modern"] {
   --map-bg: #d0d0cc;
 }
 
-/* Lime — Goethe-Institut inspired: near-black text, deep grass-green accent,
-   and the signature lime (#a0c814) as the decorative blob */
+/* Lime — Goethe-Institut inspired: near-black text and the signature lime
+   (#a0c814) as the main accent (marker counts, selected colonies, blob) */
 html[data-theme="lime"] {
   --ink: #11140b;
   --wine: #1f2614;
-  --rose: #4f7d12;
+  --rose: #a0c814;
   --accent-2: #a0c814;
+  /* lime is too light for white text — use the dark ink on accents */
+  --on-accent: #1f2614;
   --sand: #f1f3e8;
   --paper: #fbfcf6;
   --paper-2: #f3f6e6;
   --wine-rgb: 31, 38, 20;
-  --rose-rgb: 79, 125, 18;
+  --rose-rgb: 160, 200, 20;
   --paper-rgb: 251, 252, 246;
   --map-land: #e7eed0;
   --map-bg: #c3cda6;
-}
-
-/* Clay — warm earth, from Color Hunt 607456·eee0cc·ba6a4c·7b2525 */
-html[data-theme="clay"] {
-  --ink: #2a1410;
-  --wine: #7b2525;
-  --rose: #ba6a4c;
-  --sand: #eee0cc;
-  --paper: #f6ecd8;
-  --paper-2: #efe2c9;
-  --wine-rgb: 123, 37, 37;
-  --rose-rgb: 186, 106, 76;
-  --paper-rgb: 246, 236, 216;
-  --map-land: #ece0c2;
-  --map-bg: #c6c2a2;
-}
-
-/* Navy — navy + cream + brown, from Color Hunt 0a2947·f3e4c9·d3d4c0·8b5e3c */
-html[data-theme="navy"] {
-  --ink: #061726;
-  --wine: #0a2947;
-  --rose: #8b5e3c;
-  --sand: #f3e4c9;
-  --paper: #f9efd9;
-  --paper-2: #f1e2c4;
-  --wine-rgb: 10, 41, 71;
-  --rose-rgb: 139, 94, 60;
-  --paper-rgb: 249, 239, 217;
-  --map-land: #ece0c2;
-  --map-bg: #b9c3b0;
 }
 
 /* Emerald — green/teal/mint/cream, from Color Hunt 1a312c·428475·89d7b7·fff4e1 */
@@ -122,38 +82,6 @@ html[data-theme="emerald"] {
   --paper-rgb: 255, 249, 236;
   --map-land: #e3efdc;
   --map-bg: #b6cabf;
-}
-
-/* Terra — cream/sage/ochre/brown, from Color Hunt f7f1de·b0ba99·9d6638·4e220f */
-html[data-theme="terra"] {
-  --ink: #2a1408;
-  --wine: #4e220f;
-  --rose: #9d6638;
-  --accent-2: #b0ba99;
-  --sand: #f7f1de;
-  --paper: #fbf7e9;
-  --paper-2: #f2ecd6;
-  --wine-rgb: 78, 34, 15;
-  --rose-rgb: 157, 102, 56;
-  --paper-rgb: 251, 247, 233;
-  --map-land: #ece4cb;
-  --map-bg: #c3c3a6;
-}
-
-/* Cobalt — blues, from Color Hunt 112e81·4647ae·4382df·aaccd6 */
-html[data-theme="cobalt"] {
-  --ink: #0a1840;
-  --wine: #112e81;
-  --rose: #4647ae;
-  --accent-2: #4382df;
-  --sand: #eaf1f6;
-  --paper: #f6f9fb;
-  --paper-2: #e6eef5;
-  --wine-rgb: 17, 46, 129;
-  --rose-rgb: 70, 71, 174;
-  --paper-rgb: 246, 249, 251;
-  --map-land: #dce7ef;
-  --map-bg: #aebfcf;
 }
 
 /* Forest — muted greens + slate, from Color Hunt 9cb080·618764·2b5748·273338 */

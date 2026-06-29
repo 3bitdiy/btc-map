@@ -7,14 +7,9 @@
 const THEMES = [
   { id: "", name: "Terracotta", swatch: ["#8d313a", "#eb5160", "#edd1aa"] },
   { id: "adriatic", name: "Adriatic", swatch: ["#14616b", "#ef6f53", "#e7eef0"] },
-  { id: "olive", name: "Olive", swatch: ["#4f5d2f", "#cf7a3a", "#e9e6cf"] },
   { id: "modern", name: "Modern", swatch: ["#1c1c1c", "#ff4326", "#f1f1ee"] },
-  { id: "lime", name: "Lime", swatch: ["#1f2614", "#4f7d12", "#a0c814"] },
-  { id: "clay", name: "Clay", swatch: ["#7b2525", "#ba6a4c", "#eee0cc"] },
-  { id: "navy", name: "Navy", swatch: ["#0a2947", "#8b5e3c", "#f3e4c9"] },
+  { id: "lime", name: "Lime", swatch: ["#1f2614", "#a0c814", "#a0c814"] },
   { id: "emerald", name: "Emerald", swatch: ["#1a312c", "#428475", "#89d7b7"] },
-  { id: "terra", name: "Terra", swatch: ["#4e220f", "#9d6638", "#b0ba99"] },
-  { id: "cobalt", name: "Cobalt", swatch: ["#112e81", "#4382df", "#aaccd6"] },
   { id: "forest", name: "Forest", swatch: ["#273338", "#618764", "#9cb080"] },
 ];
 const THEME_KEY = "btc-theme";
