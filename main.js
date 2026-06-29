@@ -1176,7 +1176,7 @@ function openPanel(
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
   if (isMobileViewport()) {
-    setSheetSnap(48); // open the sheet at half height
+    setSheetSnap(0); // open the sheet at full height
     setFilterPanelMinimized(true); // and collapse filters — one panel at a time
   }
 
@@ -1261,8 +1261,9 @@ function closePanel() {
   document.getElementById("app").classList.remove("panel-open");
 }
 
-// Mobile bottom-sheet snap positions (% translateY): full / half / peek.
-const SHEET_SNAPS = [0, 48, 82];
+// Mobile bottom sheet is two-state: open at full height, drag down past this
+// fraction to dismiss (otherwise it springs back up).
+const SHEET_CLOSE_PCT = 28;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 767px)").matches;
@@ -1314,16 +1315,9 @@ function wireSheetDrag() {
     if (!dragging) return;
     dragging = false;
     panel.classList.remove("is-dragging");
-    const pct = currentPct();
-    if (pct > 90) {
-      closePanel();
-      return;
-    }
-    setSheetSnap(
-      SHEET_SNAPS.reduce((a, b) =>
-        Math.abs(b - pct) < Math.abs(a - pct) ? b : a,
-      ),
-    );
+    // Dragged down far enough → dismiss; otherwise spring back to full.
+    if (currentPct() > SHEET_CLOSE_PCT) closePanel();
+    else setSheetSnap(0);
   };
 
   handle.addEventListener("touchstart", onDown, { passive: false });
@@ -1734,6 +1728,10 @@ async function bootstrap() {
   // on the bare map, not on a marker).
   state.map.on("click", () => {
     if (state.selectedColony) closePanel();
+    // On mobile a bare-map tap also tucks the filters away (one tap clears all).
+    if (isMobileViewport() && !state.filterPanelMinimized) {
+      setFilterPanelMinimized(true);
+    }
   });
 
   // Track load synchronously so the async data fetch below can't miss it.
