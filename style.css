@@ -1270,15 +1270,29 @@ ul {
     opacity 0.42s ease;
 }
 
+/* Light rounded card behind the house so the marker reads as two solid palette
+   colours (dark house on light card) instead of a see-through silhouette. */
+.map-marker__inner::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  background: var(--paper);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(var(--wine-rgb), 0.3);
+  z-index: 0;
+}
+
 .map-marker__icon {
   display: block;
+  position: relative;
+  z-index: 1;
   width: calc(49px * var(--marker-zoom-scale));
   height: calc(33px * var(--marker-zoom-scale));
   background: var(--ink);
-  /* Light halo so the silhouette separates from the map and from overlapping
-     markers (their lines no longer read as part of this one). */
-  filter: drop-shadow(0 0 1.1px rgba(var(--paper-rgb), 1))
-    drop-shadow(0 0 1.1px rgba(var(--paper-rgb), 1));
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -1296,17 +1310,21 @@ ul {
 }
 
 .map-marker.is-selected {
-  width: calc(87px * var(--marker-zoom-scale));
-  height: calc(87px * var(--marker-zoom-scale));
-  border-radius: 999px;
-  border: 1px solid var(--rose);
-  background: var(--sand);
-  display: grid;
-  place-items: center;
+  z-index: 3;
+}
+
+/* Selected → invert the card: accent background, light house, a touch bigger */
+.map-marker.is-selected .map-marker__inner {
+  transform: scale(1.18);
+}
+
+.map-marker.is-selected .map-marker__inner::before {
+  background: var(--rose);
+  box-shadow: 0 3px 8px rgba(var(--wine-rgb), 0.4);
 }
 
 .map-marker.is-selected .map-marker__icon {
-  background: var(--rose);
+  background: var(--paper);
 }
 
 /* Place label under the marker — shown only when zoomed in (see syncMarkerScale) */
