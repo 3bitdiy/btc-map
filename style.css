@@ -1553,7 +1553,9 @@ ul {
     grid-template-rows: minmax(0, 1fr) auto;
     flex: 0 0 auto;
     min-height: 0;
-    height: var(--mobile-panel-max-height);
+    /* Grow with the content (compact when accordions are closed), capped so it
+       never outgrows the screen — then the list scrolls. */
+    height: auto;
     max-height: var(--mobile-panel-max-height);
     margin-top: 10px;
     padding: 14px 16px 0;
