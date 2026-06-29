@@ -557,12 +557,16 @@ function getRegionBounds(colonies) {
   return extended ? bounds : null;
 }
 
-// Padding (px) kept clear of the left sidebar (~291px). The detail panel now
-// slides in only on selection, so the region is framed for the full width.
+// Padding (px) kept clear of the left sidebar (~291px) and, when it's open, the
+// right detail panel — so reset-to-region centres the visible map, not the
+// whole width hidden behind the panel.
 function getFitPadding() {
   const mode = getViewportMode();
+  const panelOpen = document
+    .getElementById("app")
+    .classList.contains("panel-open");
   if (mode === "desktop") {
-    return { top: 96, right: 60, bottom: 48, left: 312 };
+    return { top: 96, right: panelOpen ? 360 : 60, bottom: 48, left: 312 };
   }
   if (mode === "tablet") {
     return { top: 80, right: 60, bottom: 80, left: 60 };
@@ -845,6 +849,9 @@ function clusterEntries(entries) {
 // they split apart; if they share (almost) the same spot — or we're already at
 // max zoom — let the visitor pick from a list instead.
 function onClusterClick(cluster) {
+  // Drilling into a cluster: drop any previously selected marker/panel.
+  if (state.selectedColony) closePanel();
+
   let minLat = 90;
   let maxLat = -90;
   let minLng = 180;
@@ -884,14 +891,25 @@ function onClusterClick(cluster) {
   if (maxGap <= thresholdPx || atMaxZoom) {
     openLocationPicker(cluster.colonies, cluster.coords);
   } else {
+    // Generous, viewport-aware padding so every child stays in view (markers
+    // are large at this zoom), and a slower glide so the split isn't jarring.
     state.map.fitBounds(
       [
         [minLng, minLat],
         [maxLng, maxLat],
       ],
-      { padding: 110, maxZoom: fitMaxZoom, animate: true },
+      { padding: getClusterPadding(), maxZoom: fitMaxZoom, duration: 850 },
     );
   }
+}
+
+// Padding for the zoom-to-split fit: clears the left sidebar and leaves room
+// for the (large) marker icons so split children never land off-screen.
+function getClusterPadding() {
+  const mode = getViewportMode();
+  if (mode === "desktop") return { top: 110, right: 100, bottom: 90, left: 330 };
+  if (mode === "tablet") return { top: 100, right: 80, bottom: 100, left: 80 };
+  return { top: 90, right: 60, bottom: 90, left: 60 };
 }
 
 // Identity of a single marker entry: a colony AT a specific location. Keyed by
