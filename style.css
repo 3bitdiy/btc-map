@@ -317,6 +317,11 @@ ul {
   display: none;
 }
 
+/* "Done" closes the filter — mobile only (shown in the mobile media block) */
+#filter-done-btn {
+  display: none;
+}
+
 .filter-group {
   position: relative;
   z-index: 2;
@@ -1559,6 +1564,32 @@ ul {
     max-height: var(--mobile-panel-max-height);
     margin-top: 10px;
     padding: 14px 16px 0;
+  }
+
+  #filter-done-btn {
+    display: block;
+    width: 100%;
+    margin: 10px 0 14px;
+    padding: 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--wine);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  #filter-card.is-minimized #filter-done-btn {
+    display: none;
+  }
+
+  /* When expanded, "Done" is the close — drop the old caret tab */
+  #filter-card:not(.is-minimized) #filter-minimize {
+    display: none;
   }
 
   #filter-minimize {

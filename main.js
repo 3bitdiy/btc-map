@@ -1605,6 +1605,10 @@ function wireFilterPanel() {
     // On mobile only one panel at a time: opening filters dismisses the sheet.
     if (expanding && isMobileViewport() && state.selectedColony) closePanel();
   });
+
+  document
+    .getElementById("filter-done-btn")
+    ?.addEventListener("click", () => setFilterPanelMinimized(true));
 }
 
 function wireZoomControls() {
