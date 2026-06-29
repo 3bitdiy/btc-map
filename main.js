@@ -1182,7 +1182,7 @@ function openPanel(
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
   if (isMobileViewport()) {
-    setSheetSnap(SHEET_HALF); // open partway so the fly-to stays visible above
+    snapSheet(SHEET_HALF); // open partway so the fly-to stays visible above
     setFilterPanelMinimized(true); // and collapse filters — one panel at a time
   }
 
@@ -1282,6 +1282,21 @@ function setSheetSnap(pct) {
     .style.setProperty("--sheet-y", `${pct}%`);
 }
 
+// Settle the sheet at a snap AND cap the scrollable content to the part that's
+// actually on screen, so the content scrolls at half height (not only at full).
+function snapSheet(pct) {
+  const panel = document.getElementById("detail-panel");
+  setSheetSnap(pct);
+  const content = document.getElementById("panel-content");
+  if (!content) return;
+  if (pct <= 4) {
+    content.style.maxHeight = "";
+  } else {
+    const visible = panel.offsetHeight * (1 - pct / 100) - 40;
+    content.style.maxHeight = `${Math.max(140, Math.round(visible))}px`;
+  }
+}
+
 // Drag the handle to move the sheet; on release snap to the nearest point, or
 // dismiss if dragged below the peek.
 function wireSheetDrag() {
@@ -1327,8 +1342,8 @@ function wireSheetDrag() {
     const pct = currentPct();
     // Past half → dismiss; near the top → full; otherwise rest at half.
     if (pct > 70) closePanel();
-    else if (pct < 24) setSheetSnap(SHEET_FULL);
-    else setSheetSnap(SHEET_HALF);
+    else if (pct < 24) snapSheet(SHEET_FULL);
+    else snapSheet(SHEET_HALF);
   };
 
   handle.addEventListener("touchstart", onDown, { passive: false });

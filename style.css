@@ -1748,7 +1748,7 @@ ul {
   #panel-handle {
     display: block;
     flex: 0 0 auto;
-    height: 24px;
+    height: 40px;
     position: relative;
     cursor: grab;
     touch-action: none;
@@ -1758,12 +1758,12 @@ ul {
     content: "";
     position: absolute;
     left: 50%;
-    top: 9px;
+    top: 16px;
     transform: translateX(-50%);
-    width: 42px;
-    height: 4px;
+    width: 48px;
+    height: 5px;
     border-radius: 999px;
-    background: rgba(var(--wine-rgb), 0.32);
+    background: rgba(var(--wine-rgb), 0.34);
   }
 
   #panel-content {

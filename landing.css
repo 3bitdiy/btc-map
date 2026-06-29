@@ -488,9 +488,15 @@ em {
 }
 
 .site-foot__logo {
+  display: block;
   width: 116px;
-  height: auto;
+  height: 55px;
   margin: 26px auto 0;
+  /* Masked so the cream wordmark takes the theme's paper tone */
+  background: var(--paper);
+  -webkit-mask: url(/assets/images/goethe-institut-light.svg) center / contain
+    no-repeat;
+  mask: url(/assets/images/goethe-institut-light.svg) center / contain no-repeat;
 }
 
 .site-foot__meta {
