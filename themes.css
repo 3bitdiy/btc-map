@@ -59,9 +59,9 @@ html[data-theme="lime"] {
   --ink: #11140b;
   --wine: #1f2614;
   --rose: #a0c814;
-  /* deeper grass-green for the decorative blob, distinct from the light accent */
-  --accent-2: #4f7d12;
-  /* and the same deep green for the panel + selected marker */
+  /* light lime for the decorative blobs (brand-card / hero) */
+  --accent-2: #a0c814;
+  /* deep green for the panel + selected marker + filter numbers */
   --accent-deep: #4f7d12;
   /* lime is too light for white text — use the dark ink on accents */
   --on-accent: #1f2614;

@@ -413,8 +413,8 @@ ul {
   flex: 0 0 auto;
   font-size: 12px;
   font-weight: 700;
-  color: var(--rose);
-  background: rgba(var(--rose-rgb), 0.12);
+  color: var(--accent-deep);
+  background: rgba(var(--rose-rgb), 0.22);
   border-radius: 999px;
   padding: 1px 8px;
   min-width: 24px;
@@ -717,12 +717,14 @@ ul {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: var(--rose);
 }
 
 .round-check-icon img {
   width: 14px;
   height: 14px;
+  /* check.svg is red; force it white over the accent circle */
+  filter: brightness(0) invert(1);
 }
 
 .pill-light {
@@ -1097,13 +1099,9 @@ ul {
 }
 
 #panel-location {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 3px 11px;
-  border-radius: 999px;
-  background: var(--accent-deep);
-  color: #fff;
-  font-size: 12px;
+  margin-top: 4px;
+  color: var(--accent-deep);
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1142,7 +1140,7 @@ ul {
   border: 1px solid var(--rose);
   border-radius: 999px;
   background: var(--rose);
-  color: var(--on-accent);
+  color: #fff;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
