@@ -325,8 +325,8 @@ em {
 
 /* ---------- Map CTA band ---------- */
 .map-cta {
-  background: linear-gradient(135deg, var(--wine), var(--rose));
-  color: #fff;
+  background: var(--rose);
+  color: var(--on-accent);
   padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 64px);
   text-align: center;
 }
@@ -337,11 +337,12 @@ em {
 }
 
 .map-cta .section__label {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--on-accent);
+  opacity: 0.82;
 }
 
 .map-cta .section__title {
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .map-cta__text {
@@ -350,7 +351,8 @@ em {
   font-size: clamp(15px, 1.6vw, 18px);
   line-height: 1.6;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--on-accent);
+  opacity: 0.92;
 }
 
 .stats {
@@ -373,7 +375,8 @@ em {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--on-accent);
+  opacity: 0.85;
 }
 
 .map-cta .btn--primary {

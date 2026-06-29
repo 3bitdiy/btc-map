@@ -373,11 +373,31 @@ ul {
   flex: 0 0 auto;
 }
 
+/* Custom checkbox so the check is always white (native accent-color renders a
+   dark check on light accents like Lime/Adriatic). */
 .country-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  accent-color: var(--rose);
+  border: 1.5px solid var(--rose);
+  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
+  position: relative;
+}
+
+.country-toggle input[type="checkbox"]:checked {
+  background: var(--rose);
+}
+
+.country-toggle input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  -webkit-mask: url(/assets/icons/check.svg) center / 11px no-repeat;
+  mask: url(/assets/icons/check.svg) center / 11px no-repeat;
 }
 
 .country-expand {
@@ -1118,7 +1138,7 @@ ul {
   width: 84px;
   height: 84px;
   border-radius: 999px;
-  border: 1px solid var(--accent-deep);
+  border: 1px solid var(--rose);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -1302,14 +1322,14 @@ ul {
   width: calc(87px * var(--marker-zoom-scale));
   height: calc(87px * var(--marker-zoom-scale));
   border-radius: 999px;
-  border: 1px solid var(--accent-deep);
+  border: 1px solid var(--rose);
   background: var(--sand);
   display: grid;
   place-items: center;
 }
 
 .map-marker.is-selected .map-marker__icon {
-  background: var(--accent-deep);
+  background: var(--rose);
 }
 
 /* Place label under the marker — shown only when zoomed in (see syncMarkerScale) */
@@ -1475,7 +1495,7 @@ ul {
 
 #panel-marker-icon {
   display: block;
-  background: var(--accent-deep);
+  background: var(--rose);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
