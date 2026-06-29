@@ -1163,10 +1163,16 @@ function openPanel(
   const coords = focusCoordinates || getColonyCoordinates(colony) || fallback;
 
   if (focusMap && state.map && coords) {
-    state.map.flyTo({
+    const flyOpts = {
       center: [coords.longitude, coords.latitude],
       zoom: Math.max(state.map.getZoom(), focusZoom),
-    });
+    };
+    // On mobile the half sheet covers the bottom; lift the target up so the
+    // colony lands centred in the map strip that stays visible above it.
+    if (isMobileViewport()) {
+      flyOpts.offset = [0, -Math.round(window.innerHeight * 0.23)];
+    }
+    state.map.flyTo(flyOpts);
   }
 
   const panel = document.getElementById("detail-panel");
@@ -1176,7 +1182,7 @@ function openPanel(
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
   if (isMobileViewport()) {
-    setSheetSnap(0); // open the sheet at full height
+    setSheetSnap(SHEET_HALF); // open partway so the fly-to stays visible above
     setFilterPanelMinimized(true); // and collapse filters — one panel at a time
   }
 
@@ -1261,9 +1267,10 @@ function closePanel() {
   document.getElementById("app").classList.remove("panel-open");
 }
 
-// Mobile bottom sheet is two-state: open at full height, drag down past this
-// fraction to dismiss (otherwise it springs back up).
-const SHEET_CLOSE_PCT = 28;
+// Mobile bottom-sheet snap positions (% translateY): full and half. Open at
+// half so the fly-to stays visible; drag up to full, down past half to close.
+const SHEET_FULL = 0;
+const SHEET_HALF = 48;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 767px)").matches;
@@ -1284,11 +1291,13 @@ function wireSheetDrag() {
 
   let dragging = false;
   let startY = 0;
-  let startPct = 48;
+  let startPct = SHEET_HALF;
   let height = 1;
 
-  const currentPct = () =>
-    parseFloat(panel.style.getPropertyValue("--sheet-y")) || 48;
+  const currentPct = () => {
+    const value = parseFloat(panel.style.getPropertyValue("--sheet-y"));
+    return Number.isFinite(value) ? value : SHEET_HALF;
+  };
 
   const onDown = (event) => {
     if (!isMobileViewport()) return;
@@ -1315,9 +1324,11 @@ function wireSheetDrag() {
     if (!dragging) return;
     dragging = false;
     panel.classList.remove("is-dragging");
-    // Dragged down far enough → dismiss; otherwise spring back to full.
-    if (currentPct() > SHEET_CLOSE_PCT) closePanel();
-    else setSheetSnap(0);
+    const pct = currentPct();
+    // Past half → dismiss; near the top → full; otherwise rest at half.
+    if (pct > 70) closePanel();
+    else if (pct < 24) setSheetSnap(SHEET_FULL);
+    else setSheetSnap(SHEET_HALF);
   };
 
   handle.addEventListener("touchstart", onDown, { passive: false });

@@ -127,6 +127,7 @@ em {
 
 .site-bar__name em {
   font-weight: 400;
+  text-transform: none;
 }
 
 /* ---------- Hero ---------- */

@@ -226,6 +226,14 @@ ul {
   content: none;
 }
 
+/* Whole brand (logo + title) is one link home; contents keeps the existing
+   absolute/flow layout of its children intact. */
+.brand-link {
+  display: contents;
+  color: inherit;
+  cursor: pointer;
+}
+
 .brand-mark-wrap {
   position: absolute;
   z-index: 3;
@@ -266,13 +274,17 @@ ul {
   line-height: 0.9;
 }
 
+/* Match the landing: BEYOND and CITIES bold, "the" light */
 .title-beyond,
+.title-cities {
+  font-weight: 900;
+}
+
 .title-the {
   font-weight: 400;
 }
 
 .title-cities {
-  font-weight: 900;
   letter-spacing: 2.8px;
 }
 
