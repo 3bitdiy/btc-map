@@ -309,8 +309,8 @@ function syncMarkerScale() {
     "--marker-zoom-scale",
     markerScaleForZoom(zoom).toFixed(3),
   );
-  // Show place labels under markers once zoomed in enough that they're spread.
-  document.getElementById("map")?.classList.toggle("show-marker-labels", zoom >= 9.5);
+  // Show place labels under markers earlier now that city names are off the map.
+  document.getElementById("map")?.classList.toggle("show-marker-labels", zoom >= 8);
 }
 
 function cssVar(name, fallback) {
@@ -468,6 +468,14 @@ async function loadColoniesData() {
 async function initMap() {
   const styleResponse = await fetch("/map-style.json");
   const style = await styleResponse.json();
+
+  // Hide city/town names — the colonies' own label pills carry the place names,
+  // so the vector city labels just clutter and clash with markers. Keep the
+  // state/country labels for orientation.
+  const cityLayer = style.layers.find((layer) => layer.id === "place-city");
+  if (cityLayer) {
+    cityLayer.layout = { ...(cityLayer.layout || {}), visibility: "none" };
+  }
 
   style.sources.openmaptiles = {
     type: "vector",
