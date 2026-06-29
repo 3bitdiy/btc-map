@@ -1175,7 +1175,10 @@ function openPanel(
   panel.classList.add("is-open");
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
-  if (isMobileViewport()) setSheetSnap(48); // open the sheet at half height
+  if (isMobileViewport()) {
+    setSheetSnap(48); // open the sheet at half height
+    setFilterPanelMinimized(true); // and collapse filters — one panel at a time
+  }
 
   const photo = document.getElementById("panel-photo");
   photo.src = resolveColonyPhoto(colony);
@@ -1587,7 +1590,10 @@ function wireFilterInputs() {
 
 function wireFilterPanel() {
   document.getElementById("filter-minimize").addEventListener("click", () => {
+    const expanding = state.filterPanelMinimized;
     setFilterPanelMinimized(!state.filterPanelMinimized);
+    // On mobile only one panel at a time: opening filters dismisses the sheet.
+    if (expanding && isMobileViewport() && state.selectedColony) closePanel();
   });
 }
 
