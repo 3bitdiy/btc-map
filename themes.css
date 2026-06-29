@@ -55,7 +55,8 @@ html[data-theme="lime"] {
   --ink: #11140b;
   --wine: #1f2614;
   --rose: #a0c814;
-  --accent-2: #a0c814;
+  /* deeper grass-green for the decorative blob, distinct from the light accent */
+  --accent-2: #4f7d12;
   /* lime is too light for white text — use the dark ink on accents */
   --on-accent: #1f2614;
   --sand: #f1f3e8;

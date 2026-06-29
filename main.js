@@ -708,6 +708,17 @@ function openLocationPicker(colonies, coords) {
   // highlighted while the visitor is choosing from this cluster.
   if (state.selectedColony) closePanel();
 
+  // Lift the marker into the clear strip (below the header/Filters pill on
+  // mobile) so the picker opens fully in view, not under the header or
+  // off-screen. The popup is geo-anchored, so it follows into place.
+  if (state.map) {
+    state.map.easeTo({
+      center: [coords.longitude, coords.latitude],
+      offset: [0, isMobileViewport() ? -Math.round(window.innerHeight * 0.18) : -40],
+      duration: 400,
+    });
+  }
+
   const content = document.createElement("div");
   content.className = "loc-picker";
 
@@ -737,6 +748,7 @@ function openLocationPicker(colonies, coords) {
 
   const popup = new maplibregl.Popup({
     offset: 22,
+    anchor: "top", // open below the (now centred) marker
     closeButton: true,
     closeOnClick: true,
     focusAfterOpen: false,
