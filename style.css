@@ -456,6 +456,7 @@ ul {
 .panel-x {
   width: 12px;
   height: 12px;
+  background: var(--accent-2);
   -webkit-mask-image: url(/assets/icons/x.svg);
   mask-image: url(/assets/icons/x.svg);
 }
@@ -1097,7 +1098,7 @@ ul {
 
 #panel-location {
   margin-top: 4px;
-  color: var(--rose);
+  color: var(--accent-2);
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1114,7 +1115,7 @@ ul {
   width: 84px;
   height: 84px;
   border-radius: 999px;
-  border: 1px solid var(--rose);
+  border: 1px solid var(--accent-2);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -1469,7 +1470,7 @@ ul {
 
 #panel-marker-icon {
   display: block;
-  background: var(--rose);
+  background: var(--accent-2);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
