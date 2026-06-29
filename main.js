@@ -755,7 +755,7 @@ function openLocationPicker(colonies, coords) {
   content.appendChild(list);
 
   const popup = new maplibregl.Popup({
-    offset: 72, // clear the marker and its place-name label pill
+    offset: 110, // clear the marker and its place-name label pill below it
     anchor: "top", // open below the (now centred) marker
     closeButton: true,
     closeOnClick: true,
