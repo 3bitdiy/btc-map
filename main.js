@@ -1377,7 +1377,23 @@ function setFilterPanelMinimized(minimized) {
 
   const button = document.getElementById("filter-minimize");
   button.setAttribute("aria-expanded", minimized ? "false" : "true");
+  // Collapse the sections when closing so it reopens clean (not stuck on the
+  // accordion left open from a previous visit).
+  if (minimized) collapseFilterSections();
   syncPanelMaximizeButtons();
+}
+
+// Close every expandable filter section (country accordion + the art/scope
+// dropdowns) without touching the actual filter selections.
+function collapseFilterSections() {
+  setOpenCountry(null);
+  document.querySelectorAll(".select-row").forEach((button) => {
+    const panel = document.getElementById(
+      button.getAttribute("data-toggle-target"),
+    );
+    if (panel) panel.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+  });
 }
 
 // Map-independent: reads the filter inputs and refreshes the colony list,
