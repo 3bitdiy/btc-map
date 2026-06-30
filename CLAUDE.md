@@ -17,35 +17,30 @@ No test suite — there are no test files in this project.
 The project has two parts that share the same Vite build:
 
 1. **Interactive map** (`index.html` / `main.js`) — public-facing, no login. Colony markers on a self-hosted vector map.
-2. **Colony platform (forum)** — planned, login-required area for colony managers built on PocketBase auth and real-time collections.
+2. **Colony platform (forum/blog)** — planned, **not built**. A login-required area for colony organizers. Will be a **separate** free project (Cloudflare D1 + Workers + Google OAuth), **NOT PocketBase**. See "Data, content & future forum" below.
 
 Flat-file vanilla JS (no framework, no src/ folder). Core files:
 
 **Current map implementation:** MapLibre GL JS v5.24.0 + PMTiles (self-hosted on Cloudflare R2). Map style follows OpenMapTiles schema. No custom SVG renderer.
 
-## Full Stack (production)
+## Full Stack (free / static)
 
-- **Frontend** — Cloudflare Pages (GitHub auto-deploy, push to `main` triggers build)
-- **Backend/DB** — PocketBase on Hetzner CX32 VPS, behind Caddy reverse proxy
-- **Map tiles** — PMTiles on Cloudflare R2
-- **Foto storage** — Cloudflare R2 via PocketBase S3 backend
+The whole stack is free and the map has **no backend** — it must survive being handed to non-paying partners after year 1.
+
+- **Frontend** — Cloudflare Pages (static; push to `main`)
+- **Map data** — static JSON in `public/data/` (no database, no API)
+- **Photos** — static placeholder `public/assets/images/colony-placeholder.png` (all colonies; per-colony photos not used yet)
+- **Map tiles** — PMTiles on Cloudflare R2 (free tier; free egress)
 - **CDN/proxy/SSL** — Cloudflare free tier
+- **Domain** — custom domain while funded; free fallback `*.pages.dev` (or `is-a.dev`/`js.org`)
 
-## PocketBase collections (planned)
+> The map has **zero dependency on PocketBase / the Hetzner VPS** (that VPS served nothing live and is being decommissioned). Don't reintroduce a backend for the map.
 
-```text
-users          → colony managers (email/password auth)
-colonies       → colony records (replaces colonies.json in production)
-threads        → discussion topics (author, title, linked colony)
-posts          → replies in a thread (author, body, attachments)
-announcements  → one-way broadcasts from Goethe-Institut admins
-```
+## Data, content & future forum
 
-In production, `fetch('/data/colonies.json')` in `main.js` will be replaced with:
-
-```text
-GET https://api.beyondthecities.eu/api/collections/colonies/records
-```
+- **Colony data** — static JSON: `public/data/colonies-{serbia,bosnia-and-herzegovina,north-macedonia}.json`, indexed by `public/data/colonies.manifest.json`. `loadColoniesData()` in `main.js` fetches the manifest → those files, falling back to the known split files then `colonies.json`. **No PocketBase/API call anywhere.**
+- **Editing** — maintainer edits colony data via **Sveltia CMS** (git-based → commits JSON to this repo; GitHub auth). Organizers propose additions/edits via a **Google Form** the maintainer reviews (no live integration — just a link on the site).
+- **Forum + organizer blog (planned, separate)** — **Cloudflare D1 (SQLite) + Workers + Google OAuth**. Minimal scope (`users`, `threads`, `posts`, `blog_posts`). Organizers log in with Google (no GitHub). Not built yet.
 
 ## Map Stack
 
@@ -72,4 +67,4 @@ Frontend hosted on **Cloudflare Pages** (static). To redeploy: run `npm run buil
 
 R2 bucket CORS is set to allow all origins with GET/HEAD and must expose `Content-Length`, `Content-Range`, `ETag` headers for PMTiles range requests to work.
 
-PocketBase runs on Hetzner CX32 behind Caddy. Cloudflare proxies the API subdomain (`api.beyondthecities.eu`) to the VPS.
+The Hetzner VPS / PocketBase is being decommissioned — nothing live depends on it. The future forum/blog will be a separate Cloudflare D1 + Workers project, not on that VPS.
