@@ -430,7 +430,10 @@ async function loadColoniesData() {
       files.map(async (entry) => {
         const clean = String(entry).replace(/^\/+/, "");
         const json = await fetchJson(`/data/${clean}`);
-        return Array.isArray(json) ? json : [];
+        // Files are `{ "colonies": [...] }` (so Sveltia CMS can edit them);
+        // still accept a bare array for backward compatibility.
+        if (Array.isArray(json)) return json;
+        return Array.isArray(json?.colonies) ? json.colonies : [];
       }),
     );
 

@@ -1,0 +1,128 @@
+# Sveltia CMS config (Decap-compatible) for the Beyond the Cities colony data.
+# The map reads these same files at runtime — editing here commits to the repo,
+# Cloudflare Pages rebuilds, and the change goes live.
+
+backend:
+  name: github
+  repo: 3bitdiy/btc-map
+  branch: main
+  # OAuth proxy. Deploy the "sveltia-cms-auth" Cloudflare Worker, then put its
+  # URL here (see docs/cms-setup.md). Without it, login will not work.
+  base_url: https://REPLACE-WITH-YOUR-AUTH-WORKER.workers.dev
+
+# Colony photos uploaded through the CMS land here (public/ is served at the
+# site root, so the stored path is /assets/images/colonies/<file>).
+media_folder: public/assets/images/colonies
+public_folder: /assets/images/colonies
+
+locale: en
+
+collections:
+  - name: colonies
+    label: Colonies
+    label_singular: Country file
+    description: >-
+      Each entry is one country's list of colonies. Open a country, then edit
+      the Colonies list. "Art field" is free text — prefer the canonical
+      disciplines: Painting, Sculpture, Visual arts, Graphic arts, Photography,
+      Film & video, Multimedia, Literature, Calligraphy, Applied arts,
+      Crafts & pottery, Street art, Folk & naive art, Performance, Dance,
+      Multidisciplinary (comma-separated if several).
+    files:
+      - name: serbia
+        label: Serbia
+        file: public/data/colonies-serbia.json
+        fields: &colony_fields
+          - label: Colonies
+            name: colonies
+            widget: list
+            summary: "{{fields.art_colony_name}} — {{fields.city}}"
+            fields:
+              - label: ID
+                name: id
+                widget: number
+                value_type: int
+                hint: "Unique number. Keep existing as-is; for a new colony use the next free number."
+              - { label: Name, name: art_colony_name, widget: string }
+              - { label: City, name: city, widget: string, required: false }
+              - { label: Place, name: place, widget: string, required: false }
+              - label: Country
+                name: country
+                widget: select
+                options:
+                  ["Serbia", "Bosnia and Herzegovina", "North Macedonia"]
+              - label: Latitude
+                name: latitude
+                widget: number
+                value_type: float
+                step: 0.000001
+              - label: Longitude
+                name: longitude
+                widget: number
+                value_type: float
+                step: 0.000001
+              - label: Art field
+                name: art_field
+                widget: string
+                required: false
+                hint: "Free text; prefer the canonical disciplines (see description), comma-separated."
+              - label: Scope
+                name: scope
+                widget: select
+                required: false
+                options: ["National", "Regional", "International", "Unspecified"]
+              - {
+                  label: Organisers,
+                  name: art_colony_organisers,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Contact person,
+                  name: contact_person,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Telephone,
+                  name: contact_telephone,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Email,
+                  name: email_address,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Web page,
+                  name: web_page,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Time period,
+                  name: time_period,
+                  widget: string,
+                  required: false,
+                }
+              - {
+                  label: Duration,
+                  name: duration,
+                  widget: string,
+                  required: false,
+                }
+              - label: Photos
+                name: photos
+                widget: list
+                required: false
+                field: { label: Image, name: image, widget: image }
+      - name: bosnia
+        label: Bosnia and Herzegovina
+        file: public/data/colonies-bosnia-and-herzegovina.json
+        fields: *colony_fields
+      - name: macedonia
+        label: North Macedonia
+        file: public/data/colonies-north-macedonia.json
+        fields: *colony_fields
