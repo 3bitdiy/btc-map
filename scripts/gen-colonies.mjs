@@ -67,6 +67,16 @@ const disciplines = (c) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
+// Main photo: first real photo from the JSON, else the shared placeholder.
+// (Same rule the map uses — once per-colony photos land in the data, both show
+// them automatically.)
+const photoUrl = (c) => {
+  const p = (c.photos || [])[0];
+  if (!p || String(p).includes("placehold.co"))
+    return "/assets/images/colony-placeholder.png";
+  return p;
+};
+
 // --- shared chrome -----------------------------------------------------------
 const head = (title, description, canonical, extraCss = "colonies.css") => `
   <meta charset="UTF-8" />
@@ -175,6 +185,10 @@ const colonyInner = (c) => {
       ${disciplines(c).length ? `<p class="col-hero__tags">${disciplines(c).map((d) => `<span>${esc(d)}</span>`).join("")}</p>` : ""}
       <a class="col-map-btn" href="/map.html?colony=${encodeURIComponent(c.id)}">Show on map →</a>
     </header>
+
+    <div class="col-photo">
+      <img src="${esc(photoUrl(c))}" alt="${esc(c.art_colony_name)}" loading="lazy" />
+    </div>
 
     <section class="col-body">
       <dl class="col-details">
