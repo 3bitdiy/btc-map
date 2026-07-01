@@ -42,9 +42,12 @@ const cleanText = (s) => {
   const t = (s ?? "").toString().trim();
   return t && t.toLowerCase() !== "unspecified" ? t : "";
 };
-const shortPlace = (c) =>
-  [cleanText(c.city), cleanText(c.place)].filter(Boolean).join(" · ") ||
-  cleanText(c.country);
+const shortPlace = (c) => {
+  const city = cleanText(c.city);
+  const place = cleanText(c.place);
+  if (city && place && city.toLowerCase() === place.toLowerCase()) return city;
+  return [city, place].filter(Boolean).join(" · ") || cleanText(c.country);
+};
 const disciplines = (c) =>
   cleanText(c.art_field)
     .split(/[,/&]| and /i)
