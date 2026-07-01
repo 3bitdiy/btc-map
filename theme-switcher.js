@@ -98,6 +98,18 @@ function renderSwitcher() {
     .querySelector(".theme-switcher__close")
     .addEventListener("click", () => setOpen(false));
 
+  // Close on an outside click and when navigating (incl. bfcache restore).
+  document.addEventListener("click", (event) => {
+    if (
+      wrap.classList.contains("is-open") &&
+      !wrap.contains(event.target) &&
+      !toggle.contains(event.target)
+    ) {
+      setOpen(false);
+    }
+  });
+  window.addEventListener("pageshow", () => setOpen(false));
+
   document.body.appendChild(wrap);
   // On the map, tuck the palette button into the zoom-control stack so all map
   // controls sit together (and move together when the detail panel opens).

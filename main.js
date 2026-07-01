@@ -1879,7 +1879,13 @@ async function bootstrap() {
       if (colony) openPanel(colony, true);
     }
     // Otherwise no auto-selection: the panel rests on its intro state.
+
+    // iOS: the visible viewport (dvh) can settle after init (URL bar), leaving
+    // a strip below the map. Re-fit the canvas once things settle / on return.
+    setTimeout(() => state.map?.resize(), 250);
   };
+
+  window.addEventListener("pageshow", () => state.map?.resize());
 
   // Data loading above is async, so the map may already have fired "load" by
   // now — in which case once("load") would never run and the map would render
