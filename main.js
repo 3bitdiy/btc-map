@@ -1682,6 +1682,29 @@ function wireZoomControls() {
     ?.addEventListener("click", () => fitToRegion(getVisibleColonies(), true));
 }
 
+// The map's unobtrusive nav: caret on the brand card toggles a small menu.
+function wireBrandMenu() {
+  const btn = document.getElementById("brand-menu-btn");
+  const menu = document.getElementById("brand-menu");
+  if (!btn || !menu) return;
+  const setOpen = (open) => {
+    menu.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setOpen(menu.hidden);
+  });
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !menu.contains(event.target) && event.target !== btn) {
+      setOpen(false);
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setOpen(false);
+  });
+}
+
 function wirePanel() {
   document
     .getElementById("panel-close")
@@ -1831,6 +1854,7 @@ async function bootstrap() {
   wireZoomControls();
   wirePanel();
   wireSheetDrag();
+  wireBrandMenu();
   wireMobileSidebar();
   wireMobileFilterActions();
   applyResponsivePanelDefaults();

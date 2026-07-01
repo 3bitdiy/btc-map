@@ -234,6 +234,72 @@ ul {
   cursor: pointer;
 }
 
+/* Unobtrusive nav on the map: a caret on the brand card opens a small menu */
+#brand-menu-wrap {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 40;
+}
+
+#brand-menu-btn {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--paper-rgb), 0.85);
+  color: var(--wine);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#brand-menu-btn:hover {
+  background: #fff;
+  color: var(--rose);
+}
+
+#brand-menu-btn svg {
+  transition: transform 0.2s ease;
+}
+
+#brand-menu-btn[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+#brand-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 152px;
+  background: var(--paper);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(var(--wine-rgb), 0.24);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+#brand-menu[hidden] {
+  display: none;
+}
+
+#brand-menu a {
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wine);
+  text-decoration: none;
+}
+
+#brand-menu a:hover {
+  background: rgba(var(--rose-rgb), 0.12);
+  color: var(--rose);
+}
+
 .brand-mark-wrap {
   position: absolute;
   z-index: 3;
@@ -1628,7 +1694,8 @@ ul {
   }
 
   #brand-card,
-  #filter-card {
+  #filter-card,
+  #brand-menu-wrap {
     pointer-events: auto;
   }
 

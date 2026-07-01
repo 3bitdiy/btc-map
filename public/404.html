@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Page not found — Beyond the Cities</title>
+    <style>
+      :root {
+        --wine: #8d313a;
+        --rose: #eb5160;
+        --ink: #000;
+        --sand: #edd1aa;
+        --paper: #f6e8d5;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Montserrat", system-ui, sans-serif;
+        background: var(--sand);
+        color: var(--wine);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 24px;
+      }
+      .box {
+        max-width: 460px;
+      }
+      img {
+        width: 76px;
+        height: 76px;
+        margin: 0 auto 22px;
+        display: block;
+      }
+      .code {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--rose);
+      }
+      h1 {
+        margin-top: 12px;
+        font-size: clamp(26px, 6vw, 38px);
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1.05;
+      }
+      p.msg {
+        margin-top: 14px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .actions {
+        margin-top: 28px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+      a.btn {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .primary {
+        background: var(--rose);
+        color: #fff;
+      }
+      .ghost {
+        border: 1.5px solid rgba(141, 49, 58, 0.4);
+        color: var(--wine);
+      }
+      .ghost:hover {
+        border-color: var(--rose);
+        color: var(--rose);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <img src="/favicon.svg" alt="" />
+      <p class="code">Error 404</p>
+      <h1>This path isn't on the map</h1>
+      <p class="msg">
+        The page you're looking for doesn't exist — or hasn't been mapped yet.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="/">Back home</a>
+        <a class="btn ghost" href="/map.html">Explore the map</a>
+        <a class="btn ghost" href="/colonies/">Browse colonies</a>
+      </div>
+    </div>
+  </body>
+</html>
