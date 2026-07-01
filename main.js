@@ -1192,8 +1192,10 @@ function openPanel(
       zoom: Math.max(state.map.getZoom(), focusZoom),
     };
     // On mobile the half sheet covers the bottom; lift the target up so the
-    // colony lands centred in the map strip that stays visible above it.
+    // colony lands centred in the map strip that stays visible above it, and
+    // cap the zoom so the whole (large) marker + its place label fit with room.
     if (isMobileViewport()) {
+      flyOpts.zoom = Math.min(flyOpts.zoom, 8.5);
       flyOpts.offset = [0, -Math.round(window.innerHeight * 0.14)];
     }
     state.map.flyTo(flyOpts);
