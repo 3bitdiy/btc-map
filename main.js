@@ -295,7 +295,7 @@ function markerScaleForZoom(zoom) {
   const minZoom = 5;
   const maxZoom = 12;
   const minScale = 0.42;
-  const maxScale = 4.2;
+  const maxScale = 2.8;
 
   const t = Math.min(1, Math.max(0, (zoom - minZoom) / (maxZoom - minZoom)));
   // Slightly larger on load, but noticeably stronger growth on zoom-in.
@@ -933,8 +933,7 @@ function getClusterPadding() {
   const mode = getViewportMode();
   if (mode === "desktop") return { top: 110, right: 100, bottom: 90, left: 330 };
   if (mode === "tablet") return { top: 100, right: 80, bottom: 100, left: 80 };
-  // Phones: markers are large — give plenty of room so split children fit.
-  return { top: 130, right: 90, bottom: 130, left: 90 };
+  return { top: 100, right: 70, bottom: 100, left: 70 };
 }
 
 // Identity of a single marker entry: a colony AT a specific location. Keyed by
@@ -973,28 +972,10 @@ function buildMarkers() {
     });
   });
 
-  // The selected colony never clusters — keep it a standalone marker, so
-  // picking it (even next to neighbours) doesn't re-merge into a count cluster.
-  const selId = state.selectedColony?.id;
-  const selEntries = [];
-  const rest = [];
-  entries.forEach((entry) => {
-    if (selId != null && entry.colony.id === selId) selEntries.push(entry);
-    else rest.push(entry);
-  });
-
-  const clusters = clusterEntries(rest);
+  const clusters = clusterEntries(entries);
   // Render single markers first, count clusters last, so a cluster (and its
   // badge) always stacks above overlapping single markers.
   clusters.sort((a, b) => a.colonies.length - b.colonies.length);
-  // Selected colony's own marker(s) render last → on top.
-  selEntries.forEach((entry) => {
-    clusters.push({
-      coords: entry.coords,
-      members: [entry],
-      colonies: [entry.colony],
-    });
-  });
   clusters.forEach((cluster) => {
     const element =
       cluster.colonies.length > 1
@@ -1214,8 +1195,8 @@ function openPanel(
     // colony lands centred in the map strip that stays visible above it, and
     // cap the zoom so the whole (large) marker + its place label fit with room.
     if (isMobileViewport()) {
-      flyOpts.zoom = Math.min(flyOpts.zoom, 9);
-      flyOpts.offset = [0, -Math.round(window.innerHeight * 0.14)];
+      // Lift the (smaller) marker up so the whole house + its place label show.
+      flyOpts.offset = [0, -Math.round(window.innerHeight * 0.2)];
     }
     state.map.flyTo(flyOpts);
   }
