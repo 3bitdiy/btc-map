@@ -1835,8 +1835,13 @@ async function bootstrap() {
     // The map already opened framed on REGION_BOUNDS (see initMap), so no
     // fitBounds here — that avoids the zoom jump after markers load.
     syncFilters();
-    // No auto-selection: the panel rests on its intro state (set above) until
-    // the visitor picks a colony.
+    // Deep link from a colony page (/map.html?colony=<id>) → open that colony.
+    const wanted = new URLSearchParams(location.search).get("colony");
+    if (wanted) {
+      const colony = state.colonies.find((c) => String(c.id) === String(wanted));
+      if (colony) openPanel(colony, true);
+    }
+    // Otherwise no auto-selection: the panel rests on its intro state.
   };
 
   // Data loading above is async, so the map may already have fired "load" by

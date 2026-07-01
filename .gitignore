@@ -15,6 +15,9 @@ dist-ssr
 # folders
 /0
 data/
+
+# Generated colony pages (built from public/data by scripts/gen-colonies.mjs)
+/colonies
 !public/data/
 !public/data/*.json
 !public/data/*.csv
