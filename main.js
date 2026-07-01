@@ -1,5 +1,6 @@
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
+import { assignSlugs } from "./colony-slug.js";
 
 const protocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile.bind(protocol));
@@ -1223,6 +1224,15 @@ function openPanel(
   document.getElementById("panel-location").textContent =
     getColonyDisplayLocation(colony);
 
+  // Link to the colony's full static page (hidden if we somehow have no slug).
+  const pageLink = document.getElementById("panel-page-link");
+  if (colony._slug) {
+    pageLink.href = `/colonies/${colony._slug}.html`;
+    pageLink.hidden = false;
+  } else {
+    pageLink.hidden = true;
+  }
+
   const disciplinesEl = document.getElementById("panel-disciplines");
   disciplinesEl.innerHTML = "";
   getColonyDisciplines(colony)
@@ -1810,6 +1820,7 @@ async function bootstrap() {
   });
 
   state.colonies = await loadColoniesData();
+  assignSlugs(state.colonies); // so the panel can link to /colonies/<slug>.html
 
   buildDisciplineFilters();
   wirePillVisuals();

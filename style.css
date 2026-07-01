@@ -1166,6 +1166,23 @@ ul {
   padding: 4px 10px;
 }
 
+#panel-page-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rose);
+  text-decoration: none;
+}
+
+#panel-page-link:hover {
+  text-decoration: underline;
+}
+
+#panel-page-link[hidden] {
+  display: none;
+}
+
 #panel-name {
   margin-top: 8px;
   color: var(--wine);

@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { assignSlugs } from "../colony-slug.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(root, "colonies");
@@ -35,24 +36,7 @@ const esc = (s = "") =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-const slugify = (s = "") =>
-  String(s)
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-// stable unique slug per colony
-const seen = new Map();
-for (const c of colonies) {
-  let base = slugify(c.art_colony_name) || `colony-${c.id}`;
-  let slug = base;
-  let n = 2;
-  while (seen.has(slug)) slug = `${base}-${n++}`;
-  seen.set(slug, true);
-  c._slug = slug;
-}
+assignSlugs(colonies);
 
 const cleanText = (s) => {
   const t = (s ?? "").toString().trim();
