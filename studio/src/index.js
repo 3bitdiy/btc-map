@@ -72,6 +72,12 @@ export default {
       if (pathname === "/api/posts") return apiPostsList(request, env);
       if (pathname === "/api/upload" && request.method === "POST") return apiUpload(request, env);
 
+      if (pathname === "/api/access") {
+        if (request.method === "GET") return apiAccessGet(request, env);
+        if (request.method === "PUT") return apiAccessPut(request, env);
+        return json({ error: "method_not_allowed" }, 405);
+      }
+
       const postMatch = pathname.match(/^\/api\/post\/([a-z0-9-]+)$/i);
       if (postMatch) {
         if (request.method === "GET") return apiPostGet(request, env, postMatch[1]);
@@ -146,7 +152,7 @@ async function authCallback(request, env, origin) {
   }
 
   const access = await loadAccess(env);
-  const resolved = resolveRole(access, claims.email);
+  const resolved = resolveRole(access, claims.email, ownerEmails(env));
   if (!resolved) {
     return page(
       403,
@@ -160,6 +166,7 @@ async function authCallback(request, env, origin) {
     email: claims.email,
     name: claims.name || "",
     role: resolved.role,
+    owner: !!resolved.owner,
     colonies: resolved.colonies,
     exp: Date.now() + SESSION_TTL_MS,
   };
@@ -482,6 +489,56 @@ async function apiUpload(request, env) {
   return json({ ok: true, path: `/assets/images/blog/${name}` });
 }
 
+// --- access / allowlist admin (A4.5) -----------------------------------------
+async function apiAccessGet(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+  const owners = ownerEmails(env);
+  const access = await loadAccess(env);
+  // Owners are implicit admins — don't also list them among removable admins.
+  access.admins = (access.admins || []).filter(
+    (a) => !owners.some((o) => o.toLowerCase() === String(a).toLowerCase()),
+  );
+  return json({ access, colonies: await listAllColonies(env), owners, isOwner: !!session.owner });
+}
+
+async function apiAccessPut(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  const owners = ownerEmails(env);
+  const current = await loadAccess(env);
+  // Only owners may change the admin list; other admins keep it as-is.
+  let admins;
+  if (session.owner) {
+    admins = (Array.isArray(body.admins) ? body.admins : []).map((e) => String(e).trim()).filter(Boolean);
+    // Owners are implicit admins — never store them in the list.
+    admins = admins.filter((a) => !owners.some((o) => o.toLowerCase() === a.toLowerCase()));
+  } else {
+    admins = current.admins;
+  }
+  if (!owners.length && !admins.length) return json({ error: "need_admin", detail: "Keep at least one admin." }, 400);
+
+  const organizers = {};
+  const src = body.organizers && typeof body.organizers === "object" ? body.organizers : {};
+  for (const email of Object.keys(src)) {
+    const e = String(email).trim();
+    if (!e) continue;
+    const ids = (Array.isArray(src[email]) ? src[email] : []).map((n) => String(n).trim()).filter(Boolean);
+    organizers[e] = [...new Set(ids)];
+  }
+  await env.ACCESS.put("access", JSON.stringify({ admins: [...new Set(admins)], organizers }));
+  return json({ ok: true });
+}
+
 // --- front-matter parse / serialize (mirrors scripts/gen-blog.mjs) ------------
 function parseFrontMatter(raw) {
   const m = String(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -641,15 +698,22 @@ async function loadAccess(env) {
   }
 }
 
-function resolveRole(access, email) {
+function ownerEmails(env) {
+  return String(env.OWNER_EMAILS || "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function resolveRole(access, email, owners) {
   const e = email.toLowerCase();
+  if ((owners || []).some((o) => o.toLowerCase() === e)) {
+    return { role: "admin", owner: true, colonies: "all" };
+  }
   if (access.admins.some((a) => String(a).toLowerCase() === e)) {
-    return { role: "admin", colonies: "all" };
+    return { role: "admin", owner: false, colonies: "all" };
   }
   for (const key of Object.keys(access.organizers)) {
     if (key.toLowerCase() === e) {
       const ids = (access.organizers[key] || []).map((n) => String(n));
-      return { role: "organizer", colonies: ids };
+      return { role: "organizer", owner: false, colonies: ids };
     }
   }
   return null;
@@ -730,7 +794,9 @@ function editorPage(session, env) {
     `<label class="fld"><span>Author</span><input id="p-author" type="text"/></label>` +
     `<label class="fld"><span>Tags (comma-separated)</span><input id="p-tags" type="text"/></label>` +
     `<label class="fld full"><span>Excerpt</span><textarea id="p-excerpt" rows="2"></textarea></label>` +
-    `<label class="fld full"><span>Colony IDs (comma-separated — leave empty for a general post)</span><input id="p-colonies" type="text" placeholder="e.g. 12, 47"/></label>` +
+    `<div class="fld full"><span>Colonies this post is news for (leave empty for a general post)</span>` +
+    `<div id="p-colonies-chips" class="chips"></div>` +
+    `<select id="p-colonies-add" style="margin-top:8px"><option value="">+ add colony…</option></select></div>` +
     `<div class="fld full"><span>Cover image</span><div class="photo"><img id="p-cover-preview" alt=""/>` +
     `<div class="photo-ctl"><input type="file" id="p-cover-file" accept="image/png,image/jpeg,image/webp"/>` +
     `<button type="button" class="btn ghost" onclick="uploadCover()">Upload cover</button>` +
@@ -741,6 +807,23 @@ function editorPage(session, env) {
     `<div class="actions"><button class="btn" onclick="savePost()">Save post</button>` +
     `<button class="btn ghost" id="pe-delete" onclick="deletePost()">Delete</button>` +
     `<button class="btn ghost" onclick="cancelPost()">Cancel</button><span id="p-status"></span></div></div>`;
+
+  const isAdmin = session.role === "admin";
+  const accessTab = isAdmin
+    ? `<button id="tab-access" class="tab" onclick="showTab('access')">Access</button>`
+    : "";
+  const accessPanel = isAdmin
+    ? `<div id="panel-access" style="display:none">` +
+      `<h2 style="color:#000;margin:0 0 4px">Access</h2>` +
+      `<p style="opacity:.75;font-size:13px;margin:0 0 18px">Changes take effect the next time the person signs in.</p>` +
+      `<div class="acc-sec"><h3>Admins — can edit everything</h3><div id="admins-list"></div>` +
+      `<div class="acc-add" id="add-admin-row"><input id="admin-email" type="email" placeholder="email@example.com"/>` +
+      `<button class="btn ghost" onclick="addAdmin()">Add admin</button></div></div>` +
+      `<div class="acc-sec"><h3>Organizers — edit only their assigned colonies</h3><div id="orgs-list"></div>` +
+      `<div class="acc-add"><input id="org-email" type="email" placeholder="email@example.com"/>` +
+      `<button class="btn ghost" onclick="addOrganizer()">Add organizer</button></div></div>` +
+      `<div class="actions"><button class="btn" onclick="saveAccess()">Save access</button><span id="access-status"></span></div></div>`
+    : "";
 
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
@@ -761,6 +844,11 @@ function editorPage(session, env) {
     `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
     `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
     `#post-editor{background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px;margin-top:14px}` +
+    `.acc-sec{margin-bottom:22px}.acc-sec h3{color:#000;margin:0 0 10px;font-size:16px}` +
+    `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
+    `.acc-org{flex-direction:column;align-items:stretch;gap:8px}` +
+    `.acc-org-head{display:flex;justify-content:space-between;align-items:center}` +
+    `.acc-add{display:flex;gap:8px;margin-top:10px}` +
     `.btn{background:#eb5160;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}` +
     `.btn.ghost{background:#fff;border:1.5px solid rgba(141,49,58,.35);color:#8d313a}` +
     `#form{display:none;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px}` +
@@ -786,9 +874,9 @@ function editorPage(session, env) {
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span><b>Beyond the Cities</b> · Studio</span>` +
     `<span><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
-    `<div class="wrap"><p style="opacity:.8">Signed in — ${roleLine}.</p>` +
+    `<div class="wrap"><p id="signed-in" style="opacity:.8">Signed in — ${roleLine}.</p>` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
-    `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button></div>` +
+    `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
     `<div class="load"><label class="fld" style="flex:1"><span>Colony</span>` +
     `<select id="colony-picker" onchange="onPick()"><option value="">Loading…</option></select></label></div>` +
@@ -799,7 +887,7 @@ function editorPage(session, env) {
     `<div id="panel-posts" style="display:none">` +
     `<div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
     `<div id="posts-list"></div>` + postEditor +
-    `</div>` +
+    `</div>` + accessPanel +
     `</div><script>` + EDITOR_JS + `</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
@@ -808,7 +896,7 @@ function editorPage(session, env) {
 const EDITOR_JS =
   "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','contact_person','contact_telephone','email_address','web_page','time_period','duration'];" +
   "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
-  "var editingSlug=null;var postCover='';var taggable=[];var easyMDE=null;" +
+  "var editingSlug=null;var postCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
   "function setPhotoStatus(t){q('photo-status').textContent=t}" +
@@ -817,6 +905,7 @@ const EDITOR_JS =
   "var data=await r.json();var sel=q('colony-picker');sel.innerHTML='';" +
   "var ph=document.createElement('option');ph.value='';ph.textContent=data.colonies.length?'Select a colony…':'No colonies assigned';sel.appendChild(ph);" +
   "data.colonies.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.name+' — '+c.country;sel.appendChild(o)});" +
+  "if(document.body.dataset.role!=='admin'){var nm=data.colonies.map(function(c){return c.name});q('signed-in').textContent='Signed in — '+(nm.join(', ')||'no colonies assigned')+'.'}" +
   "if(document.body.dataset.role!=='admin'&&data.colonies.length===1){sel.value=String(data.colonies[0].id);loadColony(data.colonies[0].id)}}" +
   "function onPick(){var v=q('colony-picker').value;if(v){loadColony(v)}else{q('form').style.display='none';q('title').textContent=''}}" +
   "async function loadColony(id){" +
@@ -868,9 +957,10 @@ const EDITOR_JS =
   "if(out.unchanged){setStatus('No changes to save');return}" +
   "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
   // --- tabs + blog posts ---
-  "function showTab(name){var pc=name==='colony';" +
-  "q('panel-colony').style.display=pc?'block':'none';q('panel-posts').style.display=pc?'none':'block';" +
-  "q('tab-colony').classList.toggle('on',pc);q('tab-posts').classList.toggle('on',!pc);if(!pc){loadPosts()}}" +
+  "function showTab(name){['colony','posts','access'].forEach(function(n){" +
+  "var p=q('panel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
+  "var t=q('tab-'+n);if(t)t.classList.toggle('on',n===name)});" +
+  "if(name==='posts')loadPosts();if(name==='access')loadAccessPanel()}" +
   "function setPostStatus(t){q('p-status').textContent=t}" +
   "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
   "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
@@ -889,19 +979,27 @@ const EDITOR_JS =
   "s=String(s).replace(/[čćžšđČĆŽŠĐ]/g,function(m){return map[m]||m});" +
   "return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}" +
   "function setCoverPreview(p){var src;if(!p){src=RAW+'/assets/images/colony-placeholder.png'}else if(/^https?:/.test(p)){src=p}else{src=RAW+p}q('p-cover-preview').src=src}" +
+  "function taggableName(id){var c=taggable.filter(function(x){return String(x.id)===String(id)})[0];return c?c.name:('#'+id)}" +
+  "function renderPostColonies(){var box=q('p-colonies-chips');box.innerHTML='';" +
+  "postColonies.forEach(function(id){var c=elx('span','chip on');c.textContent=taggableName(id)+'  \\u00d7';c.style.cursor='pointer';c.onclick=function(){removePostColony(id)};box.appendChild(c)});" +
+  "var sel=q('p-colonies-add');sel.innerHTML='';var ph=document.createElement('option');ph.value='';ph.textContent='+ add colony…';sel.appendChild(ph);" +
+  "taggable.forEach(function(c){if(postColonies.indexOf(String(c.id))===-1){var o=document.createElement('option');o.value=c.id;o.textContent=c.name;sel.appendChild(o)}});" +
+  "sel.onchange=function(){if(sel.value)addPostColony(sel.value)}}" +
+  "function addPostColony(id){if(postColonies.indexOf(String(id))===-1)postColonies.push(String(id));renderPostColonies()}" +
+  "function removePostColony(id){postColonies=postColonies.filter(function(x){return x!==String(id)});renderPostColonies()}" +
   "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false,toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link','image','|','preview','guide']})}" +
   "function getBody(){return easyMDE?easyMDE.value():q('p-body').value}" +
   "function newPost(){editingSlug=null;postCover='';q('pe-title').textContent='New post';" +
   "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
   "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
-  "q('p-colonies').value=(document.body.dataset.role!=='admin'?taggable.map(function(c){return c.id}).join(', '):'');" +
+  "postColonies=(document.body.dataset.role!=='admin'?taggable.map(function(c){return String(c.id)}):[]);renderPostColonies();" +
   "setCoverPreview('');setPostStatus('');q('p-cover-file').value='';q('p-cover-status').textContent='';q('posts-status').textContent='';" +
   "q('pe-delete').style.display='none';q('post-editor').style.display='block';initEditor();easyMDE.value('');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
   "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';" +
   "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
-  "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');q('p-colonies').value=(p.colonies||[]).join(', ');" +
+  "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');postColonies=(p.colonies||[]).map(String);renderPostColonies();" +
   "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
   "q('pe-delete').style.display='';q('post-editor').style.display='block';initEditor();easyMDE.value(p.body||'');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
@@ -914,7 +1012,7 @@ const EDITOR_JS =
   "var slug=editingSlug||slugify(title);if(!slug){setPostStatus('Could not build a slug from the title');return}" +
   "var body={title:title,date:q('p-date').value||'',author:q('p-author').value,excerpt:q('p-excerpt').value,cover:postCover,body:getBody(),draft:q('p-draft').checked," +
   "tags:q('p-tags').value.split(',').map(function(s){return s.trim()}).filter(Boolean)," +
-  "colonies:q('p-colonies').value.split(',').map(function(s){return s.trim()}).filter(Boolean)};" +
+  "colonies:postColonies.slice()};" +
   "setPostStatus('Saving…');var r=await fetch('/api/post/'+slug,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();if(!r.ok){setPostStatus('Save failed: '+(out.detail||out.error));return}" +
   "q('post-editor').style.display='none';editingSlug=null;" +
@@ -924,6 +1022,39 @@ const EDITOR_JS =
   "if(!r.ok){alert('Delete failed: '+(out.detail||out.error));return}" +
   "if(editingSlug===s){cancelPost()}q('posts-status').textContent='Post deleted \\u2713';loadPosts()}" +
   "function cancelPost(){q('post-editor').style.display='none';editingSlug=null}" +
+  // --- access (admin only) ---
+  "var accessState={admins:[],organizers:{}};var allColonies=[];var accessOwners=[];var isOwner=false;" +
+  "function elx(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}" +
+  "function btnx(txt){var b=elx('button','btn ghost');b.type='button';b.textContent=txt;return b}" +
+  "function setAccessStatus(t){q('access-status').textContent=t}" +
+  "function colonyName(id){var c=allColonies.filter(function(x){return String(x.id)===String(id)})[0];return c?c.name:('#'+id)}" +
+  "async function loadAccessPanel(){setAccessStatus('');var r=await fetch('/api/access');if(!r.ok){setAccessStatus('Could not load');return}" +
+  "var d=await r.json();accessState={admins:(d.access.admins||[]).slice(),organizers:JSON.parse(JSON.stringify(d.access.organizers||{}))};" +
+  "allColonies=d.colonies||[];accessOwners=d.owners||[];isOwner=!!d.isOwner;renderAccess()}" +
+  "function renderAccess(){renderAdmins();renderOrgs()}" +
+  "function renderAdmins(){var box=q('admins-list');box.innerHTML='';" +
+  "accessOwners.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
+  "var b=elx('span','badge');b.textContent='owner';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);box.appendChild(row)});" +
+  "accessState.admins.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.textContent=email;s.style.fontWeight='600';row.appendChild(s);" +
+  "if(isOwner){var rm=btnx('Remove');rm.onclick=function(){removeAdmin(email)};row.appendChild(rm)}box.appendChild(row)});" +
+  "var addRow=q('add-admin-row');if(addRow)addRow.style.display=isOwner?'flex':'none'}" +
+  "function renderOrgs(){var box=q('orgs-list');box.innerHTML='';Object.keys(accessState.organizers).forEach(function(email){" +
+  "var ids=accessState.organizers[email]||[];var row=elx('div','acc-row acc-org');" +
+  "var head=elx('div','acc-org-head');var s=elx('span');s.textContent=email;s.style.fontWeight='600';" +
+  "var rm=btnx('Remove');rm.onclick=function(){removeOrganizer(email)};head.appendChild(s);head.appendChild(rm);" +
+  "var chips=elx('div','chips');ids.forEach(function(id){var c=elx('span','chip on');c.textContent=colonyName(id)+'  \\u00d7';c.style.cursor='pointer';c.onclick=function(){removeColonyFromOrg(email,id)};chips.appendChild(c)});" +
+  "var sel=document.createElement('select');var ph=document.createElement('option');ph.value='';ph.textContent='+ add colony…';sel.appendChild(ph);" +
+  "allColonies.forEach(function(c){if(ids.indexOf(String(c.id))===-1){var o=document.createElement('option');o.value=c.id;o.textContent=c.name;sel.appendChild(o)}});" +
+  "sel.onchange=function(){if(sel.value)addColonyToOrg(email,sel.value)};" +
+  "row.appendChild(head);row.appendChild(chips);row.appendChild(sel);box.appendChild(row)})}" +
+  "function addAdmin(){var e=q('admin-email').value.trim();if(!e)return;if(accessState.admins.indexOf(e)===-1)accessState.admins.push(e);q('admin-email').value='';renderAccess()}" +
+  "function removeAdmin(email){accessState.admins=accessState.admins.filter(function(x){return x!==email});renderAccess()}" +
+  "function addOrganizer(){var e=q('org-email').value.trim();if(!e)return;if(!accessState.organizers[e])accessState.organizers[e]=[];q('org-email').value='';renderAccess()}" +
+  "function removeOrganizer(email){delete accessState.organizers[email];renderAccess()}" +
+  "function addColonyToOrg(email,id){var a=accessState.organizers[email]||[];if(a.indexOf(String(id))===-1)a.push(String(id));accessState.organizers[email]=a;renderAccess()}" +
+  "function removeColonyFromOrg(email,id){accessState.organizers[email]=(accessState.organizers[email]||[]).filter(function(x){return x!==String(id)});renderAccess()}" +
+  "async function saveAccess(){setAccessStatus('Saving…');var r=await fetch('/api/access',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(accessState)});" +
+  "var out=await r.json();if(!r.ok){setAccessStatus('Save failed: '+(out.detail||out.error));return}setAccessStatus('Saved \\u2713')}" +
   "loadColonies();";
 
 // --- misc responders ---------------------------------------------------------

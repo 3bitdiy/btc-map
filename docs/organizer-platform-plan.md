@@ -202,8 +202,14 @@ added: identical content returns `{ok, unchanged}` instead of an empty commit.
   own); dropdown replaces the id input; organizer with one colony auto-loads.
   Art field is now a canonical multi-select (chips + "Other"); main-photo
   widget with preview + upload/remove.
-- [ ] **A4.5** Admin **Access** screen: view/add/remove admins + organizers and
-  assign colonies → writes the KV allowlist.
+- [x] **A4.5** Admin **Access** tab (admin-only): add/remove admins + organizers,
+  assign colonies via a dropdown (chips with remove) → `GET/PUT /api/access`
+  writes the KV `access` key. Changes apply on next sign-in.
+- [x] **Owner tier** — `OWNER_EMAILS` (wrangler var). Owners are always admin,
+  never stored in the KV admin list, cannot be removed via the UI, and are the
+  **only** role allowed to edit the admin list (regular admins manage organizers
+  + content only). Prevents self-lockout and admin-vs-admin removal. Requires a
+  fresh sign-in to pick up `owner` in the session.
 
 ## Milestone 5 — Hardening & ship
 - [ ] **A5.1** Server-side validation + escaping; **re-check scope on every

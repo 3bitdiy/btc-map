@@ -15,7 +15,10 @@
     "GITHUB_REPO": "3bitdiy/btc-map",
     "GITHUB_BRANCH": "main",
     "STUDIO_URL": "https://studio.beyondthecities.org",
-    "GOOGLE_CLIENT_ID": "594753096509-ca5djbvm7kqqeo3ms1nq3iruf3daihd8.apps.googleusercontent.com"
+    "GOOGLE_CLIENT_ID": "594753096509-ca5djbvm7kqqeo3ms1nq3iruf3daihd8.apps.googleusercontent.com",
+    // Protected owner(s): always admin, cannot be removed via the UI, and the
+    // only role allowed to manage the admin list. Comma-separated emails.
+    "OWNER_EMAILS": "stevankojic.com@gmail.com"
   },
 
   // Allowlist store (who can edit which colony). Filled in by A0.4:
