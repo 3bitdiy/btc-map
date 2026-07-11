@@ -174,30 +174,34 @@ added: identical content returns `{ok, unchanged}` instead of an empty commit.
 ## Milestone 2 — Read APIs
 - [x] **A2.1** `GET /api/colony/:id` — reads across country files via GitHub
   contents API (deployed; live browser confirm pending).
-- [ ] **A2.2** `GET /api/posts?colony=:id` — list a colony's posts (parse blog MD
-  front-matter; reuse the gen-blog parser logic).
+- [x] **A2.2** `GET /api/posts` (scoped: admin all, organizer → posts whose
+  `colonies` intersect theirs) + `GET /api/post/:slug`. Front-matter
+  parser/serializer mirrors gen-blog.mjs.
 
 ## Milestone 3 — Write APIs (commit engine)
 - [x] **A3.1** Commit helper `ghGetFile`/`ghPutFile` (content + sha → PUT;
   surfaces 409 conflict). Deployed; commit not yet exercised live.
 - [x] **A3.2** `PUT /api/colony/:id` — perms check → whitelist-merge editable
   fields → patch country file → commit. Deployed; live test pending (needs UI).
-- [ ] **A3.3** `PUT /api/post/:slug` + `DELETE /api/post/:slug` — write/delete
-  `public/data/blog/<slug>.md`; **enforce** front-matter `colonies ⊆ allowed`;
-  slug generation + uniqueness.
-- [ ] **A3.4** *(optional in A)* `POST /api/upload` — commit a cover image to
-  `public/assets/images/blog/`, return its public path. Can defer to Phase B.
+- [x] **A3.3** `PUT /api/post/:slug` + `DELETE /api/post/:slug` (write/delete
+  the MD file; enforce `colonies ⊆ allowed`; general posts admin-only) +
+  `POST /api/upload` for blog cover images. Client slugifies the title.
+- [x] **A3.4** `POST/DELETE /api/colony/:id/photo` — commit an uploaded image to
+  `public/assets/images/colonies/` + set `photos[0]` (JPEG/PNG/WebP, ≤5 MB).
+  Blog cover upload (`public/assets/images/blog/`) still to come with A3.3.
 
 ## Milestone 4 — Editor UI (vanilla)
 - [x] **A4.1** App shell: top bar (brand · email · role badge · logout) served
   by the Worker; login card when signed out.
 - [x] **A4.2** Colony-details form (load-by-id → editable fields) → Save → A3.2.
   Verified live.
-- [ ] **A4.3** Posts list + post editor (title/date/author/cover/tags/markdown) →
-  Publish/Delete → A3.3. Colony field **locked** for organizer, **selectable**
-  for admin.
-- [ ] **A4.4** Landing: organizer → their colony/colonies; admin → all-colonies
-  **search picker**.
+- [x] **A4.3** "Blog posts" tab: posts list (New/Edit/Delete) + post editor
+  (title/date/author/excerpt/tags/colony-ids/cover upload/markdown/draft).
+  Organizer's colony ids prefilled; server enforces the scope.
+- [x] **A4.4** Colony picker: `GET /api/colonies` (admin → all, organizer →
+  own); dropdown replaces the id input; organizer with one colony auto-loads.
+  Art field is now a canonical multi-select (chips + "Other"); main-photo
+  widget with preview + upload/remove.
 - [ ] **A4.5** Admin **Access** screen: view/add/remove admins + organizers and
   assign colonies → writes the KV allowlist.
 

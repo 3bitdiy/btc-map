@@ -22,6 +22,25 @@ const EDITABLE_COLONY_FIELDS = [
   "email_address", "web_page", "time_period", "duration", "photos",
 ];
 
+// Canonical disciplines for the "Art field" multi-select (matches the CMS list).
+// Stored as a comma-separated string to keep the format the map reads.
+const DISCIPLINES = [
+  "Painting", "Sculpture", "Visual arts", "Graphic arts", "Photography",
+  "Film & video", "Multimedia", "Literature", "Calligraphy", "Applied arts",
+  "Crafts & pottery", "Street art", "Folk & naive art", "Performance",
+  "Dance", "Multidisciplinary",
+];
+
+// Photo upload constraints. Colony photos live under public/ and are referenced
+// as /assets/images/colonies/<file>; the map/colony page show photos[0].
+const PHOTO_DIR = "public/assets/images/colonies";
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const IMAGE_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+
+// Blog posts: one markdown file per post (front-matter + body).
+const BLOG_DIR = "public/data/blog";
+const BLOG_IMG_DIR = "public/assets/images/blog";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -34,11 +53,30 @@ export default {
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
       if (pathname === "/auth/logout") return authLogout(origin);
       if (pathname === "/api/me") return apiMe(request, env);
+      if (pathname === "/api/colonies") return apiColonies(request, env);
+
+      const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photo$/);
+      if (photoMatch) {
+        if (request.method === "POST") return apiColonyPhotoPost(request, env, photoMatch[1]);
+        if (request.method === "DELETE") return apiColonyPhotoDelete(request, env, photoMatch[1]);
+        return json({ error: "method_not_allowed" }, 405);
+      }
 
       const colonyMatch = pathname.match(/^\/api\/colony\/(\d+)$/);
       if (colonyMatch) {
         if (request.method === "GET") return apiColonyGet(request, env, colonyMatch[1]);
         if (request.method === "PUT") return apiColonyPut(request, env, colonyMatch[1]);
+        return json({ error: "method_not_allowed" }, 405);
+      }
+
+      if (pathname === "/api/posts") return apiPostsList(request, env);
+      if (pathname === "/api/upload" && request.method === "POST") return apiUpload(request, env);
+
+      const postMatch = pathname.match(/^\/api\/post\/([a-z0-9-]+)$/i);
+      if (postMatch) {
+        if (request.method === "GET") return apiPostGet(request, env, postMatch[1]);
+        if (request.method === "PUT") return apiPostPut(request, env, postMatch[1]);
+        if (request.method === "DELETE") return apiPostDelete(request, env, postMatch[1]);
         return json({ error: "method_not_allowed" }, 405);
       }
 
@@ -154,6 +192,30 @@ function canEditColony(session, id) {
   return Array.isArray(session.colonies) && session.colonies.includes(String(id));
 }
 
+// Lightweight list for the editor's colony picker. Admin → all; organizer →
+// only their assigned colonies.
+async function apiColonies(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+
+  const all = [];
+  for (const path of COUNTRY_FILES) {
+    const file = await ghGetFile(env, path);
+    if (!file) continue;
+    const data = JSON.parse(file.text);
+    const list = Array.isArray(data) ? data : data.colonies || [];
+    for (const c of list) all.push({ id: c.id, name: c.art_colony_name, country: c.country });
+  }
+
+  let out = all;
+  if (session.role !== "admin") {
+    const mine = new Set((session.colonies || []).map(String));
+    out = all.filter((c) => mine.has(String(c.id)));
+  }
+  out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  return json({ colonies: out });
+}
+
 // Locate a colony across the country files. Returns the parsed file (with its
 // GitHub sha, for writing back), the colony object and its index.
 async function findColony(env, id) {
@@ -210,6 +272,279 @@ async function apiColonyPut(request, env, id) {
   return json({ ok: true, commit: res.commit, colony });
 }
 
+// Set the colony's photos[0] by committing an uploaded image + patching the JSON.
+async function apiColonyPhotoPost(request, env, id) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!canEditColony(session, id)) return json({ error: "forbidden" }, 403);
+
+  let file;
+  try {
+    file = (await request.formData()).get("file");
+  } catch {
+    return json({ error: "invalid_upload" }, 400);
+  }
+  if (!file || typeof file === "string") return json({ error: "no_file" }, 400);
+
+  const ext = IMAGE_EXT[file.type];
+  if (!ext) return json({ error: "unsupported_type", detail: "Use JPEG, PNG or WebP." }, 415);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.length > PHOTO_MAX_BYTES) return json({ error: "too_large", detail: "Max 5 MB." }, 413);
+
+  const name = `colony-${id}-${Date.now()}.${ext}`;
+  const imgPath = `${PHOTO_DIR}/${name}`;
+  const publicPath = `/assets/images/colonies/${name}`;
+
+  const imgRes = await ghCommitFile(env, imgPath, bytesToBase64(bytes), null, `photo: colony ${id} (studio, ${session.email})`);
+  if (!imgRes.ok) return json({ error: "image_commit_failed", detail: imgRes.detail }, 502);
+
+  const found = await findColony(env, id);
+  if (!found) return json({ error: "colony_not_found" }, 404);
+  const colony = found.list[found.index];
+  const existing = Array.isArray(colony.photos) ? colony.photos : [];
+  colony.photos = [publicPath, ...existing.slice(1)];
+  found.list[found.index] = colony;
+
+  const jsonRes = await ghPutFile(
+    env, found.path, JSON.stringify(found.data, null, 2) + "\n", found.sha,
+    `edit: ${colony.art_colony_name || "colony " + id} main photo (studio, ${session.email})`,
+  );
+  if (!jsonRes.ok) return json({ error: "commit_failed", detail: jsonRes.detail }, 502);
+  return json({ ok: true, photo: publicPath, photos: colony.photos, commit: jsonRes.commit });
+}
+
+async function apiColonyPhotoDelete(request, env, id) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!canEditColony(session, id)) return json({ error: "forbidden" }, 403);
+
+  const found = await findColony(env, id);
+  if (!found) return json({ error: "colony_not_found" }, 404);
+  const colony = found.list[found.index];
+  const existing = Array.isArray(colony.photos) ? colony.photos : [];
+  if (!existing.length) return json({ ok: true, photos: [], unchanged: true });
+  colony.photos = existing.slice(1);
+  found.list[found.index] = colony;
+
+  const res = await ghPutFile(
+    env, found.path, JSON.stringify(found.data, null, 2) + "\n", found.sha,
+    `edit: ${colony.art_colony_name || "colony " + id} remove main photo (studio, ${session.email})`,
+  );
+  if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
+  return json({ ok: true, photos: colony.photos, commit: res.commit });
+}
+
+// --- blog posts (A2.2 / A3.3) ------------------------------------------------
+// Which colonies (if any) a post is scoped to decides who may edit it.
+function canEditPost(session, colonies) {
+  if (session.role === "admin") return true;
+  const mine = new Set((session.colonies || []).map(String));
+  return (colonies || []).some((c) => mine.has(String(c)));
+}
+
+async function apiPostsList(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+
+  const entries = await ghListDir(env, BLOG_DIR);
+  const posts = [];
+  for (const e of entries) {
+    if (e.type !== "file" || !e.name.endsWith(".md")) continue;
+    const file = await ghGetFile(env, `${BLOG_DIR}/${e.name}`);
+    if (!file) continue;
+    const { data } = parseFrontMatter(file.text);
+    const colonies = normalizeColonies(data.colonies);
+    if (!canEditPost(session, colonies)) continue;
+    posts.push({
+      slug: e.name.replace(/\.md$/, ""),
+      title: data.title || "(untitled)",
+      date: data.date || "",
+      draft: String(data.draft).toLowerCase() === "true",
+      colonies,
+    });
+  }
+  posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  // Colonies the user may tag a post with (for the editor's picker).
+  const taggable =
+    session.role === "admin" ? await listAllColonies(env) : await listMyColonies(env, session);
+  return json({ posts, taggable, role: session.role });
+}
+
+async function apiPostGet(request, env, slug) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  const file = await ghGetFile(env, `${BLOG_DIR}/${slug}.md`);
+  if (!file) return json({ error: "post_not_found" }, 404);
+  const { data, body } = parseFrontMatter(file.text);
+  const colonies = normalizeColonies(data.colonies);
+  if (!canEditPost(session, colonies)) return json({ error: "forbidden" }, 403);
+  return json({
+    post: {
+      slug,
+      title: data.title || "",
+      date: data.date || "",
+      author: data.author || "",
+      excerpt: data.excerpt || "",
+      cover: data.cover || "",
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      colonies,
+      draft: String(data.draft).toLowerCase() === "true",
+      body: (body || "").trim(),
+    },
+  });
+}
+
+async function apiPostPut(request, env, slug) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  if (!body.title || !String(body.title).trim()) return json({ error: "title_required" }, 400);
+
+  const colonies = normalizeColonies(body.colonies);
+  // Organizer may only tag their own colonies.
+  if (session.role !== "admin") {
+    const mine = new Set((session.colonies || []).map(String));
+    if (!colonies.every((c) => mine.has(String(c)))) {
+      return json({ error: "forbidden_colony", detail: "You can only tag your own colonies." }, 403);
+    }
+  }
+
+  const existing = await ghGetFile(env, `${BLOG_DIR}/${slug}.md`);
+  if (existing) {
+    // Editing an existing post — must be allowed to edit the current one.
+    const cur = normalizeColonies(parseFrontMatter(existing.text).data.colonies);
+    if (!canEditPost(session, cur)) return json({ error: "forbidden" }, 403);
+  } else if (session.role !== "admin" && colonies.length === 0) {
+    // A brand-new general (unscoped) post is admin-only.
+    return json({ error: "forbidden", detail: "Only admins can create general posts." }, 403);
+  }
+
+  const md = serializePost({
+    title: String(body.title).trim(),
+    date: body.date || new Date().toISOString().slice(0, 10),
+    author: body.author || "",
+    excerpt: body.excerpt || "",
+    cover: body.cover || "",
+    tags: (Array.isArray(body.tags) ? body.tags : []).map((t) => String(t).trim()).filter(Boolean),
+    colonies,
+    draft: Boolean(body.draft),
+    body: body.body || "",
+  });
+
+  const res = await ghCommitFile(
+    env, `${BLOG_DIR}/${slug}.md`, toBase64(md), existing ? existing.sha : null,
+    `${existing ? "edit" : "post"}: ${String(body.title).trim()} (studio, ${session.email})`,
+  );
+  if (res.status === 409) return json({ error: "conflict" }, 409);
+  if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
+  return json({ ok: true, slug, commit: res.commit });
+}
+
+async function apiPostDelete(request, env, slug) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  const file = await ghGetFile(env, `${BLOG_DIR}/${slug}.md`);
+  if (!file) return json({ error: "post_not_found" }, 404);
+  const colonies = normalizeColonies(parseFrontMatter(file.text).data.colonies);
+  if (!canEditPost(session, colonies)) return json({ error: "forbidden" }, 403);
+
+  const res = await ghDeleteFile(env, `${BLOG_DIR}/${slug}.md`, file.sha, `delete post: ${slug} (studio, ${session.email})`);
+  if (!res.ok) return json({ error: "delete_failed", detail: res.detail }, 502);
+  return json({ ok: true, commit: res.commit });
+}
+
+// Generic image upload (blog covers). Commits to public/assets/images/blog/.
+async function apiUpload(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+
+  let file;
+  try {
+    file = (await request.formData()).get("file");
+  } catch {
+    return json({ error: "invalid_upload" }, 400);
+  }
+  if (!file || typeof file === "string") return json({ error: "no_file" }, 400);
+  const ext = IMAGE_EXT[file.type];
+  if (!ext) return json({ error: "unsupported_type", detail: "Use JPEG, PNG or WebP." }, 415);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.length > PHOTO_MAX_BYTES) return json({ error: "too_large", detail: "Max 5 MB." }, 413);
+
+  const name = `cover-${Date.now()}.${ext}`;
+  const res = await ghCommitFile(env, `${BLOG_IMG_DIR}/${name}`, bytesToBase64(bytes), null, `blog image (studio, ${session.email})`);
+  if (!res.ok) return json({ error: "image_commit_failed", detail: res.detail }, 502);
+  return json({ ok: true, path: `/assets/images/blog/${name}` });
+}
+
+// --- front-matter parse / serialize (mirrors scripts/gen-blog.mjs) ------------
+function parseFrontMatter(raw) {
+  const m = String(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!m) return { data: {}, body: raw };
+  const data = {};
+  const lines = m[1].split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const kv = lines[i].match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+    if (!kv) continue;
+    const key = kv[1];
+    const val = kv[2].trim();
+    if (val.startsWith("[") && val.endsWith("]")) {
+      data[key] = val.slice(1, -1).split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+    } else if (val === "") {
+      const items = [];
+      while (i + 1 < lines.length && /^\s*-\s+/.test(lines[i + 1])) {
+        items.push(lines[++i].replace(/^\s*-\s+/, "").trim().replace(/^["']|["']$/g, ""));
+      }
+      data[key] = items.length ? items : "";
+    } else {
+      data[key] = val.replace(/^["']|["']$/g, "");
+    }
+  }
+  return { data, body: m[2] };
+}
+
+function serializePost(p) {
+  const fm = [
+    `title: ${p.title}`,
+    `date: ${p.date}`,
+    `author: ${p.author}`,
+    `excerpt: ${p.excerpt}`,
+    `cover: ${p.cover}`,
+    `tags: [${(p.tags || []).join(", ")}]`,
+    `colonies: [${(p.colonies || []).join(", ")}]`,
+    `draft: ${p.draft ? "true" : "false"}`,
+  ];
+  return `---\n${fm.join("\n")}\n---\n\n${String(p.body || "").trim()}\n`;
+}
+
+function normalizeColonies(v) {
+  const arr = Array.isArray(v) ? v : v ? [v] : [];
+  return arr.map((n) => String(n).trim()).filter(Boolean);
+}
+
+async function listAllColonies(env) {
+  const out = [];
+  for (const path of COUNTRY_FILES) {
+    const file = await ghGetFile(env, path);
+    if (!file) continue;
+    const data = JSON.parse(file.text);
+    const list = Array.isArray(data) ? data : data.colonies || [];
+    for (const c of list) out.push({ id: String(c.id), name: c.art_colony_name });
+  }
+  out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  return out;
+}
+
+async function listMyColonies(env, session) {
+  const mine = new Set((session.colonies || []).map(String));
+  return (await listAllColonies(env)).filter((c) => mine.has(c.id));
+}
+
 // --- GitHub contents API -----------------------------------------------------
 function ghHeaders(env) {
   return {
@@ -229,12 +564,41 @@ async function ghGetFile(env, path) {
   return { sha: data.sha, text: fromBase64(data.content || "") };
 }
 
-async function ghPutFile(env, path, text, sha, message) {
+async function ghListDir(env, path) {
+  const url = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${path}?ref=${env.GITHUB_BRANCH}`;
+  const res = await fetch(url, { headers: ghHeaders(env) });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`GitHub GET dir ${path} → ${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+async function ghDeleteFile(env, path, sha, message) {
   const url = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${path}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: { ...ghHeaders(env), "content-type": "application/json" },
+    body: JSON.stringify({ message, sha, branch: env.GITHUB_BRANCH }),
+  });
+  if (!res.ok) return { ok: false, status: res.status, detail: await res.text() };
+  const out = await res.json();
+  return { ok: true, commit: out.commit && out.commit.sha };
+}
+
+function ghPutFile(env, path, text, sha, message) {
+  return ghCommitFile(env, path, toBase64(text), sha, message);
+}
+
+// Core commit for one file. `sha` is required to update an existing file,
+// omitted to create a new one. `contentB64` is standard base64.
+async function ghCommitFile(env, path, contentB64, sha, message) {
+  const url = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${path}`;
+  const body = { message, content: contentB64, branch: env.GITHUB_BRANCH };
+  if (sha) body.sha = sha;
   const res = await fetch(url, {
     method: "PUT",
     headers: { ...ghHeaders(env), "content-type": "application/json" },
-    body: JSON.stringify({ message, content: toBase64(text), sha, branch: env.GITHUB_BRANCH }),
+    body: JSON.stringify(body),
   });
   if (res.status === 409) return { ok: false, status: 409 };
   if (!res.ok) return { ok: false, status: res.status, detail: await res.text() };
@@ -301,13 +665,13 @@ async function home(request, env) {
        <p><a class="btn" href="/auth/google">Continue with Google</a></p>`,
     );
   }
-  return editorPage(session);
+  return editorPage(session, env);
 }
 
-// Minimal colony editor (A4.1 shell + A4.2 form). Posts / picker / access come
-// next. The client script below uses no template literals so it can live inside
-// this one safely.
-function editorPage(session) {
+// Minimal colony editor (A4.1 shell + A4.2 form). Posts / access come next. The
+// client script below uses no template literals so it can live inside this one.
+function editorPage(session, env) {
+  const rawBase = `https://raw.githubusercontent.com/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/public`;
   const roleLine =
     session.role === "organizer"
       ? `colonies: ${escapeHtml((session.colonies || []).join(", ") || "none")}`
@@ -320,6 +684,25 @@ function editorPage(session) {
     opts.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("") +
     `</select></label>`;
 
+  const artChips = DISCIPLINES.map(
+    (d) => `<button type="button" class="chip" data-v="${escapeHtml(d)}">${escapeHtml(d)}</button>`,
+  ).join("");
+  const artField =
+    `<div class="fld full"><span>Art field</span>` +
+    `<div id="art-chips" class="chips">${artChips}</div>` +
+    `<input id="f-art_field_other" type="text" placeholder="Other (comma-separated)…" style="margin-top:8px"/></div>`;
+
+  const photoField =
+    `<div class="fld full"><span>Main photo</span>` +
+    `<div class="photo"><img id="photo-preview" alt="" />` +
+    `<div class="photo-ctl">` +
+    `<input type="file" id="photo-file" accept="image/png,image/jpeg,image/webp"/>` +
+    `<div style="display:flex;gap:8px"><button type="button" class="btn ghost" onclick="uploadPhoto()">Upload photo</button>` +
+    `<button type="button" class="btn ghost" onclick="removePhoto()">Remove</button></div>` +
+    `<span id="photo-status" style="font-size:12px"></span>` +
+    `<span style="font-size:11px;opacity:.7">Committed immediately · JPEG/PNG/WebP · max 5 MB</span>` +
+    `</div></div></div>`;
+
   const form =
     field("art_colony_name", "Name") +
     field("city", "City") +
@@ -327,7 +710,8 @@ function editorPage(session) {
     select("country", "Country", ["Serbia", "Bosnia and Herzegovina", "North Macedonia"]) +
     field("latitude", "Latitude") +
     field("longitude", "Longitude") +
-    field("art_field", "Art field") +
+    artField +
+    photoField +
     select("scope", "Scope", ["National", "Regional", "International", "Unspecified"]) +
     field("art_colony_organisers", "Organisers") +
     field("contact_person", "Contact person") +
@@ -336,6 +720,27 @@ function editorPage(session) {
     field("web_page", "Website") +
     field("time_period", "Time period") +
     field("duration", "Duration");
+
+  const postEditor =
+    `<div id="post-editor" style="display:none">` +
+    `<h3 id="pe-title" style="color:#000;margin:0 0 12px"></h3>` +
+    `<div class="grid">` +
+    `<label class="fld"><span>Title</span><input id="p-title" type="text"/></label>` +
+    `<label class="fld"><span>Date</span><input id="p-date" type="date"/></label>` +
+    `<label class="fld"><span>Author</span><input id="p-author" type="text"/></label>` +
+    `<label class="fld"><span>Tags (comma-separated)</span><input id="p-tags" type="text"/></label>` +
+    `<label class="fld full"><span>Excerpt</span><textarea id="p-excerpt" rows="2"></textarea></label>` +
+    `<label class="fld full"><span>Colony IDs (comma-separated — leave empty for a general post)</span><input id="p-colonies" type="text" placeholder="e.g. 12, 47"/></label>` +
+    `<div class="fld full"><span>Cover image</span><div class="photo"><img id="p-cover-preview" alt=""/>` +
+    `<div class="photo-ctl"><input type="file" id="p-cover-file" accept="image/png,image/jpeg,image/webp"/>` +
+    `<button type="button" class="btn ghost" onclick="uploadCover()">Upload cover</button>` +
+    `<span id="p-cover-status" style="font-size:12px"></span></div></div></div>` +
+    `<label class="fld full"><span>Body (markdown)</span><textarea id="p-body" rows="12"></textarea></label>` +
+    `<label class="fld" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="p-draft" style="width:auto"/><span>Draft (kept off the blog)</span></label>` +
+    `</div>` +
+    `<div class="actions"><button class="btn" onclick="savePost()">Save post</button>` +
+    `<button class="btn ghost" id="pe-delete" onclick="deletePost()">Delete</button>` +
+    `<button class="btn ghost" onclick="cancelPost()">Cancel</button><span id="p-status"></span></div></div>`;
 
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
@@ -347,51 +752,179 @@ function editorPage(session) {
     `.bar b{color:#000}.badge{background:#eb5160;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
-    `input,select{font:inherit;padding:9px 12px;border:1px solid rgba(141,49,58,.3);border-radius:10px;background:#fff;color:#8d313a;width:100%}` +
+    `input,select,textarea{font:inherit;padding:9px 12px;border:1px solid rgba(141,49,58,.3);border-radius:10px;background:#fff;color:#8d313a;width:100%}` +
+    `textarea{resize:vertical;min-height:56px;line-height:1.5}` +
+    `.tabs{display:flex;gap:6px;margin:6px 0 18px}` +
+    `.tab{background:#fff;border:1.5px solid rgba(141,49,58,.25);color:#8d313a;border-radius:999px;padding:7px 16px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;width:auto}` +
+    `.tab.on{background:#8d313a;border-color:#8d313a;color:#fff}` +
+    `.posts-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}` +
+    `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
+    `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
+    `#post-editor{background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px;margin-top:14px}` +
     `.btn{background:#eb5160;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}` +
     `.btn.ghost{background:#fff;border:1.5px solid rgba(141,49,58,.35);color:#8d313a}` +
     `#form{display:none;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px}` +
     `.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}` +
     `.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}` +
+    `.fld.full{grid-column:1/-1}` +
+    `.chips{display:flex;flex-wrap:wrap;gap:6px}` +
+    `.chip{border:1.5px solid rgba(141,49,58,.3);background:#fff;color:#8d313a;border-radius:999px;` +
+    `padding:5px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;width:auto}` +
+    `.chip.on{background:#eb5160;border-color:#eb5160;color:#fff}` +
+    `.photo{display:flex;gap:14px;align-items:flex-start}` +
+    `#photo-preview,#p-cover-preview{width:150px;height:100px;object-fit:cover;border-radius:10px;` +
+    `background:#faf0df;border:1px solid rgba(141,49,58,.2);flex:0 0 auto}` +
+    `.photo-ctl{display:flex;flex-direction:column;gap:8px}` +
+    `input[type=file]{border:0;padding:0;font-size:12px}` +
     `.fld span{opacity:.8}.actions{margin-top:18px;display:flex;gap:10px;align-items:center}` +
     `#status{font-size:13px;font-weight:600;opacity:.85}a{color:#8d313a}` +
-    `</style></head><body>` +
+    `.EasyMDEContainer .CodeMirror{border-radius:10px;border:1px solid rgba(141,49,58,.3);color:#000}` +
+    `.editor-toolbar{border-radius:10px 10px 0 0;border-color:rgba(141,49,58,.3)}` +
+    `</style>` +
+    `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css"/>` +
+    `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
+    `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span><b>Beyond the Cities</b> · Studio</span>` +
     `<span><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
     `<div class="wrap"><p style="opacity:.8">Signed in — ${roleLine}.</p>` +
-    `<div class="load"><input id="colony-id" type="text" inputmode="numeric" placeholder="Colony ID (e.g. 1)"/>` +
-    `<button class="btn ghost" onclick="loadColony()">Load</button></div>` +
+    `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
+    `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button></div>` +
+    `<div id="panel-colony">` +
+    `<div class="load"><label class="fld" style="flex:1"><span>Colony</span>` +
+    `<select id="colony-picker" onchange="onPick()"><option value="">Loading…</option></select></label></div>` +
     `<h2 id="title" style="color:#000"></h2>` +
     `<div id="form"><div class="grid">${form}</div>` +
     `<div class="actions"><button class="btn" onclick="save()">Save changes</button><span id="status"></span></div></div>` +
+    `</div>` +
+    `<div id="panel-posts" style="display:none">` +
+    `<div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
+    `<div id="posts-list"></div>` + postEditor +
+    `</div>` +
     `</div><script>` + EDITOR_JS + `</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
 // Client script — plain concatenation, no backticks/template literals.
 const EDITOR_JS =
-  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','art_field','scope','art_colony_organisers','contact_person','contact_telephone','email_address','web_page','time_period','duration'];" +
-  "var currentId=null;" +
+  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','contact_person','contact_telephone','email_address','web_page','time_period','duration'];" +
+  "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
+  "var editingSlug=null;var postCover='';var taggable=[];var easyMDE=null;" +
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
-  "async function loadColony(){" +
-  "var id=q('colony-id').value.trim();if(!id)return;" +
+  "function setPhotoStatus(t){q('photo-status').textContent=t}" +
+  "async function loadColonies(){" +
+  "var r=await fetch('/api/colonies');if(!r.ok){setStatus('Could not load colony list');return}" +
+  "var data=await r.json();var sel=q('colony-picker');sel.innerHTML='';" +
+  "var ph=document.createElement('option');ph.value='';ph.textContent=data.colonies.length?'Select a colony…':'No colonies assigned';sel.appendChild(ph);" +
+  "data.colonies.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.name+' — '+c.country;sel.appendChild(o)});" +
+  "if(document.body.dataset.role!=='admin'&&data.colonies.length===1){sel.value=String(data.colonies[0].id);loadColony(data.colonies[0].id)}}" +
+  "function onPick(){var v=q('colony-picker').value;if(v){loadColony(v)}else{q('form').style.display='none';q('title').textContent=''}}" +
+  "async function loadColony(id){" +
   "setStatus('Loading…');q('title').textContent='';" +
   "var r=await fetch('/api/colony/'+id);" +
   "if(!r.ok){var e=await r.json();setStatus('Could not load: '+(e.error||r.status));q('form').style.display='none';return}" +
   "var data=await r.json();var c=data.colony;" +
   "FIELDS.forEach(function(f){var el=q('f-'+f);if(el)el.value=(c[f]==null?'':c[f])});" +
+  "setArtField(c.art_field||'');" +
+  "currentPhotos=Array.isArray(c.photos)?c.photos:[];setPhotoPreview();q('photo-file').value='';setPhotoStatus('');" +
   "currentId=id;q('title').textContent=c.art_colony_name||('Colony '+id);" +
   "q('form').style.display='block';setStatus('Loaded from '+data.file)}" +
+  "function mainPhoto(){return currentPhotos.length?String(currentPhotos[0]):''}" +
+  "function setPhotoPreview(){var p=mainPhoto();var src;" +
+  "if(!p||p.indexOf('placehold.co')!==-1){src=RAW+'/assets/images/colony-placeholder.png'}" +
+  "else if(/^https?:/.test(p)){src=p}else{src=RAW+p}q('photo-preview').src=src}" +
+  "async function uploadPhoto(){if(!currentId)return;var f=q('photo-file').files[0];" +
+  "if(!f){setPhotoStatus('Choose an image first');return}" +
+  "setPhotoStatus('Uploading…');q('photo-preview').src=URL.createObjectURL(f);" +
+  "var fd=new FormData();fd.append('file',f);" +
+  "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'POST',body:fd});var out=await r.json();" +
+  "if(!r.ok){setPhotoStatus('Upload failed: '+(out.detail||out.error));return}" +
+  "currentPhotos=out.photos||[out.photo];q('photo-file').value='';" +
+  "setPhotoStatus('Photo updated \\u2713 commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
+  "async function removePhoto(){if(!currentId)return;setPhotoStatus('Removing…');" +
+  "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'DELETE'});var out=await r.json();" +
+  "if(!r.ok){setPhotoStatus('Remove failed: '+(out.detail||out.error));return}" +
+  "currentPhotos=out.photos||[];setPhotoPreview();q('photo-file').value='';" +
+  "setPhotoStatus(out.unchanged?'No photo to remove':('Photo removed \\u2713 commit '+String(out.commit||'').slice(0,7)))}" +
+  "function setArtField(v){" +
+  "var chips=document.querySelectorAll('#art-chips .chip');chips.forEach(function(ch){ch.classList.remove('on')});" +
+  "var other=[];String(v).split(',').map(function(s){return s.trim()}).filter(Boolean).forEach(function(t){" +
+  "var m=null;chips.forEach(function(ch){if(ch.dataset.v.toLowerCase()===t.toLowerCase())m=ch});" +
+  "if(m){m.classList.add('on')}else{other.push(t)}});" +
+  "q('f-art_field_other').value=other.join(', ')}" +
+  "function getArtField(){var out=[];" +
+  "document.querySelectorAll('#art-chips .chip.on').forEach(function(ch){out.push(ch.dataset.v)});" +
+  "var o=q('f-art_field_other').value.trim();if(o){o.split(',').forEach(function(s){s=s.trim();if(s)out.push(s)})}" +
+  "return out.join(', ')}" +
+  "document.addEventListener('click',function(e){var ch=e.target.closest('#art-chips .chip');if(ch)ch.classList.toggle('on')});" +
   "async function save(){if(!currentId)return;var body={};" +
   "FIELDS.forEach(function(f){body[f]=q('f-'+f).value});" +
+  "body.art_field=getArtField();" +
   "['latitude','longitude'].forEach(function(k){var v=String(body[k]).trim();if(v!==''&&!isNaN(Number(v))){body[k]=Number(v)}else{delete body[k]}});" +
   "setStatus('Saving…');" +
   "var r=await fetch('/api/colony/'+currentId,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();" +
   "if(!r.ok){setStatus('Save failed: '+(out.detail||out.error));return}" +
   "if(out.unchanged){setStatus('No changes to save');return}" +
-  "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}";
+  "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
+  // --- tabs + blog posts ---
+  "function showTab(name){var pc=name==='colony';" +
+  "q('panel-colony').style.display=pc?'block':'none';q('panel-posts').style.display=pc?'none':'block';" +
+  "q('tab-colony').classList.toggle('on',pc);q('tab-posts').classList.toggle('on',!pc);if(!pc){loadPosts()}}" +
+  "function setPostStatus(t){q('p-status').textContent=t}" +
+  "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
+  "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
+  "var data=await r.json();taggable=data.taggable||[];renderPosts(data.posts||[])}" +
+  "function renderPosts(list){var box=q('posts-list');box.innerHTML='';" +
+  "if(!list.length){box.innerHTML='<p style=\"opacity:.7\">No posts yet.</p>';return}" +
+  "list.forEach(function(p){var row=document.createElement('div');row.className='post-row';" +
+  "var left=document.createElement('div');var t=document.createElement('div');t.style.fontWeight='700';t.style.color='#000';t.textContent=p.title+(p.draft?'  (draft)':'');" +
+  "var meta=document.createElement('div');meta.className='meta';meta.textContent=p.date+' · '+(p.colonies&&p.colonies.length?('colonies '+p.colonies.join(', ')):'general');" +
+  "left.appendChild(t);left.appendChild(meta);" +
+  "var btns=document.createElement('div');btns.style.display='flex';btns.style.gap='8px';" +
+  "var ed=document.createElement('button');ed.className='btn ghost';ed.textContent='Edit';ed.onclick=function(){editPost(p.slug)};" +
+  "var de=document.createElement('button');de.className='btn ghost';de.textContent='Delete';de.onclick=function(){deletePost(p.slug)};" +
+  "btns.appendChild(ed);btns.appendChild(de);row.appendChild(left);row.appendChild(btns);box.appendChild(row)})}" +
+  "function slugify(s){var map={'č':'c','ć':'c','ž':'z','š':'s','đ':'dj','Č':'c','Ć':'c','Ž':'z','Š':'s','Đ':'dj'};" +
+  "s=String(s).replace(/[čćžšđČĆŽŠĐ]/g,function(m){return map[m]||m});" +
+  "return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}" +
+  "function setCoverPreview(p){var src;if(!p){src=RAW+'/assets/images/colony-placeholder.png'}else if(/^https?:/.test(p)){src=p}else{src=RAW+p}q('p-cover-preview').src=src}" +
+  "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false,toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link','image','|','preview','guide']})}" +
+  "function getBody(){return easyMDE?easyMDE.value():q('p-body').value}" +
+  "function newPost(){editingSlug=null;postCover='';q('pe-title').textContent='New post';" +
+  "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
+  "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
+  "q('p-colonies').value=(document.body.dataset.role!=='admin'?taggable.map(function(c){return c.id}).join(', '):'');" +
+  "setCoverPreview('');setPostStatus('');q('p-cover-file').value='';q('p-cover-status').textContent='';q('posts-status').textContent='';" +
+  "q('pe-delete').style.display='none';q('post-editor').style.display='block';initEditor();easyMDE.value('');" +
+  "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
+  "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
+  "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';" +
+  "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
+  "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');q('p-colonies').value=(p.colonies||[]).join(', ');" +
+  "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
+  "q('pe-delete').style.display='';q('post-editor').style.display='block';initEditor();easyMDE.value(p.body||'');" +
+  "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
+  "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
+  "q('p-cover-status').textContent='Uploading…';q('p-cover-preview').src=URL.createObjectURL(f);" +
+  "var fd=new FormData();fd.append('file',f);var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
+  "if(!r.ok){q('p-cover-status').textContent='Upload failed: '+(out.detail||out.error);return}" +
+  "postCover=out.path;q('p-cover-status').textContent='Cover uploaded \\u2713'}" +
+  "async function savePost(){var title=q('p-title').value.trim();if(!title){setPostStatus('Title is required');return}" +
+  "var slug=editingSlug||slugify(title);if(!slug){setPostStatus('Could not build a slug from the title');return}" +
+  "var body={title:title,date:q('p-date').value||'',author:q('p-author').value,excerpt:q('p-excerpt').value,cover:postCover,body:getBody(),draft:q('p-draft').checked," +
+  "tags:q('p-tags').value.split(',').map(function(s){return s.trim()}).filter(Boolean)," +
+  "colonies:q('p-colonies').value.split(',').map(function(s){return s.trim()}).filter(Boolean)};" +
+  "setPostStatus('Saving…');var r=await fetch('/api/post/'+slug,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
+  "var out=await r.json();if(!r.ok){setPostStatus('Save failed: '+(out.detail||out.error));return}" +
+  "q('post-editor').style.display='none';editingSlug=null;" +
+  "q('posts-status').textContent='Saved \\u2713 commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min';loadPosts()}" +
+  "async function deletePost(slug){var s=slug||editingSlug;if(!s)return;if(!confirm('Delete this post?'))return;" +
+  "var r=await fetch('/api/post/'+s,{method:'DELETE'});var out=await r.json();" +
+  "if(!r.ok){alert('Delete failed: '+(out.detail||out.error));return}" +
+  "if(editingSlug===s){cancelPost()}q('posts-status').textContent='Post deleted \\u2713';loadPosts()}" +
+  "function cancelPost(){q('post-editor').style.display='none';editingSlug=null}" +
+  "loadColonies();";
 
 // --- misc responders ---------------------------------------------------------
 function health(env) {
@@ -494,9 +1027,14 @@ function b64urlDecode(s) {
 
 // Standard base64 (GitHub contents API), UTF-8 safe.
 function toBase64(str) {
-  const bytes = new TextEncoder().encode(str);
+  return bytesToBase64(new TextEncoder().encode(str));
+}
+function bytesToBase64(bytes) {
   let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
+  const CHUNK = 0x8000; // avoid arg-count limits on large images
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
   return btoa(bin);
 }
 function fromBase64(b64) {
