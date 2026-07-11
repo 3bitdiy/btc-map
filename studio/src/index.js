@@ -847,11 +847,18 @@ function editorPage(session, env) {
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"/>` +
-    `<title>Studio · Beyond the Cities</title><style>` +
-    `*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#f6e8d5;color:#8d313a}` +
+    `<title>Studio · Beyond the Cities</title>` +
+    `<link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>` +
+    `<style>` +
+    `*{box-sizing:border-box}body{margin:0;font-family:'Montserrat',system-ui,sans-serif;background:#f6e8d5;color:#8d313a}` +
     `.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;` +
-    `background:#fff;border-bottom:1px solid rgba(141,49,58,.15)}` +
+    `background:#fff;border-bottom:1px solid rgba(141,49,58,.15);flex-wrap:wrap}` +
     `.bar b{color:#000}.badge{background:#eb5160;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
+    `.bar-brand{display:flex;align-items:center;gap:10px}.bar-logo{height:30px;width:auto;display:block}` +
+    `.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}` +
+    `.bar-site{font-weight:700;opacity:.7}.bar-site:hover{opacity:1;color:#eb5160}` +
+    `.studio-foot{border-top:1px solid rgba(141,49,58,.12);text-align:center;padding:30px 20px;font-size:13px;font-weight:600}` +
+    `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
     `input,select,textarea{font:inherit;padding:9px 12px;border:1px solid rgba(141,49,58,.3);border-radius:10px;background:#fff;color:#8d313a;width:100%}` +
@@ -891,8 +898,8 @@ function editorPage(session, env) {
     `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css"/>` +
     `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
-    `<div class="bar"><span><b>Beyond the Cities</b> · Studio</span>` +
-    `<span><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
+    `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
+    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
     `<div class="wrap"><p id="signed-in" style="opacity:.8">Signed in — ${roleLine}.</p>` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
@@ -907,7 +914,10 @@ function editorPage(session, env) {
     `<div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
     `<div id="posts-list"></div>` + postEditor +
     `</div>` + accessPanel +
-    `</div><script>` + EDITOR_JS + `</script></body></html>`;
+    `</div>` +
+    `<footer class="studio-foot"><p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>` +
+    `<p class="studio-foot__meta">A Goethe-Institut project · 2026–2028</p></footer>` +
+    `<script>` + EDITOR_JS + `</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
@@ -1110,17 +1120,21 @@ function htmlPage(title, inner, status = 200) {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>
 <style>
-  body{font-family:system-ui,sans-serif;background:#f6e8d5;color:#8d313a;margin:0;
+  body{font-family:'Montserrat',system-ui,sans-serif;background:#f6e8d5;color:#8d313a;margin:0;
        min-height:100vh;display:grid;place-items:center;padding:24px}
+  .brand{display:flex;align-items:center;gap:11px;margin-bottom:18px;font-weight:700;letter-spacing:.02em}
+  .brand img{height:40px;width:auto}
+  .brand b{color:#000}
   .card{background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:18px;
         padding:32px 36px;max-width:440px;box-shadow:0 14px 40px rgba(141,49,58,.12)}
-  h1{font-size:20px;margin:0 0 12px}
+  h1{font-size:20px;margin:0 0 12px;color:#000}
   p{line-height:1.6;margin:0 0 12px}
   a{color:#8d313a}
   .btn{display:inline-block;background:#eb5160;color:#fff;text-decoration:none;
        padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
-</style></head><body><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div></body></html>`;
+</style></head><body><div><div class="brand"><img src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></div><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div></div></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 

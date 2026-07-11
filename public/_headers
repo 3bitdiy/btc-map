@@ -1,0 +1,4 @@
+# Allow the self-hosted fonts to be used cross-origin (e.g. by the Studio
+# Worker at studio.beyondthecities.org). Cloudflare Pages applies this file.
+/assets/fonts/*
+  Access-Control-Allow-Origin: *
