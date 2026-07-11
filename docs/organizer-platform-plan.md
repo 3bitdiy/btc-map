@@ -217,8 +217,10 @@ added: identical content returns `{ok, unchanged}` instead of an empty commit.
 - [x] **A5.2** Write rate limit (40/min per email, KV fixed-window) + clear
   save-failed status messages.
 - [x] **A5.3** Concurrent-edit conflicts surfaced (GitHub 409 → `conflict`).
-- [ ] **A5.4** Custom domain `studio.beyondthecities.org` (Worker custom domain
-  + Google redirect URI) — needs the zone on Cloudflare; user action.
+- [x] **A5.4** Custom domain **live**: `studio.beyondthecities.org` (Worker
+  custom domain + Google origin/redirect added). `/health` + home OK. Worker
+  derives the redirect URI from the request origin, so the workers.dev URL
+  keeps working too.
 - [x] **A5.5** `studio/README.md` — deploy, config, how to add an organizer,
   how organizers use it, custom-domain steps.
 - Deferred: delete orphan images on replace; sanitize blog markdown at build.
