@@ -91,7 +91,7 @@ const nav = (active) => `
       <a href="/map.html">Map</a>
       <a href="/colonies/"${active === "colonies" ? ' aria-current="page"' : ""}>Colonies</a>
       <a href="/blog/">Blog</a>
-      <a class="col-nav__org" href="/forum/">Organizers</a>
+      <a class="col-nav__org" href="https://studio.beyondthecities.org/">Organizers</a>
     </nav>
   </header>`;
 
