@@ -9,13 +9,13 @@ colonies: []
 draft: false
 ---
 
-##About the project
+## About the project
 
 From the 1950s onward, the Socialist Federal Republic of Yugoslavia maintained an elaborate state-funded program for cultural institutions – primarily residency programs in rural areas, the so-called "artists' colonies." After the country's dissolution, some of these colonies survived, some independently, others with limited public support.
 
 The "Beyond the Cities" project builds on this tradition: It revitalizes existing artists' colonies and similar initiatives in Serbia, Bosnia and Herzegovina, and North Macedonia. The goal is a reliable, state-independent network of cultural partners in the Western Balkans that strengthens rural areas "beyond the cities" and opens up new opportunities for transnational cooperation – including with the Goethe-Institutes.
 
-##Goals
+## Goals
 
 Network building through inventory assessment, needs analysis and collaborative capacity building
 Strengthening collaboration within the network through a digital communication platform, practical "how-to" guides, long-term planning coordination, and regular networking routines.
@@ -24,24 +24,24 @@ Cooperation with the local Goethe Institutes through binding agreements, a joint
 
 Ensuring the sustainable promotion of infrastructure and structures for cultural organizations in culturally underserved rural regions, even beyond the project duration.
 
-##Period
+## Period
 2026-2028
 
-##Project phases
+## Project phases
 
-**Inventory**
+### Inventory
 Research on active former artists' colonies in Serbia, Bosnia and Herzegovina and North Macedonia (100-150 institutions)
 
-**Needs analysis**
+### Needs analysis
 Analysis of the personnel, technical, financial and organizational capacities of 20-30 selected colonies, creation of current activity profiles and identification of optimization potentials in management.
 
-**Collaborative capacity building**
+### Collaborative capacity building
 Strengthening 15-20 artist colonies through exchange, international mobility, workshops and mentor residencies
 
-**Networking**
+### Networking
 Building sustainable structures for continuous cooperation between artists' colonies in Bosnia and Herzegovina, North Macedonia and Serbia
 
-##Participating institutions
+## Participating institutions
 
 The project “Beyond the Cities” is carried out by the Goethe-Institut Belgrade in cooperation with the Goethe-Institutes in Bosnia and Herzegovina and North Macedonia, as well as with partner organizations in Serbia, Bosnia and Herzegovina, North Macedonia and Germany.
 
@@ -50,7 +50,7 @@ The project “Beyond the Cities” is carried out by the Goethe-Institut Belgra
 * CAC - Center for Contemporary Art
 * IGBK - International Society for Fine Arts
 
-##contact
+## contact
 
 Zorica Milisavljević
 Project Manager
