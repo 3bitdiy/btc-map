@@ -41,7 +41,7 @@ Strengthening 15-20 artist colonies through exchange, international mobility, wo
 **Networking**
 Building sustainable structures for continuous cooperation between artists' colonies in Bosnia and Herzegovina, North Macedonia and Serbia
 
-***Participating institutions***
+**Participating institutions**
 
 The project “Beyond the Cities” is carried out by the Goethe-Institut Belgrade in cooperation with the Goethe-Institutes in Bosnia and Herzegovina and North Macedonia, as well as with partner organizations in Serbia, Bosnia and Herzegovina, North Macedonia and Germany.
 
