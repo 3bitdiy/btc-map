@@ -4,16 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/gen-colonies.mjs && vite",
-    "build": "node scripts/gen-colonies.mjs && vite build",
+    "gen": "node scripts/gen-colonies.mjs && node scripts/gen-blog.mjs",
+    "dev": "npm run gen && vite",
+    "build": "npm run gen && vite build",
     "preview": "vite preview",
     "data:convert": "node scripts/convert-colonies-csv.mjs",
     "data:missing": "node scripts/geocode-missing-locations.mjs",
     "data:geocode": "node scripts/geocode-missing-locations.mjs --apply",
-    "gen:colonies": "node scripts/gen-colonies.mjs"
+    "gen:colonies": "node scripts/gen-colonies.mjs",
+    "gen:blog": "node scripts/gen-blog.mjs"
   },
   "devDependencies": {
     "csv-parse": "^6.2.1",
+    "marked": "^18.0.6",
     "vite": "^8.0.10"
   },
   "dependencies": {

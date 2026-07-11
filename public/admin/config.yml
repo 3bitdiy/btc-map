@@ -126,3 +126,59 @@ collections:
         label: North Macedonia
         file: public/data/colonies-north-macedonia.json
         fields: *colony_fields
+
+  - name: blog
+    label: Blog
+    label_singular: Post
+    description: >-
+      News and stories for the public blog. Each post is one markdown file.
+      Set "Draft" to keep a post out of the build until it's ready. List a
+      colony's ID under "Related colonies" to also show the post under
+      "News from this colony" on that colony's page.
+    folder: public/data/blog
+    extension: md
+    format: frontmatter
+    create: true
+    slug: "{{slug}}"
+    media_folder: /public/assets/images/blog
+    public_folder: /assets/images/blog
+    fields:
+      - { label: Title, name: title, widget: string }
+      - {
+          label: Date,
+          name: date,
+          widget: datetime,
+          date_format: "YYYY-MM-DD",
+          time_format: false,
+          picker_utc: true,
+        }
+      - { label: Author, name: author, widget: string, required: false }
+      - {
+          label: Excerpt,
+          name: excerpt,
+          widget: text,
+          required: false,
+          hint: "One or two sentences shown in the list and as the page description.",
+        }
+      - { label: Cover image, name: cover, widget: image, required: false }
+      - {
+          label: Tags,
+          name: tags,
+          widget: list,
+          required: false,
+          field: { label: Tag, name: tag, widget: string },
+        }
+      - label: Related colonies
+        name: colonies
+        widget: list
+        required: false
+        hint: "Colony IDs this post is news for."
+        field: { label: Colony ID, name: id, widget: number, value_type: int }
+      - {
+          label: Draft,
+          name: draft,
+          widget: boolean,
+          default: false,
+          required: false,
+        }
+      - { label: Body, name: body, widget: markdown }

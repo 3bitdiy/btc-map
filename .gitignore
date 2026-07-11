@@ -22,6 +22,10 @@ data/
 !public/data/*.json
 !public/data/*.csv
 
+# Generated blog pages + index (built from public/data/blog by scripts/gen-blog.mjs)
+/blog
+public/data/blog-index.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
