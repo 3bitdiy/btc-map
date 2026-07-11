@@ -1,0 +1,29 @@
+{
+  // Organizer platform ("Studio") — a standalone Cloudflare Worker, separate
+  // from the static map deploy (../wrangler.jsonc). Deploy with:
+  //   npx wrangler deploy --config studio/wrangler.jsonc
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "btc-studio",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-14",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // Non-secret config. GOOGLE_CLIENT_ID is not sensitive (it's exposed in the
+  // browser redirect anyway), so it lives here rather than as a secret.
+  "vars": {
+    "GITHUB_REPO": "3bitdiy/btc-map",
+    "GITHUB_BRANCH": "main",
+    "STUDIO_URL": "https://studio.beyondthecities.org",
+    "GOOGLE_CLIENT_ID": "594753096509-ca5djbvm7kqqeo3ms1nq3iruf3daihd8.apps.googleusercontent.com"
+  },
+
+  // Allowlist store (who can edit which colony). Filled in by A0.4:
+  //   npx wrangler kv namespace create ACCESS
+  "kv_namespaces": [
+    { "binding": "ACCESS", "id": "277fbe5444964a60a86e12b910a3e04f" }
+  ]
+
+  // Secrets (set via `wrangler secret put`, never committed):
+  //   GITHUB_TOKEN, GOOGLE_CLIENT_SECRET, SESSION_SECRET
+}
