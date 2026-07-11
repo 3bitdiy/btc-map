@@ -91,7 +91,6 @@ const nav = (active) => `
       <a href="/map.html">Map</a>
       <a href="/colonies/"${active === "colonies" ? ' aria-current="page"' : ""}>Colonies</a>
       <a href="/blog/">Blog</a>
-      <a class="col-nav__org" href="https://studio.beyondthecities.org/">Organizers</a>
     </nav>
   </header>`;
 
@@ -99,6 +98,7 @@ const footer = () => `
   <footer class="col-foot">
     <p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>
     <p class="col-foot__meta">A Goethe-Institut project · 2026–2028</p>
+    <p><a class="col-foot__login" href="https://studio.beyondthecities.org/">Organizer login</a></p>
   </footer>`;
 
 // inline the logo <symbol> (extracted from index.html) so pages are standalone
