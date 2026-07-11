@@ -48,6 +48,14 @@ export default {
     const origin = url.origin;
 
     try {
+      // Basic write rate limit (protects the GitHub token from abuse).
+      if (pathname.startsWith("/api/") && (request.method === "POST" || request.method === "PUT" || request.method === "DELETE")) {
+        const s = await getSession(request, env);
+        if (s && !(await rateOk(env, s.email))) {
+          return json({ error: "rate_limited", detail: "Too many changes — wait a minute." }, 429);
+        }
+      }
+
       if (pathname === "/health") return health(env);
       if (pathname === "/auth/google") return authStart(request, env, origin);
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
@@ -684,6 +692,17 @@ async function signSession(env, payload) {
   const body = b64urlEncode(JSON.stringify(payload));
   const sig = await hmac(env.SESSION_SECRET, body);
   return `${body}.${sig}`;
+}
+
+// Fixed-window write rate limit, keyed by email, stored in the ACCESS KV.
+async function rateOk(env, email) {
+  const windowSec = 60;
+  const limit = 40;
+  const bucket = `rl:${email}:${Math.floor(Date.now() / 1000 / windowSec)}`;
+  const cur = parseInt((await env.ACCESS.get(bucket)) || "0", 10);
+  if (cur >= limit) return false;
+  await env.ACCESS.put(bucket, String(cur + 1), { expirationTtl: windowSec });
+  return true;
 }
 
 // --- allowlist (KV) ----------------------------------------------------------

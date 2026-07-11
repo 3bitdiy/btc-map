@@ -212,14 +212,16 @@ added: identical content returns `{ok, unchanged}` instead of an empty commit.
   fresh sign-in to pick up `owner` in the session.
 
 ## Milestone 5 — Hardening & ship
-- [ ] **A5.1** Server-side validation + escaping; **re-check scope on every
-  write** (never trust the client).
-- [ ] **A5.2** Rate-limit writes; clear save-failed/retry UX.
-- [ ] **A5.3** Surface concurrent-edit conflicts (someone else edited → reload).
-- [ ] **A5.4** Deploy Worker to prod; set secrets + OAuth redirect URIs; DNS for
-  `studio.…`. End-to-end smoke test (organizer logs in → edits → live after
-  rebuild).
-- [ ] **A5.5** Short docs: "how to add an organizer" + "how organizers use it".
+- [x] **A5.1** Scope re-checked on every write server-side; editor UI uses
+  textContent / server escapes HTML in rendered pages.
+- [x] **A5.2** Write rate limit (40/min per email, KV fixed-window) + clear
+  save-failed status messages.
+- [x] **A5.3** Concurrent-edit conflicts surfaced (GitHub 409 → `conflict`).
+- [ ] **A5.4** Custom domain `studio.beyondthecities.org` (Worker custom domain
+  + Google redirect URI) — needs the zone on Cloudflare; user action.
+- [x] **A5.5** `studio/README.md` — deploy, config, how to add an organizer,
+  how organizers use it, custom-domain steps.
+- Deferred: delete orphan images on replace; sanitize blog markdown at build.
 
 ## Order & parallelism
 `M0 → M1 → (M2 ∥ M3) → M4 → M5`. Do the **walking skeleton** across M1/M3/M4
