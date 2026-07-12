@@ -902,57 +902,57 @@ function editorPage(session, env) {
     `<title>Studio · Beyond the Cities</title>` +
     `<link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>` +
     `<style>` +
-    `*{box-sizing:border-box}body{margin:0;font-family:'Montserrat',system-ui,sans-serif;background:#f6e8d5;color:#8d313a}` +
+    `*{box-sizing:border-box}body{margin:0;font-family:'Montserrat',system-ui,sans-serif;background:#f1f1ee;color:#1c1c1c}` +
     `.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;` +
-    `background:#fff;border-bottom:1px solid rgba(141,49,58,.15);flex-wrap:wrap}` +
-    `.bar b{color:#000}.badge{background:#eb5160;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
+    `background:#fff;border-bottom:1px solid rgba(28,28,28,.15);flex-wrap:wrap}` +
+    `.bar b{color:#000}.badge{background:#ff4326;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
     `.bar-brand{display:flex;align-items:center;gap:10px}.bar-logo{height:30px;width:auto;display:block}` +
     `.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}` +
-    `.bar-site{font-weight:700;opacity:.7}.bar-site:hover{opacity:1;color:#eb5160}` +
-    `.studio-foot{border-top:1px solid rgba(141,49,58,.12);text-align:center;padding:30px 20px;font-size:13px;font-weight:600}` +
+    `.bar-site{font-weight:700;opacity:.7}.bar-site:hover{opacity:1;color:#ff4326}` +
+    `.studio-foot{border-top:1px solid rgba(28,28,28,.12);text-align:center;padding:30px 20px;font-size:13px;font-weight:600}` +
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
     `.picker{margin:8px 0 20px}` +
     `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:320px;overflow:auto}` +
-    `.picker-item{width:100%;text-align:left;border:1px solid rgba(141,49,58,.15);background:#fff;border-radius:10px;` +
-    `padding:9px 12px;cursor:pointer;font:inherit;color:#8d313a;display:flex;flex-direction:column;gap:2px;align-items:flex-start}` +
-    `.picker-item:hover{border-color:#eb5160}.picker-item.on{background:#eb5160;border-color:#eb5160;color:#fff}` +
+    `.picker-item{width:100%;text-align:left;border:1px solid rgba(28,28,28,.15);background:#fff;border-radius:10px;` +
+    `padding:9px 12px;cursor:pointer;font:inherit;color:#1c1c1c;display:flex;flex-direction:column;gap:2px;align-items:flex-start}` +
+    `.picker-item:hover{border-color:#ff4326}.picker-item.on{background:#ff4326;border-color:#ff4326;color:#fff}` +
     `.pi-name{font-weight:700}.pi-sub{font-size:11.5px;opacity:.65;text-transform:uppercase;letter-spacing:.03em}` +
     `.picker-item.on .pi-sub{opacity:.85}` +
-    `input,select,textarea{font:inherit;padding:9px 12px;border:1px solid rgba(141,49,58,.3);border-radius:10px;background:#fff;color:#8d313a;width:100%}` +
+    `input,select,textarea{font:inherit;padding:9px 12px;border:1px solid rgba(28,28,28,.3);border-radius:10px;background:#fff;color:#1c1c1c;width:100%}` +
     `textarea{resize:vertical;min-height:56px;line-height:1.5}` +
     `.tabs{display:flex;gap:6px;margin:6px 0 18px}` +
-    `.tab{background:#fff;border:1.5px solid rgba(141,49,58,.25);color:#8d313a;border-radius:999px;padding:7px 16px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;width:auto}` +
-    `.tab.on{background:#8d313a;border-color:#8d313a;color:#fff}` +
+    `.tab{background:#fff;border:1.5px solid rgba(28,28,28,.25);color:#1c1c1c;border-radius:999px;padding:7px 16px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;width:auto}` +
+    `.tab.on{background:#1c1c1c;border-color:#1c1c1c;color:#fff}` +
     `.posts-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}` +
-    `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
+    `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
     `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
-    `#post-editor{background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px;margin-top:14px}` +
+    `#post-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px;margin-top:14px}` +
     `.acc-sec{margin-bottom:22px}.acc-sec h3{color:#000;margin:0 0 10px;font-size:16px}` +
-    `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
+    `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
     `.acc-org{flex-direction:column;align-items:stretch;gap:8px}` +
     `.acc-org-head{display:flex;justify-content:space-between;align-items:center}` +
     `.acc-add{display:flex;gap:8px;margin-top:10px}` +
-    `.btn{background:#eb5160;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}` +
-    `.btn.ghost{background:#fff;border:1.5px solid rgba(141,49,58,.35);color:#8d313a}` +
-    `#form{display:none;background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:16px;padding:20px}` +
+    `.btn{background:#ff4326;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}` +
+    `.btn.ghost{background:#fff;border:1.5px solid rgba(28,28,28,.35);color:#1c1c1c}` +
+    `#form{display:none;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px}` +
     `.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}` +
     `.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}` +
     `.fld.full{grid-column:1/-1}` +
     `.chips{display:flex;flex-wrap:wrap;gap:6px}` +
-    `.chip{border:1.5px solid rgba(141,49,58,.3);background:#fff;color:#8d313a;border-radius:999px;` +
+    `.chip{border:1.5px solid rgba(28,28,28,.3);background:#fff;color:#1c1c1c;border-radius:999px;` +
     `padding:5px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;width:auto}` +
-    `.chip.on{background:#eb5160;border-color:#eb5160;color:#fff}` +
+    `.chip.on{background:#ff4326;border-color:#ff4326;color:#fff}` +
     `.photo{display:flex;gap:14px;align-items:flex-start}` +
     `#photo-preview,#p-cover-preview{width:150px;height:100px;object-fit:cover;border-radius:10px;` +
-    `background:#faf0df;border:1px solid rgba(141,49,58,.2);flex:0 0 auto}` +
+    `background:#f7f7f5;border:1px solid rgba(28,28,28,.2);flex:0 0 auto}` +
     `.photo-ctl{display:flex;flex-direction:column;gap:8px}` +
     `input[type=file]{border:0;padding:0;font-size:12px}` +
     `.fld span{opacity:.8}.actions{margin-top:18px;display:flex;gap:10px;align-items:center}` +
-    `#status{font-size:13px;font-weight:600;opacity:.85}a{color:#8d313a}` +
-    `.EasyMDEContainer .CodeMirror{border-radius:10px;border:1px solid rgba(141,49,58,.3);color:#000}` +
-    `.editor-toolbar{border-radius:10px 10px 0 0;border-color:rgba(141,49,58,.3)}` +
+    `#status{font-size:13px;font-weight:600;opacity:.85}a{color:#1c1c1c}` +
+    `.EasyMDEContainer .CodeMirror{border-radius:10px;border:1px solid rgba(28,28,28,.3);color:#000}` +
+    `.editor-toolbar{border-radius:10px 10px 0 0;border-color:rgba(28,28,28,.3)}` +
     `</style>` +
     `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css"/>` +
     `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
@@ -1204,17 +1204,17 @@ function htmlPage(title, inner, status = 200) {
 <title>${escapeHtml(title)}</title>
 <link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>
 <style>
-  body{font-family:'Montserrat',system-ui,sans-serif;background:#f6e8d5;color:#8d313a;margin:0;
+  body{font-family:'Montserrat',system-ui,sans-serif;background:#f1f1ee;color:#1c1c1c;margin:0;
        min-height:100vh;display:grid;place-items:center;padding:24px}
   .brand{display:flex;align-items:center;gap:11px;margin-bottom:18px;font-weight:700;letter-spacing:.02em}
   .brand img{height:40px;width:auto}
   .brand b{color:#000}
-  .card{background:#fff;border:1px solid rgba(141,49,58,.15);border-radius:18px;
-        padding:32px 36px;max-width:440px;box-shadow:0 14px 40px rgba(141,49,58,.12)}
+  .card{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:18px;
+        padding:32px 36px;max-width:440px;box-shadow:0 14px 40px rgba(28,28,28,.12)}
   h1{font-size:20px;margin:0 0 12px;color:#000}
   p{line-height:1.6;margin:0 0 12px}
-  a{color:#8d313a}
-  .btn{display:inline-block;background:#eb5160;color:#fff;text-decoration:none;
+  a{color:#1c1c1c}
+  .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;
        padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
 </style></head><body><div><div class="brand"><img src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></div><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div></div></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
