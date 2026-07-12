@@ -162,11 +162,32 @@ const dirInner = `
 const detailRow = (label, value) =>
   value ? `<div class="col-detail"><dt>${esc(label)}</dt><dd>${value}</dd></div>` : "";
 
+// A contact field may hold several values ("a & b"). Split so each is its own
+// link. Phones/websites keep "/" (Serbian numbers, URLs) — never split on it.
+const splitContacts = (raw, kind) => {
+  const s = cleanText(raw);
+  if (!s) return [];
+  const re =
+    kind === "website"
+      ? /\s*[&,;]\s*/
+      : kind === "email"
+        ? /\s*[&,;]\s*|\s+and\s+/i
+        : /\s*[&,]\s*|\s+and\s+/i; // phone
+  return s.split(re).map((x) => x.trim()).filter(Boolean);
+};
+
+const contactLinks = (raw, kind) =>
+  splitContacts(raw, kind)
+    .map((v) => {
+      if (kind === "phone") return `<a href="tel:${esc(v.replace(/[^\d+]/g, ""))}">${esc(v)}</a>`;
+      if (kind === "email") return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+      const href = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+      return `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(v)}</a>`;
+    })
+    .join("<br />");
+
 const colonyInner = (c) => {
   const place = shortPlace(c);
-  const web = cleanText(c.web_page);
-  const email = cleanText(c.email_address);
-  const webHref = web && !/^https?:\/\//i.test(web) ? `https://${web}` : web;
   return `
   <main class="col-page">
     <a class="col-back" href="/colonies/">← All colonies</a>
@@ -188,9 +209,9 @@ const colonyInner = (c) => {
         ${detailRow("Time period", esc(cleanText(c.time_period)))}
         ${detailRow("Duration", esc(cleanText(c.duration)))}
         ${detailRow("Contact", esc(cleanText(c.contact_person)))}
-        ${detailRow("Phone", esc(cleanText(c.contact_telephone)))}
-        ${detailRow("Email", email ? `<a href="mailto:${esc(email)}">${esc(email)}</a>` : "")}
-        ${detailRow("Website", web ? `<a href="${esc(webHref)}" target="_blank" rel="noopener">${esc(web)}</a>` : "")}
+        ${detailRow("Phone", contactLinks(c.contact_telephone, "phone"))}
+        ${detailRow("Email", contactLinks(c.email_address, "email"))}
+        ${detailRow("Website", contactLinks(c.web_page, "website"))}
       </dl>
     </section>
 

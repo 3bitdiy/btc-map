@@ -161,6 +161,24 @@ function getColonyPlace(colony) {
   return normalizeText(colony.place);
 }
 
+// A contact field may hold several values joined with "&"/","/"and". Split so
+// each becomes its own link. Separators differ per kind: phones and websites
+// keep "/" (Serbian numbers and URLs use it), so we never split on "/".
+function splitContacts(raw, kind) {
+  const s = normalizeText(raw);
+  if (!s) return [];
+  const re =
+    kind === "website"
+      ? /\s*[&,;]\s*/
+      : kind === "email"
+        ? /\s*[&,;]\s*|\s+and\s+/i
+        : /\s*[&,]\s*|\s+and\s+/i; // phone
+  return s
+    .split(re)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
 function getColonyDisplayLocation(colony) {
   const city = getColonyCity(colony);
   const place = getColonyPlace(colony);
@@ -1293,14 +1311,15 @@ function openPanel(
     contactList.appendChild(li);
   };
 
-  const phone = normalizeText(colony.contact_telephone);
-  if (phone) addContact(phone, `tel:${phone.replace(/[^\d+]/g, "")}`);
-
-  const email = normalizeText(colony.email_address);
-  if (email) addContact(email, `mailto:${email}`);
-
-  const web = normalizeText(colony.web_page);
-  if (web) addContact(web, /^https?:\/\//i.test(web) ? web : `https://${web}`, true);
+  splitContacts(colony.contact_telephone, "phone").forEach((p) =>
+    addContact(p, `tel:${p.replace(/[^\d+]/g, "")}`),
+  );
+  splitContacts(colony.email_address, "email").forEach((e) =>
+    addContact(e, `mailto:${e}`),
+  );
+  splitContacts(colony.web_page, "website").forEach((w) =>
+    addContact(w, /^https?:\/\//i.test(w) ? w : `https://${w}`, true),
+  );
 
   if (!contactList.childElementCount) {
     const li = document.createElement("li");
