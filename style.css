@@ -1335,78 +1335,71 @@ ul {
 #panel-name {
   margin-top: 8px;
   color: var(--wine);
-  font-size: clamp(16px, 1.7vw, 18px);
-  line-height: 1.12;
-  font-weight: 500;
+  /* Match the brand "BEYOND": 17px, Montserrat 900, uppercase. */
+  font-size: 17px;
+  line-height: 1.06;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: -0.01em;
   overflow-wrap: break-word;
   word-break: break-word;
   hyphens: auto;
   text-wrap: balance;
 }
 
+/* Data groups: emphasised heading with a light divider, values tight beneath
+   it, and more space between groups. Everything shares the same left edge (no
+   inset cards — they vanished on the light themes and looked misaligned). */
 #panel-about,
 #panel-details,
 #panel-contact {
-  margin-top: 12px;
+  margin-top: 22px;
 }
 
 #panel-about h3,
 #panel-details h3,
 #panel-contact h3 {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  border-radius: 999px;
-  background: #fff;
-  color: var(--wine);
-  padding: 0 12px;
+  display: block;
+  margin: 0 0 9px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(var(--wine-rgb), 0.12);
+  color: var(--accent-deep);
   font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
-#panel-organizer,
-#panel-contact-list li {
+#panel-organizer {
+  margin: 0;
   color: var(--wine);
-  margin-top: 8px;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 13.5px;
+  line-height: 1.45;
   font-weight: 500;
 }
 
-#panel-details-list {
+#panel-details-list,
+#panel-contact-list {
   display: grid;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #fff;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
 }
 
-#panel-details-list li {
-  font-size: 13px;
-  line-height: 1.35;
+#panel-details-list li,
+#panel-contact-list li {
+  margin: 0;
+  color: var(--wine);
+  font-size: 13.5px;
+  line-height: 1.4;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #panel-details-list strong {
   font-weight: 700;
-}
-
-#panel-contact-list {
-  display: grid;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #fff;
-}
-
-#panel-contact-list li {
-  margin-top: 0;
-  margin-bottom: 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  color: var(--ink);
 }
 
 .panel-contact-link {
@@ -1422,7 +1415,7 @@ ul {
 
 @media (max-width: 1199px) {
   #panel-name {
-    font-size: clamp(16px, 4vw, 18px);
+    font-size: 17px;
   }
 
   #panel-marker-badge {
