@@ -1630,6 +1630,95 @@ function wireCountryAccordion() {
   });
 }
 
+// Live colony search: type a name/place → pick a match → open it on the map.
+function wireColonySearch() {
+  const input = document.getElementById("colony-search");
+  const results = document.getElementById("colony-search-results");
+  const wrap = document.getElementById("colony-search-wrap");
+  if (!input || !results || !wrap) return;
+
+  const hide = () => {
+    results.hidden = true;
+    results.innerHTML = "";
+  };
+
+  const render = (term) => {
+    const q = term.trim().toLowerCase();
+    if (!q) return hide();
+
+    const matches = state.colonies
+      .filter((c) => {
+        return (
+          getColonyName(c).toLowerCase().includes(q) ||
+          getColonyCity(c).toLowerCase().includes(q) ||
+          getColonyPlace(c).toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 8);
+
+    results.innerHTML = "";
+    if (!matches.length) {
+      const li = document.createElement("li");
+      li.className = "colony-search-empty";
+      li.textContent = "No colonies match.";
+      results.appendChild(li);
+      results.hidden = false;
+      return;
+    }
+
+    matches.forEach((colony) => {
+      const place =
+        [getColonyCity(colony), getColonyPlace(colony)]
+          .filter(Boolean)
+          .filter((v, i, arr) => arr.indexOf(v) === i)
+          .join(" · ") || getColonyCountry(colony);
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "colony-search-item";
+      button.dataset.colonyId = String(colony.id);
+      const name = document.createElement("span");
+      name.className = "colony-search-name";
+      name.textContent = getColonyName(colony);
+      const placeEl = document.createElement("span");
+      placeEl.className = "colony-search-place";
+      placeEl.textContent = place;
+      button.append(name, placeEl);
+      li.appendChild(button);
+      results.appendChild(li);
+    });
+    results.hidden = false;
+  };
+
+  input.addEventListener("input", () => render(input.value));
+  input.addEventListener("focus", () => {
+    if (input.value.trim()) render(input.value);
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      hide();
+      input.blur();
+    }
+  });
+
+  results.addEventListener("click", (event) => {
+    const button = event.target.closest(".colony-search-item");
+    if (!(button instanceof HTMLButtonElement)) return;
+    const colony = state.colonies.find(
+      (c) => String(c.id) === button.dataset.colonyId,
+    );
+    if (colony) {
+      openPanel(colony, true, null, COLONY_LIST_FOCUS_ZOOM);
+      hide();
+      input.blur();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!wrap.contains(event.target)) hide();
+  });
+}
+
 function wireCollapsibles() {
   document.querySelectorAll(".select-row").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1860,6 +1949,7 @@ async function bootstrap() {
   buildDisciplineFilters();
   wirePillVisuals();
   wireCountryAccordion();
+  wireColonySearch();
   wireCollapsibles();
   wireFilterInputs();
   wireFilterPanel();

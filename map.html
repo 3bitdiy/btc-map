@@ -105,6 +105,11 @@
 
       <section id="filter-card" aria-label="Map filters">
         <div id="filter-content">
+          <div id="colony-search-wrap">
+            <input id="colony-search" type="search" placeholder="Search colonies…" autocomplete="off" aria-label="Search colonies" />
+            <ul id="colony-search-results" role="listbox" hidden></ul>
+          </div>
+
           <!-- Country browser + filter: collapsed accordion sections, built in main.js -->
           <div id="country-accordion" class="country-accordion"></div>
 
