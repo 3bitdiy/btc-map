@@ -306,16 +306,19 @@ async function apiColonyPhotoPost(request, env, id) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (bytes.length > PHOTO_MAX_BYTES) return json({ error: "too_large", detail: "Max 5 MB." }, 413);
 
-  const name = `colony-${id}-${Date.now()}.${ext}`;
-  const imgPath = `${PHOTO_DIR}/${name}`;
-  const publicPath = `/assets/images/colonies/${name}`;
-
-  const imgRes = await ghCommitFile(env, imgPath, bytesToBase64(bytes), null, `photo: colony ${id} (studio, ${session.email})`);
-  if (!imgRes.ok) return json({ error: "image_commit_failed", detail: imgRes.detail }, 502);
-
   const found = await findColony(env, id);
   if (!found) return json({ error: "colony_not_found" }, 404);
   const colony = found.list[found.index];
+
+  // SEO/readable filename: colony-name slug + a short unique suffix.
+  const slug = slugify(colony.art_colony_name) || `colony-${id}`;
+  const name = `${slug}-${Date.now()}.${ext}`;
+  const imgPath = `${PHOTO_DIR}/${name}`;
+  const publicPath = `/assets/images/colonies/${name}`;
+
+  const imgRes = await ghCommitFile(env, imgPath, bytesToBase64(bytes), null, `photo: ${colony.art_colony_name || "colony " + id} (studio, ${session.email})`);
+  if (!imgRes.ok) return json({ error: "image_commit_failed", detail: imgRes.detail }, 502);
+
   const existing = Array.isArray(colony.photos) ? colony.photos : [];
   colony.photos = [publicPath, ...existing.slice(1)];
   found.list[found.index] = colony;
@@ -585,6 +588,15 @@ function serializePost(p) {
     `draft: ${p.draft ? "true" : "false"}`,
   ];
   return `---\n${fm.join("\n")}\n---\n\n${String(p.body || "").trim()}\n`;
+}
+
+function slugify(s) {
+  const map = { č: "c", ć: "c", ž: "z", š: "s", đ: "dj", Č: "c", Ć: "c", Ž: "z", Š: "s", Đ: "dj" };
+  return String(s || "")
+    .replace(/[čćžšđČĆŽŠĐ]/g, (m) => map[m] || m)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function normalizeColonies(v) {
