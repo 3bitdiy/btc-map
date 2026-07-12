@@ -5,10 +5,10 @@
  * tiles on the "btc-theme-change" event.
  */
 const THEMES = [
-  { id: "", name: "Modern", swatch: ["#1c1c1c", "#ff4326", "#f1f1ee"] },
+  { id: "", name: "Contemporary", swatch: ["#1c1c1c", "#ff4326", "#f1f1ee"] },
   { id: "terracotta", name: "Terracotta", swatch: ["#8d313a", "#eb5160", "#edd1aa"] },
   { id: "adriatic", name: "Adriatic", swatch: ["#14616b", "#ef6f53", "#e7eef0"] },
-  { id: "lime", name: "Lime", swatch: ["#1f2614", "#a0c814", "#4f7d12"] },
+  { id: "lime", name: "Lime", swatch: ["#1c1c1c", "#a0c814", "#f1f1ee"] },
   { id: "emerald", name: "Emerald", swatch: ["#1a312c", "#428475", "#89d7b7"] },
   { id: "forest", name: "Forest", swatch: ["#273338", "#618764", "#9cb080"] },
 ];

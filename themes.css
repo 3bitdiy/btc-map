@@ -19,9 +19,10 @@
   --accent-deep: var(--rose);
 }
 
-/* Default palette = Modern. Uses html:not([data-theme]) (specificity 0,1,1) so
-   it outranks each page's own :root (0,1,0) regardless of CSS bundling order.
-   Pick "Terracotta" in the switcher for the original warm palette. */
+/* Default palette = Contemporary (mono grays/blacks + red accent). Uses
+   html:not([data-theme]) (specificity 0,1,1) so it outranks each page's own
+   :root (0,1,0) regardless of CSS bundling order. Pick "Terracotta" in the
+   switcher for the original warm palette. */
 html:not([data-theme]) {
   --ink: #000000;
   --wine: #1c1c1c;
@@ -66,26 +67,24 @@ html[data-theme="terracotta"] {
   --map-bg: #c2c9bc;
 }
 
-/* Lime — Goethe-Institut inspired: near-black text and the signature lime
-   (#a0c814) as the main accent (marker counts, selected colonies, blob) */
+/* Lime — same mono grays/blacks/whites as Contemporary, with the signature
+   Goethe lime (#a0c814) as the accent instead of the red. */
 html[data-theme="lime"] {
-  --ink: #11140b;
-  --wine: #1f2614;
+  --ink: #000000;
+  --wine: #1c1c1c;
   --rose: #a0c814;
-  /* light lime for the decorative blobs (brand-card / hero) */
-  --accent-2: #a0c814;
-  /* deep green for the panel + selected marker + filter numbers */
-  --accent-deep: #4f7d12;
-  /* lime is too light for white text — use the dark ink on accents */
-  --on-accent: #1f2614;
-  --sand: #f1f3e8;
-  --paper: #fbfcf6;
-  --paper-2: #f3f6e6;
-  --wine-rgb: 31, 38, 20;
+  --sand: #f1f1ee;
+  --paper: #ffffff;
+  --paper-2: #f7f7f5;
+  --wine-rgb: 28, 28, 28;
   --rose-rgb: 160, 200, 20;
-  --paper-rgb: 251, 252, 246;
-  --map-land: #e7eed0;
-  --map-bg: #c3cda6;
+  --paper-rgb: 255, 255, 255;
+  --map-land: #e9e9e6;
+  --map-bg: #d0d0cc;
+  /* lime is light → dark text on the accent; deeper green for panel/markers */
+  --accent-2: #a0c814;
+  --on-accent: #1f2614;
+  --accent-deep: #4f7d12;
 }
 
 /* Emerald — green/teal/mint/cream, from Color Hunt 1a312c·428475·89d7b7·fff4e1 */
