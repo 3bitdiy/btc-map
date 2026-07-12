@@ -145,6 +145,15 @@ function normalizeText(value) {
   return String(value).trim();
 }
 
+// Fold diacritics for search so "backi" matches "Bački", "djala" matches "Đala".
+function foldSearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "dj");
+}
+
 function getColonyName(colony) {
   return normalizeText(colony.art_colony_name || colony.name);
 }
@@ -1681,15 +1690,15 @@ function wireColonySearch() {
   };
 
   const render = (term) => {
-    const q = term.trim().toLowerCase();
+    const q = foldSearch(term.trim());
     if (!q) return hide();
 
     const matches = state.colonies
       .filter((c) => {
         return (
-          getColonyName(c).toLowerCase().includes(q) ||
-          getColonyCity(c).toLowerCase().includes(q) ||
-          getColonyPlace(c).toLowerCase().includes(q)
+          foldSearch(getColonyName(c)).includes(q) ||
+          foldSearch(getColonyCity(c)).includes(q) ||
+          foldSearch(getColonyPlace(c)).includes(q)
         );
       })
       .slice(0, 8);

@@ -36,6 +36,14 @@ const esc = (s = "") =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+// Fold diacritics so search matches "backi" ↔ "Bački", "djala" ↔ "Đala".
+const foldSearch = (s = "") =>
+  String(s)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "dj");
+
 assignSlugs(colonies);
 
 const cleanText = (s) => {
@@ -126,10 +134,10 @@ const countries = [...new Set(colonies.map((c) => c.country))].sort();
 
 const dirCard = (c) => `
       <a class="col-card" href="/colonies/${c._slug}.html"
-         data-name="${esc(c.art_colony_name.toLowerCase())}"
+         data-name="${esc(foldSearch(c.art_colony_name))}"
          data-country="${esc(c.country)}"
-         data-place="${esc(shortPlace(c).toLowerCase())}"
-         data-fields="${esc(disciplines(c).join(" ").toLowerCase())}">
+         data-place="${esc(foldSearch(shortPlace(c)))}"
+         data-fields="${esc(foldSearch(disciplines(c).join(" ")))}">
         <span class="col-card__media"><img src="${esc(photoUrl(c))}" alt="" loading="lazy" /></span>
         <span class="col-card__body">
           <span class="col-card__name">${esc(c.art_colony_name)}</span>

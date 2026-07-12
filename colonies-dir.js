@@ -1,4 +1,12 @@
 // Client-side search + country filter for the colony directory.
+// Fold diacritics so "backi" matches "Bački" (card data-* are folded at build).
+const foldSearch = (s = "") =>
+  String(s)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "dj");
+
 const search = document.getElementById("col-search");
 const grid = document.getElementById("col-grid");
 const empty = document.getElementById("col-empty");
@@ -25,7 +33,7 @@ function apply() {
 }
 
 search?.addEventListener("input", (event) => {
-  term = event.target.value.trim().toLowerCase();
+  term = foldSearch(event.target.value.trim());
   apply();
 });
 

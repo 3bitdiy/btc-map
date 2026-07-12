@@ -1029,9 +1029,10 @@ const EDITOR_JS =
   "if(cs.length<2){box.style.display='none';return}box.style.display='flex';" +
   "function mk(label,val){var b=document.createElement('button');b.type='button';b.className='chip'+(pickerCountry===val?' on':'');b.textContent=label;b.onclick=function(){pickerCountry=val;renderCountryChips();renderPicker()};return b}" +
   "box.appendChild(mk('All',''));cs.sort().forEach(function(c){box.appendChild(mk(c,c))})}" +
-  "function renderPicker(){var box=q('picker-results');box.innerHTML='';var term=pickerTerm.trim().toLowerCase();" +
+  "function foldSearch(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/đ/g,'dj')}" +
+  "function renderPicker(){var box=q('picker-results');box.innerHTML='';var term=foldSearch(pickerTerm.trim());" +
   "var list=pickerColonies.filter(function(c){if(pickerCountry&&c.country!==pickerCountry)return false;" +
-  "if(term){var hay=(c.name+' '+(c.place||'')).toLowerCase();if(hay.indexOf(term)===-1)return false}return true});" +
+  "if(term){var hay=foldSearch(c.name+' '+(c.place||''));if(hay.indexOf(term)===-1)return false}return true});" +
   "if(!list.length){var p=document.createElement('p');p.style.cssText='opacity:.7;font-size:13px;padding:6px 2px';p.textContent='No colonies match.';box.appendChild(p);return}" +
   "list.slice(0,60).forEach(function(c){var b=document.createElement('button');b.type='button';b.className='picker-item'+(String(c.id)===String(currentId)?' on':'');" +
   "var n=document.createElement('span');n.className='pi-name';n.textContent=c.name;" +
