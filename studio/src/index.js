@@ -500,9 +500,11 @@ async function apiUpload(request, env) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
 
-  let file;
+  let file, title;
   try {
-    file = (await request.formData()).get("file");
+    const form = await request.formData();
+    file = form.get("file");
+    title = form.get("title");
   } catch {
     return json({ error: "invalid_upload" }, 400);
   }
@@ -512,7 +514,9 @@ async function apiUpload(request, env) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (bytes.length > PHOTO_MAX_BYTES) return json({ error: "too_large", detail: "Max 5 MB." }, 413);
 
-  const name = `cover-${Date.now()}.${ext}`;
+  // SEO/readable filename from the post title, e.g. open-call-2026-cover-<ts>.webp
+  const slug = slugify(title);
+  const name = `${slug ? slug + "-" : ""}cover-${Date.now()}.${ext}`;
   const res = await ghCommitFile(env, `${BLOG_IMG_DIR}/${name}`, bytesToBase64(bytes), null, `blog image (studio, ${session.email})`);
   if (!res.ok) return json({ error: "image_commit_failed", detail: res.detail }, 502);
   return json({ ok: true, path: `/assets/images/blog/${name}` });
@@ -1115,7 +1119,7 @@ const EDITOR_JS =
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
   "q('p-cover-preview').src=URL.createObjectURL(f);q('p-cover-status').textContent='Optimising…';var blob=await optimizeImage(f);" +
-  "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');" +
+  "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');fd.append('title',q('p-title').value||'');" +
   "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
   "if(!r.ok){q('p-cover-status').textContent='Upload failed: '+(out.detail||out.error);return}" +
   "postCover=out.path;q('p-cover-status').textContent='Cover uploaded \\u2713'}" +
