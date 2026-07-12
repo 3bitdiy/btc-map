@@ -425,6 +425,62 @@ a {
   opacity: 0.7;
 }
 
+/* News list rows, populated by colony.js */
+.col-blog__list {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.col-news {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid rgba(var(--wine-rgb), 0.12);
+  border-radius: 14px;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.col-news:hover {
+  transform: translateY(-2px);
+  border-color: var(--rose);
+}
+
+.col-news img {
+  width: 74px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 9px;
+  flex: 0 0 auto;
+}
+
+.col-news > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.col-news__date {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-deep);
+}
+
+.col-news__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 /* ---------- Footer ---------- */
 .col-foot {
   border-top: 1px solid rgba(var(--wine-rgb), 0.12);
