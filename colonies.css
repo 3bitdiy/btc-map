@@ -204,15 +204,33 @@ a {
 .col-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 18px;
   background: #fff;
   border: 1px solid rgba(var(--wine-rgb), 0.12);
   border-radius: 16px;
+  overflow: hidden;
   transition:
     transform 0.14s ease,
     border-color 0.14s ease,
     box-shadow 0.14s ease;
+}
+
+.col-card__media {
+  display: block;
+  background: var(--paper-2);
+}
+
+.col-card__media img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.col-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 16px;
 }
 
 .col-card:hover {

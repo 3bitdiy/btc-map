@@ -129,9 +129,12 @@ const dirCard = (c) => `
          data-name="${esc(c.art_colony_name.toLowerCase())}"
          data-country="${esc(c.country)}"
          data-fields="${esc(disciplines(c).join(" ").toLowerCase())}">
-        <span class="col-card__name">${esc(c.art_colony_name)}</span>
-        <span class="col-card__place">${esc(shortPlace(c))}</span>
-        ${disciplines(c).length ? `<span class="col-card__tags">${disciplines(c).slice(0, 3).map((d) => `<span>${esc(d)}</span>`).join("")}</span>` : ""}
+        <span class="col-card__media"><img src="${esc(photoUrl(c))}" alt="" loading="lazy" /></span>
+        <span class="col-card__body">
+          <span class="col-card__name">${esc(c.art_colony_name)}</span>
+          <span class="col-card__place">${esc(shortPlace(c))}</span>
+          ${disciplines(c).length ? `<span class="col-card__tags">${disciplines(c).slice(0, 3).map((d) => `<span>${esc(d)}</span>`).join("")}</span>` : ""}
+        </span>
       </a>`;
 
 const dirInner = `

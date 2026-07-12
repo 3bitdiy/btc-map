@@ -74,7 +74,9 @@
       "country": "Serbia",
       "latitude": 45.125874,
       "longitude": 19.533366,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/petkovica-monastery.webp"
+      ]
     },
     {
       "id": 5,
@@ -94,7 +96,7 @@
       "latitude": 45.82972,
       "longitude": 20.46528,
       "photos": [
-        "/assets/images/colonies/colony-5-1783792520035.jpg"
+        "/assets/images/colonies/terra-kikinda.webp"
       ]
     },
     {
@@ -341,7 +343,9 @@
       "country": "Serbia",
       "latitude": 45.40861,
       "longitude": 19.88917,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/jegricka-temerin.webp"
+      ]
     },
     {
       "id": 17,
