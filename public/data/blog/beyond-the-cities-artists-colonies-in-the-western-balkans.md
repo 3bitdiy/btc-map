@@ -1,6 +1,6 @@
 ---
 title: Beyond the Cities - Artists' colonies in the western Balkans
-date: 2026-07-11
+date: 2026-07-09
 author: Goethe-Institut Belgrade
 excerpt: Revitalization of artists' colonies in the Western Balkans: "Beyond the Cities" is building an independent cultural network in rural areas.
 cover: /assets/images/blog/cover-1783793745711.webp
