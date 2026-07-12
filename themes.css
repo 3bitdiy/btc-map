@@ -6,9 +6,23 @@
  * land/background also follow the palette.
  */
 :root {
-  /* Default palette is now Modern (was Terracotta). themes.css loads after each
-     page's own :root, so these win. Pick "Terracotta" in the switcher for the
-     original warm palette (html[data-theme="terracotta"] below). */
+  /* Accent tokens inherited by every theme unless the theme overrides them. */
+  /* Decorative accent (hero blob / brand blob). Tracks --rose unless a theme
+     sets its own bolder shade. */
+  --accent-2: var(--rose);
+  /* Text/icon colour that sits on top of the --rose accent (count badges,
+     selected marker). White by default; themes with a light accent override. */
+  --on-accent: #fff;
+  /* Deeper accent for the detail panel (place pill, marker badge, ×) and the
+     selected map marker — readable on the paper panel / light marker. Defaults
+     to --rose (already mid-dark on most themes); light-accent themes override. */
+  --accent-deep: var(--rose);
+}
+
+/* Default palette = Modern. Uses html:not([data-theme]) (specificity 0,1,1) so
+   it outranks each page's own :root (0,1,0) regardless of CSS bundling order.
+   Pick "Terracotta" in the switcher for the original warm palette. */
+html:not([data-theme]) {
   --ink: #000000;
   --wine: #1c1c1c;
   --rose: #ff4326;
@@ -20,16 +34,6 @@
   --paper-rgb: 255, 255, 255;
   --map-land: #e9e9e6;
   --map-bg: #d0d0cc;
-  /* Decorative accent (hero blob / brand blob). Tracks --rose unless a theme
-     sets its own bolder shade. */
-  --accent-2: var(--rose);
-  /* Text/icon colour that sits on top of the --rose accent (count badges,
-     selected marker). White by default; themes with a light accent override. */
-  --on-accent: #fff;
-  /* Deeper accent for the detail panel (place pill, marker badge, ×) and the
-     selected map marker — readable on the paper panel / light marker. Defaults
-     to --rose (already mid-dark on most themes); light-accent themes override. */
-  --accent-deep: var(--rose);
 }
 
 /* Adriatic — cool teal + coral, Mediterranean light */
