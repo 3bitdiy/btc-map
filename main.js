@@ -1260,23 +1260,28 @@ function openPanel(
   const contactList = document.getElementById("panel-contact-list");
   contactList.innerHTML = "";
 
-  if (normalizeText(colony.contact_telephone)) {
+  const addContact = (value, href, external) => {
     const li = document.createElement("li");
-    li.textContent = normalizeText(colony.contact_telephone);
+    const a = document.createElement("a");
+    a.className = "panel-contact-link";
+    a.href = href;
+    a.textContent = value;
+    if (external) {
+      a.target = "_blank";
+      a.rel = "noopener";
+    }
+    li.appendChild(a);
     contactList.appendChild(li);
-  }
+  };
 
-  if (normalizeText(colony.email_address)) {
-    const li = document.createElement("li");
-    li.textContent = normalizeText(colony.email_address);
-    contactList.appendChild(li);
-  }
+  const phone = normalizeText(colony.contact_telephone);
+  if (phone) addContact(phone, `tel:${phone.replace(/[^\d+]/g, "")}`);
 
-  if (normalizeText(colony.web_page)) {
-    const li = document.createElement("li");
-    li.textContent = normalizeText(colony.web_page);
-    contactList.appendChild(li);
-  }
+  const email = normalizeText(colony.email_address);
+  if (email) addContact(email, `mailto:${email}`);
+
+  const web = normalizeText(colony.web_page);
+  if (web) addContact(web, /^https?:\/\//i.test(web) ? web : `https://${web}`, true);
 
   if (!contactList.childElementCount) {
     const li = document.createElement("li");
@@ -1444,10 +1449,8 @@ function setFilterPanelMinimized(minimized) {
   syncPanelMaximizeButtons();
 }
 
-// Close every expandable filter section (country accordion + the art/scope
-// dropdowns) without touching the actual filter selections.
-function collapseFilterSections() {
-  setOpenCountry(null);
+// Collapse the art/scope dropdowns (the .select-row sections).
+function closeSelectRows() {
   document.querySelectorAll(".select-row").forEach((button) => {
     const panel = document.getElementById(
       button.getAttribute("data-toggle-target"),
@@ -1455,6 +1458,13 @@ function collapseFilterSections() {
     if (panel) panel.hidden = true;
     button.setAttribute("aria-expanded", "false");
   });
+}
+
+// Close every expandable filter section (country accordion + the art/scope
+// dropdowns) without touching the actual filter selections.
+function collapseFilterSections() {
+  setOpenCountry(null);
+  closeSelectRows();
 }
 
 // Map-independent: reads the filter inputs and refreshes the colony list,
@@ -1611,7 +1621,11 @@ function wireCountryAccordion() {
     if (expandBtn instanceof HTMLButtonElement && !expandBtn.disabled) {
       const country = expandBtn.closest(".country-section")?.dataset.country;
       if (!country) return;
-      setOpenCountry(state.openCountry === country ? null : country);
+      const willOpen = state.openCountry !== country;
+      // Single-open across both filter groups: opening a country closes the
+      // art-field / scope dropdowns.
+      if (willOpen) closeSelectRows();
+      setOpenCountry(willOpen ? country : null);
     }
   });
 }
@@ -1623,18 +1637,14 @@ function wireCollapsibles() {
       if (!targetId) return;
       const panel = document.getElementById(targetId);
       if (!panel) return;
-      const expanded = button.getAttribute("aria-expanded") === "true";
-      document.querySelectorAll(".select-row").forEach((otherButton) => {
-        if (otherButton === button) return;
-        const otherTargetId = otherButton.getAttribute("data-toggle-target");
-        if (!otherTargetId) return;
-        const otherPanel = document.getElementById(otherTargetId);
-        if (!otherPanel) return;
-        otherPanel.hidden = true;
-        otherButton.setAttribute("aria-expanded", "false");
-      });
-      panel.hidden = expanded;
-      button.setAttribute("aria-expanded", expanded ? "false" : "true");
+      const willOpen = button.getAttribute("aria-expanded") !== "true";
+      // Single-open across both filter groups: close the country accordion and
+      // every other dropdown, then open this one if it was closed.
+      collapseFilterSections();
+      if (willOpen) {
+        panel.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+      }
     });
   });
 }

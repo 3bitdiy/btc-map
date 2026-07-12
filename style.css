@@ -1252,8 +1252,8 @@ ul {
 #panel-name {
   margin-top: 8px;
   color: var(--wine);
-  font-size: clamp(19px, 2.1vw, 24px);
-  line-height: 1.08;
+  font-size: clamp(16px, 1.7vw, 18px);
+  line-height: 1.12;
   font-weight: 500;
   text-transform: uppercase;
   overflow-wrap: break-word;
@@ -1322,11 +1322,24 @@ ul {
 #panel-contact-list li {
   margin-top: 0;
   margin-bottom: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.panel-contact-link {
+  color: var(--wine);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.14s ease;
+}
+
+.panel-contact-link:hover {
+  color: var(--rose);
 }
 
 @media (max-width: 1199px) {
   #panel-name {
-    font-size: clamp(19px, 4.5vw, 23px);
+    font-size: clamp(16px, 4vw, 18px);
   }
 
   #panel-marker-badge {
