@@ -636,11 +636,17 @@ let mapTooltipEl = null;
 
 function moveTooltip(event) {
   if (!mapTooltipEl) return;
-  mapTooltipEl.style.left = `${event.clientX}px`;
+  // Flip below the cursor when there isn't room above (near the top edge).
+  const h = mapTooltipEl.offsetHeight;
+  mapTooltipEl.classList.toggle("map-tooltip--below", event.clientY - h - 20 < 0);
+  // Keep the (centered) tooltip within the horizontal viewport bounds.
+  const halfW = mapTooltipEl.offsetWidth / 2;
+  const x = Math.max(halfW + 4, Math.min(event.clientX, window.innerWidth - halfW - 4));
+  mapTooltipEl.style.left = `${x}px`;
   mapTooltipEl.style.top = `${event.clientY}px`;
 }
 
-function attachMarkerTooltip(el, title, subtitle) {
+function attachMarkerTooltip(el, title, subtitle, photo) {
   // Touch devices fire mouseenter on tap but never mouseleave, so the tooltip
   // would stick forever. Only wire it where real hovering exists.
   if (!window.matchMedia("(hover: hover)").matches) return;
@@ -650,8 +656,16 @@ function attachMarkerTooltip(el, title, subtitle) {
       mapTooltipEl = document.createElement("div");
       mapTooltipEl.className = "map-tooltip";
       mapTooltipEl.setAttribute("aria-hidden", "true");
-      mapTooltipEl.innerHTML = `<strong></strong><span></span>`;
+      mapTooltipEl.innerHTML = `<img class="map-tooltip__img" alt="" /><div class="map-tooltip__text"><strong></strong><span></span></div>`;
       document.body.appendChild(mapTooltipEl);
+    }
+    const img = mapTooltipEl.querySelector(".map-tooltip__img");
+    if (photo) {
+      img.src = photo;
+      img.style.display = "block";
+    } else {
+      img.removeAttribute("src");
+      img.style.display = "none";
     }
     mapTooltipEl.querySelector("strong").textContent = title;
     mapTooltipEl.querySelector("span").textContent = subtitle || "";
@@ -676,7 +690,12 @@ function createMarkerElement(colony, focusCoords = null) {
     openPanel(colony, true, focusCoords);
   });
 
-  attachMarkerTooltip(el, getColonyName(colony), getColonyDisplayLocation(colony));
+  attachMarkerTooltip(
+    el,
+    getColonyName(colony),
+    getColonyDisplayLocation(colony),
+    resolveColonyPhoto(colony),
+  );
   return el;
 }
 
