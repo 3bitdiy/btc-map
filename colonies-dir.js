@@ -14,6 +14,7 @@ function apply() {
     const matchesTerm =
       !term ||
       card.dataset.name.includes(term) ||
+      (card.dataset.place || "").includes(term) ||
       card.dataset.fields.includes(term);
     const matchesCountry = !country || card.dataset.country === country;
     const show = matchesTerm && matchesCountry;

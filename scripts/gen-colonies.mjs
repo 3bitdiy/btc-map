@@ -128,6 +128,7 @@ const dirCard = (c) => `
       <a class="col-card" href="/colonies/${c._slug}.html"
          data-name="${esc(c.art_colony_name.toLowerCase())}"
          data-country="${esc(c.country)}"
+         data-place="${esc(shortPlace(c).toLowerCase())}"
          data-fields="${esc(disciplines(c).join(" ").toLowerCase())}">
         <span class="col-card__media"><img src="${esc(photoUrl(c))}" alt="" loading="lazy" /></span>
         <span class="col-card__body">

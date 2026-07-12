@@ -219,7 +219,15 @@ async function apiColonies(request, env) {
     if (!file) continue;
     const data = JSON.parse(file.text);
     const list = Array.isArray(data) ? data : data.colonies || [];
-    for (const c of list) all.push({ id: c.id, name: c.art_colony_name, country: c.country });
+    for (const c of list) {
+      const place = [c.city, c.place].map((v) => String(v || "").trim()).filter(Boolean);
+      all.push({
+        id: c.id,
+        name: c.art_colony_name,
+        country: c.country,
+        place: [...new Set(place)].join(" · "),
+      });
+    }
   }
 
   let out = all;
@@ -905,6 +913,13 @@ function editorPage(session, env) {
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
+    `.picker{margin:8px 0 20px}` +
+    `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:320px;overflow:auto}` +
+    `.picker-item{width:100%;text-align:left;border:1px solid rgba(141,49,58,.15);background:#fff;border-radius:10px;` +
+    `padding:9px 12px;cursor:pointer;font:inherit;color:#8d313a;display:flex;flex-direction:column;gap:2px;align-items:flex-start}` +
+    `.picker-item:hover{border-color:#eb5160}.picker-item.on{background:#eb5160;border-color:#eb5160;color:#fff}` +
+    `.pi-name{font-weight:700}.pi-sub{font-size:11.5px;opacity:.65;text-transform:uppercase;letter-spacing:.03em}` +
+    `.picker-item.on .pi-sub{opacity:.85}` +
     `input,select,textarea{font:inherit;padding:9px 12px;border:1px solid rgba(141,49,58,.3);border-radius:10px;background:#fff;color:#8d313a;width:100%}` +
     `textarea{resize:vertical;min-height:56px;line-height:1.5}` +
     `.tabs{display:flex;gap:6px;margin:6px 0 18px}` +
@@ -948,8 +963,9 @@ function editorPage(session, env) {
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
-    `<div class="load"><label class="fld" style="flex:1"><span>Colony</span>` +
-    `<select id="colony-picker" onchange="onPick()"><option value="">Loading…</option></select></label></div>` +
+    `<div class="picker"><input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off"/>` +
+    `<div id="picker-countries" class="chips" style="margin-top:8px"></div>` +
+    `<div id="picker-results"><p style="opacity:.7;font-size:13px;padding:8px 2px">Loading colonies…</p></div></div>` +
     `<h2 id="title" style="color:#000"></h2>` +
     `<div id="form"><div class="grid">${form}</div>` +
     `<div class="actions"><button class="btn" onclick="save()">Save changes</button><span id="status"></span></div></div>` +
@@ -973,14 +989,27 @@ const EDITOR_JS =
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
   "function setPhotoStatus(t){q('photo-status').textContent=t}" +
+  "var pickerColonies=[];var pickerTerm='';var pickerCountry='';" +
   "async function loadColonies(){" +
   "var r=await fetch('/api/colonies');if(!r.ok){setStatus('Could not load colony list');return}" +
-  "var data=await r.json();var sel=q('colony-picker');sel.innerHTML='';" +
-  "var ph=document.createElement('option');ph.value='';ph.textContent=data.colonies.length?'Select a colony…':'No colonies assigned';sel.appendChild(ph);" +
-  "data.colonies.forEach(function(c){var o=document.createElement('option');o.value=c.id;o.textContent=c.name+' — '+c.country;sel.appendChild(o)});" +
-  "if(document.body.dataset.role!=='admin'){var nm=data.colonies.map(function(c){return c.name});q('signed-in').textContent='Signed in — '+(nm.join(', ')||'no colonies assigned')+'.'}" +
-  "if(document.body.dataset.role!=='admin'&&data.colonies.length===1){sel.value=String(data.colonies[0].id);loadColony(data.colonies[0].id)}}" +
-  "function onPick(){var v=q('colony-picker').value;if(v){loadColony(v)}else{q('form').style.display='none';q('title').textContent=''}}" +
+  "var data=await r.json();pickerColonies=data.colonies||[];" +
+  "if(document.body.dataset.role!=='admin'){var nm=pickerColonies.map(function(c){return c.name});q('signed-in').textContent='Signed in — '+(nm.join(', ')||'no colonies assigned')+'.'}" +
+  "q('picker-search').addEventListener('input',function(e){pickerTerm=e.target.value;renderPicker()});" +
+  "renderCountryChips();renderPicker();" +
+  "if(document.body.dataset.role!=='admin'&&pickerColonies.length===1){loadColony(pickerColonies[0].id)}}" +
+  "function renderCountryChips(){var box=q('picker-countries');box.innerHTML='';" +
+  "var cs=[];pickerColonies.forEach(function(c){if(cs.indexOf(c.country)===-1)cs.push(c.country)});" +
+  "if(cs.length<2){box.style.display='none';return}box.style.display='flex';" +
+  "function mk(label,val){var b=document.createElement('button');b.type='button';b.className='chip'+(pickerCountry===val?' on':'');b.textContent=label;b.onclick=function(){pickerCountry=val;renderCountryChips();renderPicker()};return b}" +
+  "box.appendChild(mk('All',''));cs.sort().forEach(function(c){box.appendChild(mk(c,c))})}" +
+  "function renderPicker(){var box=q('picker-results');box.innerHTML='';var term=pickerTerm.trim().toLowerCase();" +
+  "var list=pickerColonies.filter(function(c){if(pickerCountry&&c.country!==pickerCountry)return false;" +
+  "if(term){var hay=(c.name+' '+(c.place||'')).toLowerCase();if(hay.indexOf(term)===-1)return false}return true});" +
+  "if(!list.length){var p=document.createElement('p');p.style.cssText='opacity:.7;font-size:13px;padding:6px 2px';p.textContent='No colonies match.';box.appendChild(p);return}" +
+  "list.slice(0,60).forEach(function(c){var b=document.createElement('button');b.type='button';b.className='picker-item'+(String(c.id)===String(currentId)?' on':'');" +
+  "var n=document.createElement('span');n.className='pi-name';n.textContent=c.name;" +
+  "var sub=document.createElement('span');sub.className='pi-sub';sub.textContent=[(c.place||''),c.country].filter(Boolean).join(' · ');" +
+  "b.appendChild(n);b.appendChild(sub);b.onclick=function(){loadColony(c.id)};box.appendChild(b)})}" +
   "async function loadColony(id){" +
   "setStatus('Loading…');q('title').textContent='';" +
   "var r=await fetch('/api/colony/'+id);" +
@@ -990,7 +1019,7 @@ const EDITOR_JS =
   "setArtField(c.art_field||'');" +
   "currentPhotos=Array.isArray(c.photos)?c.photos:[];setPhotoPreview();q('photo-file').value='';setPhotoStatus('');" +
   "currentId=id;q('title').textContent=c.art_colony_name||('Colony '+id);" +
-  "q('form').style.display='block';setStatus('Loaded from '+data.file)}" +
+  "renderPicker();q('form').style.display='block';setStatus('Loaded from '+data.file)}" +
   "function mainPhoto(){return currentPhotos.length?String(currentPhotos[0]):''}" +
   "function setPhotoPreview(){var p=mainPhoto();var src;" +
   "if(!p||p.indexOf('placehold.co')!==-1){src=RAW+'/assets/images/colony-placeholder.png'}" +
