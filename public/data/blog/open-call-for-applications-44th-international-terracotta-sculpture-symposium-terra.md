@@ -1,5 +1,5 @@
 ---
-title: Open Call for Applications
+title: Open Call for Applications: THE 44th Internatioanl Terracotta Sculpture Symposium Terra
 date: 2026-07-10
 author: The Center For Fine And Applied Arts Terra
 excerpt: The Center For Fine And Applied Arts Terra launched its call for application for the participation in The 44th International Terracotta Sculpture Symposium Terra
@@ -8,6 +8,8 @@ tags: [Open Call, Symposium, Sculpture, Terracotta]
 colonies: [5]
 draft: false
 ---
+
+On August 15th, 2024, The Center For Fine And Applied Arts Terra launched its call for application for the participation in The 44th International Terracotta Sculpture Symposium Terra (hereinafter: Symposium Terra) which will be held July 1st – July 31st, 2025.
 
 International Terracotta Sculpture Symposium Terra in Kikinda includes conception and execution of an artwork made out of terracotta, which will be permanently placed in the Terra sculpture park. The Terra collection artworks are exclusively in the field of contemporary art, and may involve: sculptural works, spatial installations or other works of art made of clay. Therefore, the applicants are invited to submit written proposals for the participation in 44rd International Terracotta Sculpture Symposium Terra 2025.
 
