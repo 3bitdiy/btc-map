@@ -320,6 +320,7 @@ async function apiColonyPhotoPost(request, env, id) {
   if (!imgRes.ok) return json({ error: "image_commit_failed", detail: imgRes.detail }, 502);
 
   const existing = Array.isArray(colony.photos) ? colony.photos : [];
+  const prevMain = existing[0];
   colony.photos = [publicPath, ...existing.slice(1)];
   found.list[found.index] = colony;
 
@@ -328,6 +329,7 @@ async function apiColonyPhotoPost(request, env, id) {
     `edit: ${colony.art_colony_name || "colony " + id} main photo (studio, ${session.email})`,
   );
   if (!jsonRes.ok) return json({ error: "commit_failed", detail: jsonRes.detail }, 502);
+  if (prevMain && prevMain !== publicPath) await deleteRepoImage(env, prevMain, session.email);
   return json({ ok: true, photo: publicPath, photos: colony.photos, commit: jsonRes.commit });
 }
 
@@ -341,6 +343,7 @@ async function apiColonyPhotoDelete(request, env, id) {
   const colony = found.list[found.index];
   const existing = Array.isArray(colony.photos) ? colony.photos : [];
   if (!existing.length) return json({ ok: true, photos: [], unchanged: true });
+  const removed = existing[0];
   colony.photos = existing.slice(1);
   found.list[found.index] = colony;
 
@@ -349,6 +352,7 @@ async function apiColonyPhotoDelete(request, env, id) {
     `edit: ${colony.art_colony_name || "colony " + id} remove main photo (studio, ${session.email})`,
   );
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
+  await deleteRepoImage(env, removed, session.email);
   return json({ ok: true, photos: colony.photos, commit: res.commit });
 }
 
@@ -461,6 +465,10 @@ async function apiPostPut(request, env, slug) {
   );
   if (res.status === 409) return json({ error: "conflict" }, 409);
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
+  if (existing) {
+    const oldCover = parseFrontMatter(existing.text).data.cover;
+    if (oldCover && oldCover !== (body.cover || "")) await deleteRepoImage(env, oldCover, session.email);
+  }
   return json({ ok: true, slug, commit: res.commit });
 }
 
@@ -472,8 +480,10 @@ async function apiPostDelete(request, env, slug) {
   const colonies = normalizeColonies(parseFrontMatter(file.text).data.colonies);
   if (!canEditPost(session, colonies)) return json({ error: "forbidden" }, 403);
 
+  const cover = parseFrontMatter(file.text).data.cover;
   const res = await ghDeleteFile(env, `${BLOG_DIR}/${slug}.md`, file.sha, `delete post: ${slug} (studio, ${session.email})`);
   if (!res.ok) return json({ error: "delete_failed", detail: res.detail }, 502);
+  if (cover) await deleteRepoImage(env, cover, session.email);
   return json({ ok: true, commit: res.commit });
 }
 
@@ -648,6 +658,28 @@ async function ghListDir(env, path) {
   if (!res.ok) throw new Error(`GitHub GET dir ${path} → ${res.status}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+}
+
+// Best-effort delete of a previously-uploaded image (colony photo or blog
+// cover). Restricted to our upload folders so it can never touch the shared
+// placeholder or anything else. Failures are ignored.
+async function deleteRepoImage(env, publicPath, email) {
+  if (typeof publicPath !== "string") return;
+  if (
+    !publicPath.startsWith("/assets/images/colonies/") &&
+    !publicPath.startsWith("/assets/images/blog/")
+  ) {
+    return;
+  }
+  const path = `public${publicPath}`;
+  try {
+    const file = await ghGetFile(env, path);
+    if (file) {
+      await ghDeleteFile(env, path, file.sha, `cleanup: remove unused ${publicPath} (studio, ${email})`);
+    }
+  } catch {
+    /* best effort — leave the orphan if anything goes wrong */
+  }
 }
 
 async function ghDeleteFile(env, path, sha, message) {
