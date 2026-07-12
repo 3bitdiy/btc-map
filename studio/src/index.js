@@ -500,11 +500,12 @@ async function apiUpload(request, env) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
 
-  let file, title;
+  let file, title, replace;
   try {
     const form = await request.formData();
     file = form.get("file");
     title = form.get("title");
+    replace = form.get("replace"); // a just-uploaded, unsaved cover to clean up
   } catch {
     return json({ error: "invalid_upload" }, 400);
   }
@@ -519,6 +520,10 @@ async function apiUpload(request, env) {
   const name = `${slug ? slug + "-" : ""}cover-${Date.now()}.${ext}`;
   const res = await ghCommitFile(env, `${BLOG_IMG_DIR}/${name}`, bytesToBase64(bytes), null, `blog image (studio, ${session.email})`);
   if (!res.ok) return json({ error: "image_commit_failed", detail: res.detail }, 502);
+  // Drop the previous, unsaved cover from this editing session (blog folder only).
+  if (typeof replace === "string" && replace.startsWith("/assets/images/blog/")) {
+    await deleteRepoImage(env, replace, session.email);
+  }
   return json({ ok: true, path: `/assets/images/blog/${name}` });
 }
 
@@ -1007,7 +1012,7 @@ const EDITOR_JS =
   "function renderMulti(name,values){var box=q('ml-'+name);box.innerHTML='';var vals=(values&&values.length)?values:[''];vals.forEach(function(v){addMulti(name,v)})}" +
   "function getMulti(name){return [].slice.call(q('ml-'+name).querySelectorAll('input')).map(function(i){return i.value.trim()}).filter(Boolean).join(', ')}" +
   "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
-  "var editingSlug=null;var postCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
+  "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
   "function setPhotoStatus(t){q('photo-status').textContent=t}" +
@@ -1123,7 +1128,7 @@ const EDITOR_JS =
   "function removePostColony(id){postColonies=postColonies.filter(function(x){return x!==String(id)});renderPostColonies()}" +
   "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false,toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link','image','|','preview','guide']})}" +
   "function getBody(){return easyMDE?easyMDE.value():q('p-body').value}" +
-  "function newPost(){editingSlug=null;postCover='';q('pe-title').textContent='New post';" +
+  "function newPost(){editingSlug=null;postCover='';savedCover='';q('pe-title').textContent='New post';" +
   "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
   "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
   "postColonies=(document.body.dataset.role!=='admin'?taggable.map(function(c){return String(c.id)}):[]);renderPostColonies();" +
@@ -1131,7 +1136,7 @@ const EDITOR_JS =
   "q('pe-delete').style.display='none';q('post-editor').style.display='block';initEditor();easyMDE.value('');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
-  "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';" +
+  "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';savedCover=p.cover||'';" +
   "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
   "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');postColonies=(p.colonies||[]).map(String);renderPostColonies();" +
   "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
@@ -1140,6 +1145,7 @@ const EDITOR_JS =
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
   "q('p-cover-preview').src=URL.createObjectURL(f);q('p-cover-status').textContent='Optimising…';var blob=await optimizeImage(f);" +
   "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');fd.append('title',q('p-title').value||'');" +
+  "if(postCover&&postCover!==savedCover&&postCover.indexOf('/assets/images/blog/')===0)fd.append('replace',postCover);" +
   "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
   "if(!r.ok){q('p-cover-status').textContent='Upload failed: '+(out.detail||out.error);return}" +
   "postCover=out.path;q('p-cover-status').textContent='Cover uploaded \\u2713'}" +
