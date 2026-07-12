@@ -951,10 +951,18 @@ const EDITOR_JS =
   "function setPhotoPreview(){var p=mainPhoto();var src;" +
   "if(!p||p.indexOf('placehold.co')!==-1){src=RAW+'/assets/images/colony-placeholder.png'}" +
   "else if(/^https?:/.test(p)){src=p}else{src=RAW+p}q('photo-preview').src=src}" +
+  // Resize (max 1600px) + convert to WebP in the browser before upload.
+  "function optimizeImage(file){return new Promise(function(resolve){" +
+  "if(!/^image\\/(jpeg|png|webp)$/.test(file.type)){resolve(file);return}" +
+  "var url=URL.createObjectURL(file);var img=new Image();" +
+  "img.onload=function(){URL.revokeObjectURL(url);var maxW=1600;var w=img.naturalWidth,h=img.naturalHeight;" +
+  "if(w>maxW){h=Math.round(h*maxW/w);w=maxW}var cv=document.createElement('canvas');cv.width=w;cv.height=h;" +
+  "cv.getContext('2d').drawImage(img,0,0,w,h);cv.toBlob(function(b){resolve(b&&b.size<file.size?b:file)},'image/webp',0.82)};" +
+  "img.onerror=function(){URL.revokeObjectURL(url);resolve(file)};img.src=url})}" +
   "async function uploadPhoto(){if(!currentId)return;var f=q('photo-file').files[0];" +
   "if(!f){setPhotoStatus('Choose an image first');return}" +
-  "setPhotoStatus('Uploading…');q('photo-preview').src=URL.createObjectURL(f);" +
-  "var fd=new FormData();fd.append('file',f);" +
+  "q('photo-preview').src=URL.createObjectURL(f);setPhotoStatus('Optimising…');var blob=await optimizeImage(f);" +
+  "setPhotoStatus('Uploading…');var fd=new FormData();fd.append('file',blob,'photo.webp');" +
   "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'POST',body:fd});var out=await r.json();" +
   "if(!r.ok){setPhotoStatus('Upload failed: '+(out.detail||out.error));return}" +
   "currentPhotos=out.photos||[out.photo];q('photo-file').value='';" +
@@ -1033,8 +1041,9 @@ const EDITOR_JS =
   "q('pe-delete').style.display='';q('post-editor').style.display='block';initEditor();easyMDE.value(p.body||'');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
-  "q('p-cover-status').textContent='Uploading…';q('p-cover-preview').src=URL.createObjectURL(f);" +
-  "var fd=new FormData();fd.append('file',f);var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
+  "q('p-cover-preview').src=URL.createObjectURL(f);q('p-cover-status').textContent='Optimising…';var blob=await optimizeImage(f);" +
+  "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');" +
+  "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
   "if(!r.ok){q('p-cover-status').textContent='Upload failed: '+(out.detail||out.error);return}" +
   "postCover=out.path;q('p-cover-status').textContent='Cover uploaded \\u2713'}" +
   "async function savePost(){var title=q('p-title').value.trim();if(!title){setPostStatus('Title is required');return}" +
