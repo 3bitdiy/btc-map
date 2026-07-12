@@ -822,6 +822,10 @@ function editorPage(session, env) {
     `<option value=""></option>` +
     opts.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("") +
     `</select></label>`;
+  // Repeatable text field (stored joined by ", " in one string).
+  const multi = (name, label, addLabel) =>
+    `<div class="fld full"><span>${label}</span><div id="ml-${name}" class="multiline"></div>` +
+    `<button type="button" class="btn ghost ml-add" onclick="addMulti('${name}','')">${addLabel}</button></div>`;
 
   const artChips = DISCIPLINES.map(
     (d) => `<button type="button" class="chip" data-v="${escapeHtml(d)}">${escapeHtml(d)}</button>`,
@@ -854,9 +858,9 @@ function editorPage(session, env) {
     select("scope", "Scope", ["National", "Regional", "International", "Unspecified"]) +
     field("art_colony_organisers", "Organisers") +
     field("contact_person", "Contact person") +
-    field("contact_telephone", "Telephone") +
-    field("email_address", "Email") +
-    field("web_page", "Website") +
+    multi("contact_telephone", "Telephone(s)", "+ Add phone") +
+    multi("email_address", "Email(s)", "+ Add email") +
+    multi("web_page", "Website(s)", "+ Add website") +
     field("time_period", "Time period") +
     field("duration", "Duration");
 
@@ -948,6 +952,10 @@ function editorPage(session, env) {
     `.chip{border:1.5px solid rgba(28,28,28,.3);background:#fff;color:#1c1c1c;border-radius:999px;` +
     `padding:5px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;width:auto}` +
     `.chip.on{background:#ff4326;border-color:#ff4326;color:#fff}` +
+    `.multiline{display:flex;flex-direction:column;gap:6px}` +
+    `.ml-row{display:flex;gap:6px}.ml-row input{flex:1}` +
+    `.ml-rm{width:auto;flex:0 0 auto;padding:0 13px}` +
+    `.ml-add{width:auto;margin-top:6px;font-size:12px;padding:6px 12px}` +
     `.photo{display:flex;gap:14px;align-items:flex-start}` +
     `#photo-preview,#p-cover-preview{width:150px;height:100px;object-fit:cover;border-radius:10px;` +
     `background:#f7f7f5;border:1px solid rgba(28,28,28,.2);flex:0 0 auto}` +
@@ -987,7 +995,16 @@ function editorPage(session, env) {
 
 // Client script — plain concatenation, no backticks/template literals.
 const EDITOR_JS =
-  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','contact_person','contact_telephone','email_address','web_page','time_period','duration'];" +
+  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','contact_person','time_period','duration'];" +
+  "var MULTI=['contact_telephone','email_address','web_page'];" +
+  "function splitMulti(v){return String(v||'').split(/\\s*[&,;]\\s*|\\s+and\\s+/i).map(function(s){return s.trim()}).filter(Boolean)}" +
+  "function addMulti(name,value){var box=q('ml-'+name);var row=document.createElement('div');row.className='ml-row';" +
+  "var inp=document.createElement('input');inp.type='text';inp.value=value||'';" +
+  "var rm=document.createElement('button');rm.type='button';rm.className='btn ghost ml-rm';rm.textContent='\\u00d7';" +
+  "rm.onclick=function(){row.remove();if(!box.children.length)addMulti(name,'')};" +
+  "row.appendChild(inp);row.appendChild(rm);box.appendChild(row)}" +
+  "function renderMulti(name,values){var box=q('ml-'+name);box.innerHTML='';var vals=(values&&values.length)?values:[''];vals.forEach(function(v){addMulti(name,v)})}" +
+  "function getMulti(name){return [].slice.call(q('ml-'+name).querySelectorAll('input')).map(function(i){return i.value.trim()}).filter(Boolean).join(', ')}" +
   "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
   "var editingSlug=null;var postCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
   "function q(id){return document.getElementById(id)}" +
@@ -1020,6 +1037,7 @@ const EDITOR_JS =
   "if(!r.ok){var e=await r.json();setStatus('Could not load: '+(e.error||r.status));q('form').style.display='none';return}" +
   "var data=await r.json();var c=data.colony;" +
   "FIELDS.forEach(function(f){var el=q('f-'+f);if(el)el.value=(c[f]==null?'':c[f])});" +
+  "MULTI.forEach(function(f){renderMulti(f,splitMulti(c[f]))});" +
   "setArtField(c.art_field||'');" +
   "currentPhotos=Array.isArray(c.photos)?c.photos:[];setPhotoPreview();q('photo-file').value='';setPhotoStatus('');" +
   "currentId=id;q('title').textContent=c.art_colony_name||('Colony '+id);" +
@@ -1062,6 +1080,7 @@ const EDITOR_JS =
   "document.addEventListener('click',function(e){var ch=e.target.closest('#art-chips .chip');if(ch)ch.classList.toggle('on')});" +
   "async function save(){if(!currentId)return;var body={};" +
   "FIELDS.forEach(function(f){body[f]=q('f-'+f).value});" +
+  "MULTI.forEach(function(f){body[f]=getMulti(f)});" +
   "body.art_field=getArtField();" +
   "['latitude','longitude'].forEach(function(k){var v=String(body[k]).trim();if(v!==''&&!isNaN(Number(v))){body[k]=Number(v)}else{delete body[k]}});" +
   "setStatus('Saving…');" +
