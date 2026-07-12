@@ -3,7 +3,7 @@ title: Beyond the Cities is live
 date: 2026-07-11
 author: Goethe-Institut Belgrade
 excerpt: An interactive map of the Western Balkans' rural artist colonies is now online, the first step towards a transnational network.
-cover: /assets/images/blog/cover-1783849858215.webp
+cover: /assets/images/blog/beyond-the-cities-is-live-cover-1783859930374.webp
 tags: [Network, Announcement]
 colonies: []
 draft: false
