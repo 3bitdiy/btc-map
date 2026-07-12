@@ -908,6 +908,7 @@ function editorPage(session, env) {
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"/>` +
     `<title>Studio · Beyond the Cities</title>` +
+    `<link rel="icon" type="image/svg+xml" href="https://beyondthecities.org/favicon.svg"/>` +
     `<link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>` +
     `<style>` +
     `*{box-sizing:border-box}body{margin:0;font-family:'Montserrat',system-ui,sans-serif;background:#f1f1ee;color:#1c1c1c}` +
@@ -1225,6 +1226,7 @@ function htmlPage(title, inner, status = 200) {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${escapeHtml(title)}</title>
+<link rel="icon" type="image/svg+xml" href="https://beyondthecities.org/favicon.svg"/>
 <link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>
 <style>
   body{font-family:'Montserrat',system-ui,sans-serif;background:#f1f1ee;color:#1c1c1c;margin:0;
