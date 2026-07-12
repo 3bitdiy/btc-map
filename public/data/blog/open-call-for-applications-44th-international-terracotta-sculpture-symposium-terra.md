@@ -1,10 +1,10 @@
 ---
-title: Open Call for Applications: 44th International Terracotta Sculpture Symposium Terra
-date: 2026-07-12
+title: Open Call for Applications
+date: 2026-07-10
 author: The Center For Fine And Applied Arts Terra
-excerpt: On August 15th, 2024, The Center For Fine And Applied Arts Terra launched its call for application for the participation in The 44th International Terracotta Sculpture Symposium Terra (hereinafter: Symposium Terra) which will be held July 1st – July 31st, 2025.
+excerpt: The Center For Fine And Applied Arts Terra launched its call for application for the participation in The 44th International Terracotta Sculpture Symposium Terra
 cover: /assets/images/blog/cover-1783848405171.webp
-tags: [open call, symposium, sculpture, terracotta]
+tags: [Open Call, Symposium, Sculpture, Terracotta]
 colonies: [5]
 draft: false
 ---
