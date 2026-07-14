@@ -1367,10 +1367,10 @@ ul {
 #panel-name {
   margin-top: 8px;
   color: var(--wine);
-  /* Normal case (consistent with the colony/blog titles), bold like them. */
+  /* Normal case (consistent with the colony/blog titles). */
   font-size: 17px;
   line-height: 1.12;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.01em;
   overflow-wrap: break-word;
   word-break: break-word;
