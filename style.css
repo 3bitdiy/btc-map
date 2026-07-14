@@ -677,8 +677,8 @@ ul {
 
 /* Scope dropdown: stack the round-check rows vertically */
 #scope-filters {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 /* ID-level display above overrides .pill-list[hidden]; restore the hidden state */
