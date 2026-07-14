@@ -17,7 +17,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 44.883159,
       "longitude": 16.157498,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 61,
@@ -36,7 +38,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 42.71197,
       "longitude": 18.34362,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-4.webp"
+      ]
     },
     {
       "id": 62,
@@ -55,7 +59,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 43.16722,
       "longitude": 18.53528,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-1.webp"
+      ]
     },
     {
       "id": 63,
@@ -74,7 +80,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 44.39267,
       "longitude": 16.981251,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-2.webp"
+      ]
     },
     {
       "id": 64,
@@ -93,7 +101,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 42.71197,
       "longitude": 18.34362,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 65,
@@ -112,7 +122,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 44.34203,
       "longitude": 17.27059,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 66,
@@ -131,7 +143,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 44.610393,
       "longitude": 18.654961,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-3.webp"
+      ]
     },
     {
       "id": 67,
@@ -150,7 +164,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 43.631653,
       "longitude": 17.541408,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 68,
@@ -169,7 +185,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 44.29210876693754,
       "longitude": 17.902801979039882,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 69,
@@ -188,7 +206,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 43.808152,
       "longitude": 18.569303,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-4.webp"
+      ]
     },
     {
       "id": 70,
@@ -207,7 +227,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 45.012997,
       "longitude": 16.908875,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 71,
@@ -226,7 +248,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 45.04643,
       "longitude": 16.37782,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 72,
@@ -245,7 +269,9 @@
       "country": "Bosnia and Herzegovina",
       "latitude": 43.77547,
       "longitude": 18.445895,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-3.webp"
+      ]
     }
   ]
 }

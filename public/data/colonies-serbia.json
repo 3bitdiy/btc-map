@@ -17,7 +17,9 @@
       "country": "Serbia",
       "latitude": 45.36056,
       "longitude": 19.59167,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-2.webp"
+      ]
     },
     {
       "id": 2,
@@ -36,7 +38,9 @@
       "country": "Serbia",
       "latitude": 43.71882,
       "longitude": 21.44085,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 3,
@@ -56,7 +60,7 @@
       "latitude": 44.94366,
       "longitude": 20.21931,
       "photos": [
-        "/assets/images/colonies/colony-3-1783846110675.webp"
+        "/assets/images/colonies/demo-writing-2.webp"
       ]
     },
     {
@@ -77,7 +81,7 @@
       "latitude": 45.125874,
       "longitude": 19.533366,
       "photos": [
-        "/assets/images/colonies/petkovica-monastery.webp"
+        "/assets/images/colonies/demo-sculpture-2.webp"
       ]
     },
     {
@@ -98,7 +102,7 @@
       "latitude": 45.82972,
       "longitude": 20.46528,
       "photos": [
-        "/assets/images/colonies/terra-kikinda.webp"
+        "/assets/images/colonies/demo-sculpture-3.webp"
       ]
     },
     {
@@ -118,7 +122,9 @@
       "country": "Serbia",
       "latitude": 45.6816,
       "longitude": 19.69205,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-3.webp"
+      ]
     },
     {
       "id": 7,
@@ -137,7 +143,9 @@
       "country": "Serbia",
       "latitude": 44.935779,
       "longitude": 21.299587,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-4.webp"
+      ]
     },
     {
       "id": 8,
@@ -156,7 +164,9 @@
       "country": "Serbia",
       "latitude": 44.598536,
       "longitude": 19.828773,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-rural-2.webp"
+      ]
     },
     {
       "id": 9,
@@ -175,7 +185,9 @@
       "country": "Serbia",
       "latitude": 44.71356,
       "longitude": 21.16929,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 10,
@@ -194,7 +206,9 @@
       "country": "Serbia",
       "latitude": 45.32328,
       "longitude": 20.44294,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 11,
@@ -250,7 +264,9 @@
           "longitude": 20.35306356550526
         }
       ],
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 12,
@@ -269,7 +285,9 @@
       "country": "Serbia",
       "latitude": 43.760433,
       "longitude": 19.468836,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-photography-2.webp"
+      ]
     },
     {
       "id": 13,
@@ -288,7 +306,9 @@
       "country": "Serbia",
       "latitude": 43.41333,
       "longitude": 22.12111,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-4.webp"
+      ]
     },
     {
       "id": 14,
@@ -307,7 +327,9 @@
       "country": "Serbia",
       "latitude": 45.11167,
       "longitude": 20.62139,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 15,
@@ -326,7 +348,9 @@
       "country": "Serbia",
       "latitude": 45.25167,
       "longitude": 19.83694,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-1.webp"
+      ]
     },
     {
       "id": 16,
@@ -346,7 +370,7 @@
       "latitude": 45.40861,
       "longitude": 19.88917,
       "photos": [
-        "/assets/images/colonies/jegricka-temerin.webp"
+        "/assets/images/colonies/demo-gallery-3.webp"
       ]
     },
     {
@@ -366,7 +390,9 @@
       "country": "Serbia",
       "latitude": 44.024347,
       "longitude": 20.360405,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-1.webp"
+      ]
     },
     {
       "id": 18,
@@ -385,7 +411,9 @@
       "country": "Serbia",
       "latitude": 43.92694,
       "longitude": 20.71889,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 19,
@@ -404,7 +432,9 @@
       "country": "Serbia",
       "latitude": 43.27306,
       "longitude": 19.99944,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 20,
@@ -423,7 +453,9 @@
       "country": "Serbia",
       "latitude": 43.949249,
       "longitude": 19.906467,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-2.webp"
+      ]
     },
     {
       "id": 21,
@@ -442,7 +474,9 @@
       "country": "Serbia",
       "latitude": 45.79441,
       "longitude": 18.93402,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 22,
@@ -461,7 +495,9 @@
       "country": "Serbia",
       "latitude": 44.66436,
       "longitude": 20.92763,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 23,
@@ -480,7 +516,9 @@
       "country": "Serbia",
       "latitude": 46.1,
       "longitude": 19.66667,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-2.webp"
+      ]
     },
     {
       "id": 24,
@@ -499,7 +537,9 @@
       "country": "Serbia",
       "latitude": 45.261967,
       "longitude": 19.860028,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 25,
@@ -518,7 +558,9 @@
       "country": "Serbia",
       "latitude": 45.128165,
       "longitude": 19.225912,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-3.webp"
+      ]
     },
     {
       "id": 26,
@@ -537,7 +579,9 @@
       "country": "Serbia",
       "latitude": 44.529556,
       "longitude": 20.528405,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-rural-3.webp"
+      ]
     },
     {
       "id": 27,
@@ -556,7 +600,9 @@
       "country": "Serbia",
       "latitude": 44.123566,
       "longitude": 22.565596,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-4.webp"
+      ]
     },
     {
       "id": 28,
@@ -575,7 +621,9 @@
       "country": "Serbia",
       "latitude": 45.25167,
       "longitude": 19.83694,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 29,
@@ -594,7 +642,9 @@
       "country": "Serbia",
       "latitude": 44.80401,
       "longitude": 20.46513,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-performance-2.webp"
+      ]
     },
     {
       "id": 30,
@@ -613,7 +663,9 @@
       "country": "Serbia",
       "latitude": 44.252915,
       "longitude": 20.634127,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 31,
@@ -632,7 +684,9 @@
       "country": "Serbia",
       "latitude": 44.90143,
       "longitude": 21.108312,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-photography-3.webp"
+      ]
     },
     {
       "id": 32,
@@ -651,7 +705,9 @@
       "country": "Serbia",
       "latitude": 43.38996,
       "longitude": 19.6487,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 33,
@@ -670,7 +726,9 @@
       "country": "Serbia",
       "latitude": 43.3419873284601,
       "longitude": 22.085803057508713,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 34,
@@ -689,7 +747,9 @@
       "country": "Serbia",
       "latitude": 44.80401,
       "longitude": 20.46513,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-performance-3.webp"
+      ]
     },
     {
       "id": 35,
@@ -708,7 +768,9 @@
       "country": "Serbia",
       "latitude": 44.307151,
       "longitude": 20.557705,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-ceramics-2.webp"
+      ]
     },
     {
       "id": 36,
@@ -727,7 +789,9 @@
       "country": "Serbia",
       "latitude": 44.87297196052243,
       "longitude": 20.649728685407506,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-street-2.webp"
+      ]
     },
     {
       "id": 37,
@@ -746,7 +810,9 @@
       "country": "Serbia",
       "latitude": 43.50506,
       "longitude": 22.31928,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-3.webp"
+      ]
     },
     {
       "id": 38,
@@ -765,7 +831,9 @@
       "country": "Serbia",
       "latitude": 43.223604,
       "longitude": 21.836025,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 39,
@@ -784,7 +852,9 @@
       "country": "Serbia",
       "latitude": 46.047712,
       "longitude": 19.492622,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-street-3.webp"
+      ]
     },
     {
       "id": 40,
@@ -803,7 +873,9 @@
       "country": "Serbia",
       "latitude": 44.37306,
       "longitude": 19.60139,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 41,
@@ -822,7 +894,9 @@
       "country": "Serbia",
       "latitude": 42.711136,
       "longitude": 22.342484,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 42,
@@ -841,7 +915,9 @@
       "country": "Serbia",
       "latitude": 43.802234,
       "longitude": 19.952395,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-ceramics-3.webp"
+      ]
     },
     {
       "id": 43,
@@ -860,7 +936,9 @@
       "country": "Serbia",
       "latitude": 44.36548,
       "longitude": 20.95885,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 44,
@@ -879,7 +957,9 @@
       "country": "Serbia",
       "latitude": 43.13667,
       "longitude": 20.51222,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-ceramics-4.webp"
+      ]
     },
     {
       "id": 45,
@@ -898,7 +978,9 @@
       "country": "Serbia",
       "latitude": 44.80401,
       "longitude": 20.46513,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-writing-3.webp"
+      ]
     },
     {
       "id": 46,
@@ -917,7 +999,9 @@
       "country": "Serbia",
       "latitude": 43.13667,
       "longitude": 20.51222,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-ceramics-1.webp"
+      ]
     },
     {
       "id": 47,
@@ -936,7 +1020,9 @@
       "country": "Serbia",
       "latitude": 44.74667,
       "longitude": 19.69,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-writing-4.webp"
+      ]
     },
     {
       "id": 48,
@@ -955,7 +1041,9 @@
       "country": "Serbia",
       "latitude": 43.3419873284601,
       "longitude": 22.085803057508713,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-1.webp"
+      ]
     },
     {
       "id": 49,
@@ -974,7 +1062,9 @@
       "country": "Serbia",
       "latitude": 44.101864,
       "longitude": 21.640521,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-4.webp"
+      ]
     },
     {
       "id": 50,
@@ -993,7 +1083,9 @@
       "country": "Serbia",
       "latitude": 44.39496,
       "longitude": 19.755212,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-1.webp"
+      ]
     },
     {
       "id": 51,
@@ -1012,7 +1104,9 @@
       "country": "Serbia",
       "latitude": 42.55139,
       "longitude": 21.90028,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-2.webp"
+      ]
     },
     {
       "id": 52,
@@ -1031,7 +1125,9 @@
       "country": "Serbia",
       "latitude": 43.308004,
       "longitude": 19.674626,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-3.webp"
+      ]
     },
     {
       "id": 53,
@@ -1050,7 +1146,9 @@
       "country": "Serbia",
       "latitude": 45.905165,
       "longitude": 19.785045,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-writing-1.webp"
+      ]
     },
     {
       "id": 54,
@@ -1069,7 +1167,9 @@
       "country": "Serbia",
       "latitude": 44.864901,
       "longitude": 19.430697,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-2.webp"
+      ]
     },
     {
       "id": 55,
@@ -1088,7 +1188,9 @@
       "country": "Serbia",
       "latitude": 43.19,
       "longitude": 21.71306,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-1.webp"
+      ]
     },
     {
       "id": 56,
@@ -1107,7 +1209,9 @@
       "country": "Serbia",
       "latitude": 44.40868212904901,
       "longitude": 21.618385525282935,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-sculpture-3.webp"
+      ]
     },
     {
       "id": 57,
@@ -1126,7 +1230,9 @@
       "country": "Serbia",
       "latitude": 44.65486,
       "longitude": 20.20017,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-gallery-4.webp"
+      ]
     },
     {
       "id": 58,
@@ -1145,7 +1251,9 @@
       "country": "Serbia",
       "latitude": 44.418570480332995,
       "longitude": 19.951729554987853,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-painting-2.webp"
+      ]
     },
     {
       "id": 59,
@@ -1164,7 +1272,9 @@
       "country": "Serbia",
       "latitude": 43.81424580540608,
       "longitude": 19.854349632371324,
-      "photos": []
+      "photos": [
+        "/assets/images/colonies/demo-performance-4.webp"
+      ]
     }
   ]
 }
