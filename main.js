@@ -108,10 +108,11 @@ const state = {
   colonies: [],
   selectedColony: null,
   markers: [],
-  activeCountries: new Set(DEFAULT_COUNTRIES),
+  // All filters are select-to-filter: an empty set = no filter = show all.
+  activeCountries: new Set(),
   activeDisciplines: new Set(),
   allDisciplines: new Set(),
-  activeScopes: new Set(DEFAULT_SCOPES),
+  activeScopes: new Set(),
   openCountry: null,
   panelMinimized: false,
   filterPanelMinimized: false,
@@ -203,11 +204,11 @@ function getColonyDisplayLocation(colony) {
 }
 
 function getColonyScope(colony) {
-  const raw = normalizeText(colony.scope);
-  const lower = raw.toLowerCase();
+  const lower = normalizeText(colony.scope).toLowerCase();
+  // Check "international" first — it contains "national" as a substring.
+  if (lower.includes("international")) return "International";
   if (lower.includes("national")) return "National";
   if (lower.includes("regional")) return "Regional";
-  if (lower.includes("international")) return "International";
 
   return "Unspecified";
 }
@@ -826,10 +827,14 @@ function openLocationPicker(colonies, coords) {
 function getVisibleColonies() {
   return state.colonies.filter((colony) => {
     if (!getColonyLocations(colony).length) return false;
-    if (!state.activeCountries.has(getColonyCountry(colony))) return false;
 
-    const scope = getColonyScope(colony);
-    if (scope !== "Unspecified" && !state.activeScopes.has(scope)) return false;
+    if (state.activeCountries.size && !state.activeCountries.has(getColonyCountry(colony))) {
+      return false;
+    }
+
+    if (state.activeScopes.size && !state.activeScopes.has(getColonyScope(colony))) {
+      return false;
+    }
 
     // Art field: no selection = show all; otherwise require a match.
     if (state.activeDisciplines.size) {
@@ -1113,8 +1118,7 @@ function getCountryColonies(country) {
       if (getColonyCountry(colony) !== country) return false;
       if (!getColonyLocations(colony).length) return false;
 
-      const scope = getColonyScope(colony);
-      if (scope !== "Unspecified" && !state.activeScopes.has(scope)) {
+      if (state.activeScopes.size && !state.activeScopes.has(getColonyScope(colony))) {
         return false;
       }
 
@@ -1136,10 +1140,11 @@ function setOpenCountry(country) {
   const wrap = document.getElementById("country-accordion");
   if (!wrap) return;
 
+  const filtering = state.activeCountries.size > 0;
   wrap.querySelectorAll(".country-section").forEach((section) => {
     const sectionCountry = section.dataset.country;
-    const active = state.activeCountries.has(sectionCountry);
-    const open = active && sectionCountry === country;
+    const shown = !filtering || state.activeCountries.has(sectionCountry);
+    const open = shown && sectionCountry === country;
     section.classList.toggle("is-open", open);
 
     const expand = section.querySelector(".country-expand");
@@ -1154,16 +1159,21 @@ function renderCountryAccordion() {
   if (!wrap) return;
   wrap.innerHTML = "";
 
+  const filtering = state.activeCountries.size > 0;
+
   DEFAULT_COUNTRIES.forEach((country) => {
     const colonies = getCountryColonies(country);
-    const active = state.activeCountries.has(country);
-    const isOpen = active && state.openCountry === country;
+    const checked = state.activeCountries.has(country);
+    // Select-to-filter: nothing selected = all shown; once some are selected,
+    // the unselected ones are filtered out (dimmed, non-expandable).
+    const shown = !filtering || checked;
+    const isOpen = shown && state.openCountry === country;
     const bodyId = `country-body-${country.replace(/\s+/g, "-").toLowerCase()}`;
 
     const section = document.createElement("section");
     section.className = "country-section";
     section.dataset.country = country;
-    section.classList.toggle("is-off", !active);
+    section.classList.toggle("is-off", !shown);
     section.classList.toggle("is-open", isOpen);
 
     const header = document.createElement("div");
@@ -1172,15 +1182,15 @@ function renderCountryAccordion() {
     const toggle = document.createElement("label");
     toggle.className = "country-toggle";
     toggle.innerHTML = `<input type="checkbox" name="country" value="${country}" ${
-      active ? "checked" : ""
-    } aria-label="Show ${country} on the map" />`;
+      checked ? "checked" : ""
+    } aria-label="Filter to ${country}" />`;
 
     const expand = document.createElement("button");
     expand.type = "button";
     expand.className = "country-expand";
     expand.setAttribute("aria-expanded", isOpen ? "true" : "false");
     expand.setAttribute("aria-controls", bodyId);
-    expand.disabled = !active;
+    expand.disabled = !shown;
     expand.innerHTML = `
       <span class="country-name">${country}</span>
       <span class="country-count">${colonies.length}</span>
@@ -1594,9 +1604,9 @@ function buildDisciplineFilters() {
 
 function updateFilterToggleBadge() {
   const activeCount =
-    Math.max(0, DEFAULT_COUNTRIES.length - state.activeCountries.size) +
+    state.activeCountries.size +
     state.activeDisciplines.size +
-    Math.max(0, DEFAULT_SCOPES.length - state.activeScopes.size);
+    state.activeScopes.size;
 
   const badge = document.getElementById("filter-active-badge");
   const toggle = document.getElementById("filter-toggle");
@@ -1798,7 +1808,7 @@ function wireFilterInputs() {
   document.querySelectorAll('input[name="scope"]').forEach((input) => {
     if (input instanceof HTMLInputElement) {
       input
-        .closest(".filter-check")
+        .closest(".pill-filter-item")
         ?.classList.toggle("is-off", !input.checked);
     }
 
@@ -1806,7 +1816,7 @@ function wireFilterInputs() {
       const target = event.target;
       if (target instanceof HTMLInputElement) {
         target
-          .closest(".filter-check")
+          .closest(".pill-filter-item")
           ?.classList.toggle("is-off", !target.checked);
       }
       syncFilters();
@@ -1918,19 +1928,17 @@ function wireMobileFilterActions() {
 // Reset to defaults: all countries + scopes on, art field cleared (none
 // selected = show all). Shared by the mobile and desktop reset buttons.
 function resetFilters() {
-  state.activeCountries = new Set(DEFAULT_COUNTRIES);
+  state.activeCountries = new Set();
+  state.activeScopes = new Set();
+  state.activeDisciplines = new Set();
   state.openCountry = null;
 
-  document.querySelectorAll('input[name="scope"]').forEach((input) => {
-    if (input instanceof HTMLInputElement) input.checked = true;
-  });
-  document.querySelectorAll('input[name="discipline"]').forEach((input) => {
-    if (input instanceof HTMLInputElement) input.checked = false;
-  });
-
   document
-    .querySelectorAll(".filter-check.is-off")
-    .forEach((el) => el.classList.remove("is-off"));
+    .querySelectorAll('input[name="scope"], input[name="discipline"]')
+    .forEach((input) => {
+      if (input instanceof HTMLInputElement) input.checked = false;
+    });
+  // country checkboxes are re-rendered from state by renderCountryAccordion
   document
     .querySelectorAll(".pill-filter-item")
     .forEach((el) => el.classList.add("is-off"));

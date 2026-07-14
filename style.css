@@ -865,7 +865,8 @@ ul {
   opacity: 0.75;
 }
 
-#discipline-filters {
+#discipline-filters,
+#scope-filters {
   gap: 6px;
 }
 
