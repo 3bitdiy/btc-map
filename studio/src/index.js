@@ -1248,7 +1248,9 @@ function htmlPage(title, inner, status = 200) {
   a{color:#1c1c1c}
   .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;
        padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
-</style></head><body><div><div class="brand"><img src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></div><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div></div></body></html>`;
+  .back-site{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;opacity:.6;text-decoration:underline;text-underline-offset:2px}
+  .back-site:hover{opacity:1}
+</style></head><body><div><div class="brand"><img src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></div><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div><div style="text-align:center"><a class="back-site" href="https://beyondthecities.org/">← Back to site</a></div></div></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
