@@ -831,11 +831,12 @@ function getVisibleColonies() {
     const scope = getColonyScope(colony);
     if (scope !== "Unspecified" && !state.activeScopes.has(scope)) return false;
 
-    const disciplines = getColonyDisciplines(colony);
-    if (!disciplines.length) return false;
-    return disciplines.some((discipline) =>
-      state.activeDisciplines.has(discipline),
-    );
+    // Art field: no selection = show all; otherwise require a match.
+    if (state.activeDisciplines.size) {
+      const disciplines = getColonyDisciplines(colony);
+      if (!disciplines.some((d) => state.activeDisciplines.has(d))) return false;
+    }
+    return true;
   });
 }
 
@@ -1117,9 +1118,13 @@ function getCountryColonies(country) {
         return false;
       }
 
-      const disciplines = getColonyDisciplines(colony);
-      if (!disciplines.length) return false;
-      return disciplines.some((d) => state.activeDisciplines.has(d));
+      // Art field: no selection = show all; otherwise show colonies that
+      // practise at least one of the selected disciplines.
+      if (state.activeDisciplines.size) {
+        const disciplines = getColonyDisciplines(colony);
+        if (!disciplines.some((d) => state.activeDisciplines.has(d))) return false;
+      }
+      return true;
     })
     .sort((a, b) => getColonyName(a).localeCompare(getColonyName(b)));
 }
@@ -1573,13 +1578,14 @@ function buildDisciplineFilters() {
     return a.localeCompare(b);
   });
   state.allDisciplines = new Set(sorted);
-  state.activeDisciplines = new Set(sorted);
+  // Select-to-filter: nothing selected by default (= show all).
+  state.activeDisciplines = new Set();
 
   sorted.forEach((discipline) => {
     const label = document.createElement("label");
-    label.className = "pill-filter-item";
+    label.className = "pill-filter-item is-off";
     label.innerHTML = `
-      <input type="checkbox" name="discipline" value="${discipline}" checked />
+      <input type="checkbox" name="discipline" value="${discipline}" />
       <span>${discipline}</span>
     `;
     wrapper.appendChild(label);
@@ -1589,7 +1595,7 @@ function buildDisciplineFilters() {
 function updateFilterToggleBadge() {
   const activeCount =
     Math.max(0, DEFAULT_COUNTRIES.length - state.activeCountries.size) +
-    Math.max(0, state.allDisciplines.size - state.activeDisciplines.size) +
+    state.activeDisciplines.size +
     Math.max(0, DEFAULT_SCOPES.length - state.activeScopes.size);
 
   const badge = document.getElementById("filter-active-badge");
@@ -1613,6 +1619,9 @@ function updateFilterToggleBadge() {
     pillBadge.textContent = String(activeCount);
     pill.classList.toggle("has-active", activeCount > 0);
   }
+
+  const resetBtn = document.getElementById("filter-reset-desktop");
+  if (resetBtn) resetBtn.hidden = activeCount === 0;
 }
 
 function wirePillVisuals() {
@@ -1903,22 +1912,30 @@ function wireMobileFilterActions() {
     }
   });
 
-  resetButton.addEventListener("click", () => {
-    state.activeCountries = new Set(DEFAULT_COUNTRIES);
-    state.openCountry = null;
+  resetButton.addEventListener("click", resetFilters);
+}
 
-    document
-      .querySelectorAll('input[name="discipline"], input[name="scope"]')
-      .forEach((input) => {
-        if (input instanceof HTMLInputElement) input.checked = true;
-      });
+// Reset to defaults: all countries + scopes on, art field cleared (none
+// selected = show all). Shared by the mobile and desktop reset buttons.
+function resetFilters() {
+  state.activeCountries = new Set(DEFAULT_COUNTRIES);
+  state.openCountry = null;
 
-    document
-      .querySelectorAll(".pill-filter-item.is-off, .filter-check.is-off")
-      .forEach((el) => el.classList.remove("is-off"));
-
-    syncFilters();
+  document.querySelectorAll('input[name="scope"]').forEach((input) => {
+    if (input instanceof HTMLInputElement) input.checked = true;
   });
+  document.querySelectorAll('input[name="discipline"]').forEach((input) => {
+    if (input instanceof HTMLInputElement) input.checked = false;
+  });
+
+  document
+    .querySelectorAll(".filter-check.is-off")
+    .forEach((el) => el.classList.remove("is-off"));
+  document
+    .querySelectorAll(".pill-filter-item")
+    .forEach((el) => el.classList.add("is-off"));
+
+  syncFilters();
 }
 
 let viewportMode = null;
@@ -2006,6 +2023,9 @@ async function bootstrap() {
   wireBrandMenu();
   wireMobileSidebar();
   wireMobileFilterActions();
+  document
+    .getElementById("filter-reset-desktop")
+    ?.addEventListener("click", resetFilters);
   applyResponsivePanelDefaults();
   window.addEventListener("resize", applyResponsivePanelDefaults);
   window.addEventListener("btc-theme-change", applyMapTheme);
