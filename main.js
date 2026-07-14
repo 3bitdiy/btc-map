@@ -339,7 +339,7 @@ function syncMarkerScale() {
     markerScaleForZoom(zoom).toFixed(3),
   );
   // Show place labels under markers earlier now that city names are off the map.
-  document.getElementById("map")?.classList.toggle("show-marker-labels", zoom >= 8);
+  document.getElementById("map")?.classList.toggle("show-marker-labels", zoom >= 7);
 }
 
 function cssVar(name, fallback) {
@@ -729,26 +729,40 @@ function createMarkerElement(colony, focusCoords = null) {
 
 // A count marker for several nearby colonies. Clicking it zooms to split them
 // (or shows a picker when they can't be separated — see onClusterClick).
+// For a cluster spanning several places, label it with the most common city
+// (a proxy for the main/bigger place, since we have no population data).
+function getClusterPlace(cluster) {
+  const counts = new Map();
+  for (const colony of cluster.colonies) {
+    const place = getColonyShortPlace(colony);
+    if (place) counts.set(place, (counts.get(place) || 0) + 1);
+  }
+  let best = "";
+  let bestCount = 0;
+  for (const [place, n] of counts) {
+    if (n > bestCount) {
+      best = place;
+      bestCount = n;
+    }
+  }
+  return best || getColonyShortPlace(cluster.colonies[0]);
+}
+
 function createClusterElement(cluster) {
   const count = cluster.colonies.length;
+  const place = getClusterPlace(cluster);
   const el = document.createElement("button");
   el.type = "button";
   el.className = "map-marker map-marker--cluster";
   el.setAttribute("aria-label", `${count} colonies in this area`);
-  el.appendChild(
-    makeMarkerInner(
-      cluster.colonies[0],
-      String(count),
-      getColonyShortPlace(cluster.colonies[0]),
-    ),
-  );
+  el.appendChild(makeMarkerInner(cluster.colonies[0], String(count), place));
 
   el.addEventListener("click", (event) => {
     event.stopPropagation();
     onClusterClick(cluster);
   });
 
-  attachMarkerTooltip(el, `${count} colonies`, getColonyShortPlace(cluster.colonies[0]));
+  attachMarkerTooltip(el, `${count} colonies`, place);
   return el;
 }
 
