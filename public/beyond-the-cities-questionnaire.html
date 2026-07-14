@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beyond the Cities — Branding Questionnaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=Space+Grotesk:wght@400;500&family=Caveat:wght@400;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1C1A14;
+    --ink-mid: #5A5749;
+    --ink-light: #9A9488;
+    --ink-xlight: #E8E4DC;
+    --paper: #F7F4EE;
+    --paper-warm: #EDE9E0;
+    --accent: #3D5A4A;
+    --accent-light: #EAF0EC;
+    --accent-mid: #6A8C78;
+    --gold: #8C6D3F;
+    --gold-light: #F5EDD8;
+    --serif: 'Spectral', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --radius: 6px;
+    --radius-lg: 12px;
+    --max: 680px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .site-header {
+    background: var(--accent);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px
+    ), repeating-linear-gradient(
+      90deg, transparent, transparent 39px, rgba(255,255,255,0.04) 39px, rgba(255,255,255,0.04) 40px
+    );
+    pointer-events: none;
+  }
+
+  .header-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 3rem 2rem 2.5rem;
+    position: relative;
+  }
+
+  .header-eyebrow {
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    max-width: 80px;
+  }
+
+  .header-title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 300;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .header-title em {
+    font-style: italic;
+    color: rgba(255,255,255,0.75);
+  }
+
+  .header-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    max-width: 480px;
+    margin-bottom: 1.5rem;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-meta span {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .header-meta svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: rgba(0,0,0,0.2);
+    height: 3px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: rgba(255,255,255,0.4);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* Main content */
+  .main {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+  }
+
+  /* Progress indicator */
+  .progress-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ink-xlight);
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .progress-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-xlight);
+    transition: background 0.3s;
+  }
+
+  .progress-dot.done { background: var(--accent); }
+  .progress-dot.active { background: var(--accent-mid); }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--ink-light);
+    margin-left: auto;
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 3rem;
+  }
+
+  .section-eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-mid);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-eyebrow::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--accent-mid);
+  }
+
+  .section-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .section-hint {
+    font-size: 13px;
+    color: var(--ink-mid);
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--ink-xlight);
+    margin: 2.5rem 0;
+    position: relative;
+  }
+
+  .divider::after {
+    content: '◆';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    padding: 0 8px;
+    font-size: 8px;
+    color: var(--ink-xlight);
+  }
+
+  /* Fields */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 500px) {
+    .field-grid { grid-template-columns: 1fr; }
+    .style-grid { grid-template-columns: 1fr; }
+    .color-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-mid);
+    letter-spacing: 0.02em;
+  }
+
+  input[type="text"],
+  textarea {
+    width: 100%;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--ink-xlight);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus {
+    border-color: var(--accent-mid);
+    box-shadow: 0 0 0 3px rgba(61,90,74,0.08);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  /* Tags */
+  .tag-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 99px;
+    border: 1px solid var(--ink-xlight);
+    cursor: pointer;
+    color: var(--ink-mid);
+    background: #fff;
+    transition: all 0.15s;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .tag:hover {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .tag.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .tag svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .tag-limit-msg {
+    font-size: 12px;
+    color: var(--gold);
+    background: var(--gold-light);
+    padding: 4px 12px;
+    border-radius: 99px;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    margin-top: 4px;
+  }
+
+  .tag-limit-msg.show { display: flex; }
+
+  /* Scales */
+  .scale-block {
+    margin-bottom: 1.5rem;
+  }
+
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+
+  .scale-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .scale-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .scale-btn {
+    flex: 1;
+    padding: 9px 4px;
+    border: 1px solid var(--ink-xlight);
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--sans);
+    background: #fff;
+    color: var(--ink-mid);
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .scale-btn:hover {
+    border-color: var(--accent-mid);
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  .scale-btn.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .scale-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* Color swatches */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .color-swatch {
+    border: 1px solid var(--ink-xlight);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+  }
+
+  .color-swatch:hover {
+    border-color: var(--accent-mid);
+    transform: translateY(-1px);
+  }
+
+  .color-swatch.on {
+    border: 2px solid var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .swatch-bar { height: 44px; }
+
+  .swatch-label {
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--ink-mid);
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
+  .swatch-sub {
+    font-size: 10px;
+    color: var(--ink-light);
+    font-weight: 400;
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* Style cards */
+  .style-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .style-card {
+    border: 1px solid var(--ink-xlight);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+    position: relative;
+  }
+
+  .style-card:hover {
+    border-color: var(--accent-mid);
+    background: var(--accent-light);
+  }
+
+  .style-card.on {
+    border: 2px solid var(--accent);
+    background: var(--accent-light);
+  }
+
+  .style-card.on .style-check {
+    opacity: 1;
+  }
+
+  .style-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .style-check svg {
+    width: 10px;
+    height: 10px;
+    stroke: #fff;
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .style-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .style-icon svg {
+    width: 17px;
+    height: 17px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .style-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .style-desc {
+    font-size: 12px;
+    color: var(--ink-mid);
+    line-height: 1.5;
+  }
+
+  /* Reference rows */
+  .ref-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ref-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--paper-warm);
+    border: 1px solid var(--ink-xlight);
+    color: var(--ink-mid);
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ref-row input { flex: 1; }
+
+  /* Font pairing cards */
+  .font-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 500px) { .font-grid { grid-template-columns: 1fr; } }
+
+  .font-card {
+    border: 1px solid var(--ink-xlight);
+    border-radius: var(--radius-lg);
+    padding: 20px 18px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .font-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--ink-xlight);
+    transition: background 0.15s;
+  }
+
+  .font-card:hover { border-color: var(--accent-mid); }
+  .font-card:hover::before { background: var(--accent-mid); }
+
+  .font-card.on {
+    border: 2px solid var(--accent);
+  }
+
+  .font-card.on::before { background: var(--accent); }
+
+  .font-check {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .font-card.on .font-check { opacity: 1; }
+
+  .font-check svg {
+    width: 10px; height: 10px;
+    stroke: #fff; fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .font-personality {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-mid);
+    margin-bottom: 10px;
+    font-family: var(--sans);
+  }
+
+  .font-display-sample {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .font-body-sample {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-mid);
+    margin-bottom: 12px;
+  }
+
+  .font-meta {
+    border-top: 1px solid var(--ink-xlight);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .font-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .font-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink);
+    font-family: var(--sans);
+  }
+
+  .font-role {
+    font-size: 10px;
+    color: var(--ink-light);
+    font-family: var(--sans);
+  }
+
+  /* Submit section */
+  .submit-section {
+    background: var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .submit-copy p {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 300;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .submit-copy span {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .btn-submit {
+    background: #fff;
+    color: var(--accent);
+    border: none;
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-submit:hover { opacity: 0.9; }
+
+  /* Thank you */
+  .thank-you {
+    display: none;
+    text-align: center;
+    padding: 5rem 2rem;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+
+  .thank-you-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--accent-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+  }
+
+  .thank-you-icon svg {
+    width: 26px;
+    height: 26px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .thank-you h2 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .thank-you p {
+    font-size: 15px;
+    color: var(--ink-mid);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* Footer */
+  .site-footer {
+    border-top: 1px solid var(--ink-xlight);
+    padding: 1.5rem 2rem;
+    max-width: var(--max);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .site-footer p {
+    font-size: 12px;
+    color: var(--ink-light);
+  }
+
+  .site-footer strong {
+    color: var(--ink-mid);
+    font-weight: 500;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  @media print {
+    .btn-submit { display: none; }
+    .progress-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">Goethe-Institut Belgrade &nbsp;·&nbsp; 2026–2028</div>
+    <h1 class="header-title">Beyond the Cities<br><em>Branding questionnaire</em></h1>
+    <p class="header-desc">Help shape the visual and verbal identity of this transnational network of artists' residencies in the Western Balkans. There are no right or wrong answers — we want your instinct as a stakeholder.</p>
+    <div class="header-meta">
+      <span>
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        15–20 minutes
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Jan 2026 – Jun 2028
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Coordinated by Goethe-Institut Belgrade
+      </span>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</header>
+
+<div id="formWrap">
+<main class="main">
+
+  <div class="progress-indicator">
+    <div class="progress-dots" id="progressDots"></div>
+    <div class="progress-text" id="progressText">0 of 9 sections completed</div>
+  </div>
+
+  <!-- About you -->
+  <section class="section" id="sec0">
+    <div class="section-eyebrow">About you</div>
+    <h2 class="section-title">Who are you?</h2>
+    <p class="section-hint">So we can cross-reference responses by stakeholder group and country when compiling the results.</p>
+    <div class="field-grid">
+      <div class="field"><label for="f-name">Full name</label><input type="text" id="f-name" placeholder="Your full name" oninput="trackSection(0)"></div>
+      <div class="field"><label for="f-role">Role / position</label><input type="text" id="f-role" placeholder="e.g. Program coordinator" oninput="trackSection(0)"></div>
+    </div>
+    <div class="field-grid">
+      <div class="field"><label for="f-org">Organisation</label><input type="text" id="f-org" placeholder="e.g. Goethe-Institut Belgrade" oninput="trackSection(0)"></div>
+      <div class="field"><label for="f-country">Country</label><input type="text" id="f-country" placeholder="e.g. Serbia" oninput="trackSection(0)"></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 1: Personality -->
+  <section class="section" id="sec1">
+    <div class="section-eyebrow">Section 1 — personality</div>
+    <h2 class="section-title">Choose your top 3 adjectives</h2>
+    <p class="section-hint">Which words best describe how this project should feel to someone encountering it for the first time?</p>
+    <div class="tag-wrap" id="adjGrid">
+      <!-- tags injected by JS -->
+    </div>
+    <div class="tag-limit-msg" id="adjWarn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Select up to 3 adjectives
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label for="adj-other">Other — not listed above</label>
+      <input type="text" id="adj-other" placeholder="Any word that feels right..." oninput="trackSection(1)">
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 2: Values -->
+  <section class="section" id="sec2">
+    <div class="section-eyebrow">Section 2 — values</div>
+    <h2 class="section-title">What should this project communicate?</h2>
+    <p class="section-hint">Choose up to 5 values you feel this project should transmit through its identity.</p>
+    <div class="tag-wrap" id="valGrid">
+      <!-- tags injected by JS -->
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label for="val-why">In a few words, why did you choose these values?</label>
+      <textarea id="val-why" placeholder="e.g. This project is fundamentally about making invisible artists visible across borders..." oninput="trackSection(2)"></textarea>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 3: Tone -->
+  <section class="section" id="sec3">
+    <div class="section-eyebrow">Section 3 — tone of voice</div>
+    <h2 class="section-title">How should the project sound?</h2>
+    <p class="section-hint">Rate the tone on each spectrum — select the number that feels right. 1 = strongly left, 5 = strongly right.</p>
+    <div id="scaleBlocks">
+      <!-- injected by JS -->
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 4: Color -->
+  <section class="section" id="sec4">
+    <div class="section-eyebrow">Section 4 — color and mood</div>
+    <h2 class="section-title">Which color mood feels right?</h2>
+    <p class="section-hint">Select all that apply. After collecting responses, we will run a shared mood board session where you can react to real visual references — images, textures, typography.</p>
+    <div class="color-grid" id="colorGrid">
+      <!-- injected by JS -->
+    </div>
+    <div class="field">
+      <label for="color-other">Other — describe your preference</label>
+      <input type="text" id="color-other" placeholder="e.g. Warm neutrals with a single bold accent color..." oninput="trackSection(4)">
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 5: Names -->
+  <section class="section" id="sec5">
+    <div class="section-eyebrow">Section 5 — name proposals</div>
+    <h2 class="section-title">What could this project be called?</h2>
+    <p class="section-hint">Enter possible names or keywords that capture the spirit of the project. Think about what you'd want someone to feel when they first hear the name. These illustrative examples are here to spark ideas only — not proposals: <em>Residency Routes</em>, <em>Balkans Unlocked</em>, <em>Art in the Field</em>.</p>
+    <div class="ref-row"><div class="ref-num">1</div><input type="text" placeholder="Name idea or keyword..." oninput="trackSection(5)"></div>
+    <div class="ref-row"><div class="ref-num">2</div><input type="text" placeholder="Name idea or keyword..." oninput="trackSection(5)"></div>
+    <div class="ref-row"><div class="ref-num">3</div><input type="text" placeholder="Name idea or keyword..." oninput="trackSection(5)"></div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 6: References -->
+  <section class="section" id="sec6">
+    <div class="section-eyebrow">Section 6 — visual references</div>
+    <h2 class="section-title">What inspires you visually?</h2>
+    <p class="section-hint">Share brands, logos, platforms, or visual identities you find inspiring and that could fit the vision of this project. References don't need to come from the cultural sector — architecture studios, publishing houses, NGOs, or even packaging brands are welcome.</p>
+    <div class="ref-row"><div class="ref-num">1</div><input type="text" placeholder="Brand name or URL..." oninput="trackSection(6)"></div>
+    <div class="ref-row"><div class="ref-num">2</div><input type="text" placeholder="Brand name or URL..." oninput="trackSection(6)"></div>
+    <div class="ref-row"><div class="ref-num">3</div><input type="text" placeholder="Brand name or URL..." oninput="trackSection(6)"></div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 7: Style -->
+  <section class="section" id="sec7">
+    <div class="section-eyebrow">Section 7 — visual style</div>
+    <h2 class="section-title">Which direction feels most fitting?</h2>
+    <p class="section-hint">Choose one style direction for the map and website. If none fits perfectly, pick the closest and explain in the field below.</p>
+    <div class="style-grid" id="styleGrid">
+      <!-- injected by JS -->
+    </div>
+    <div class="field">
+      <label for="style-why">In a sentence, why does this direction feel right to you?</label>
+      <textarea id="style-why" style="min-height:60px" placeholder="e.g. It feels honest to the communities it represents — grounded rather than glossy..." oninput="trackSection(7)"></textarea>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Section 8: Typography -->
+  <section class="section" id="sec8">
+    <div class="section-eyebrow">Section 8 — typography</div>
+    <h2 class="section-title">Which font pairing feels right?</h2>
+    <p class="section-hint">Each option shows a display font (for titles and headlines) paired with a body font (for descriptions and interface text). Choose the one that best matches the personality you want the project to have.</p>
+    <div class="font-grid" id="fontGrid">
+      <!-- injected by JS -->
+    </div>
+    <div class="field">
+      <label for="font-notes">Any notes on typography — weights, sizes, or combinations you'd like to explore?</label>
+      <textarea id="font-notes" style="min-height:60px" placeholder="e.g. I like the classic pairing but prefer a lighter weight for body text..." oninput="trackSection(8)"></textarea>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Open comments -->
+  <section class="section">
+    <div class="section-eyebrow">Anything else?</div>
+    <h2 class="section-title">Open comments</h2>
+    <p class="section-hint">Is there anything about the project's identity, audience, or context that feels important and hasn't been covered above?</p>
+    <textarea id="open-comments" style="min-height:100px" placeholder="Share any other thoughts, concerns, or ideas here..."></textarea>
+  </section>
+
+  <div class="submit-section">
+    <div class="submit-copy">
+      <p>Ready to submit?</p>
+      <span>Your responses will be compiled and shared before the workshop.</span>
+    </div>
+    <button class="btn-submit" onclick="submitForm()">Submit responses</button>
+  </div>
+
+</main>
+</div>
+
+<div class="thank-you" id="thankYou">
+  <div class="thank-you-icon">
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h2>Thank you for your responses</h2>
+  <p>Your input will be compiled and shared with all partners before the branding workshop session, where we will collectively review the results and agree on a direction.<br><br>For questions, contact the Goethe-Institut Belgrade project coordination team.</p>
+</div>
+
+<footer class="site-footer">
+  <p><strong>Beyond the Cities</strong> — Goethe-Institut Belgrade, 2026–2028</p>
+  <p>Branding workshop questionnaire &nbsp;·&nbsp; Confidential</p>
+</footer>
+
+<script>
+const ADJECTIVES = ['Fun','Quirky','Serious','Professional','Elegant','Inviting','Playful','Strong','Alternative','Artistic','Creative','Relaxed','Casual','Light and airy','Dark and moody','Colorful','Active / energetic','Motivational','Authentic','Comforting','Minimalistic','Natural','Melancholic','Happy','Empathic','Mysterious','Provocative'];
+
+const VALUES = [
+  {icon:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', label:'Belonging'},
+  {icon:'M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 0c0 5.52-4.48 10-10 10M2 12h20', label:'Openness'},
+  {icon:'M12 22V8M12 8C12 8 9 5 6 5s-6 3-6 3M12 8c0 0 3-3 6-3s6 3 6 3', label:'Rootedness'},
+  {icon:'M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4', label:'Exchange'},
+  {icon:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', label:'Trust'},
+  {icon:'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z', label:'Creativity'},
+  {icon:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', label:'Community'},
+  {icon:'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71', label:'Connection'},
+  {icon:'M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10', label:'Resilience'},
+  {icon:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z', label:'Visibility'},
+  {icon:'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z', label:'Collaboration'},
+  {icon:'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7', label:'Cultural pride'},
+  {icon:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z', label:'Transnationalism'},
+  {icon:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', label:'Dialogue'},
+];
+
+const SCALES = [
+  ['Formal','Informal'],
+  ['Institutional','Grassroots'],
+  ['Pan-European','Locally rooted'],
+  ['Informative','Inspiring'],
+  ['Minimal','Expressive'],
+];
+
+const COLORS = [
+  {bar:'linear-gradient(135deg,#C17A5A,#D4956A,#7A8C6E)', name:'Earthy and warm', sub:'terracotta, ochre, forest green'},
+  {bar:'linear-gradient(135deg,#1A3A5C,#2E5F8A,#E8EDF2)', name:'Cool and institutional', sub:'navy, white, grey'},
+  {bar:'linear-gradient(135deg,#C4391C,#E8A020,#2E7D32)', name:'Vibrant and folk-inspired', sub:'rich regional colour traditions'},
+  {bar:'linear-gradient(135deg,#B8A898,#D4C8BC,#A8B4AC)', name:'Muted and poetic', sub:'dusty pastels, faded tones'},
+  {bar:'linear-gradient(135deg,#1A1A1A,#888,#3D5A4A)', name:'Bold and contemporary', sub:'high contrast, graphic'},
+];
+
+const STYLES = [
+  {icon:'M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-1.447-.894L15 9m0 8V9m0 0L9 7', name:'Cartographic and archival', desc:'Earthy tones, serif type, map-inspired layouts. Timeless and scholarly.'},
+  {icon:'M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4', name:'Clean and institutional', desc:'Modern, minimal, confident. Inspired by European cultural bodies.'},
+  {icon:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10', name:'Warm and community-driven', desc:'Handmade aesthetic, local photography first. Human stories at the centre.'},
+  {icon:'M4 17l6-6 4 4 6-8', name:'Bold and contemporary', desc:'Strong typography, data-forward, designed for digital-native audiences.'},
+];
+
+const sectionDone = new Set();
+
+function makeSvg(path) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+}
+
+// Build adjectives
+const adjGrid = document.getElementById('adjGrid');
+ADJECTIVES.forEach(w => {
+  const el = document.createElement('span');
+  el.className = 'tag';
+  el.textContent = w;
+  el.dataset.value = w;
+  el.onclick = () => toggleAdj(el);
+  adjGrid.appendChild(el);
+});
+
+// Build values
+const valGrid = document.getElementById('valGrid');
+VALUES.forEach(v => {
+  const el = document.createElement('span');
+  el.className = 'tag';
+  el.innerHTML = makeSvg(v.icon) + v.label;
+  el.dataset.value = v.label;
+  el.onclick = () => toggleVal(el);
+  valGrid.appendChild(el);
+});
+
+// Build scales
+const scaleBlocks = document.getElementById('scaleBlocks');
+SCALES.forEach(([a, b], i) => {
+  const div = document.createElement('div');
+  div.className = 'scale-block';
+  div.dataset.pair = `${a} → ${b}`;
+  div.innerHTML = `
+    <div class="scale-labels">
+      <span class="scale-label">${a}</span>
+      <span class="scale-label">${b}</span>
+    </div>
+    <div class="scale-row">
+      ${[1,2,3,4,5].map(n => `<button class="scale-btn" onclick="pickScale(this,${i})" aria-label="${a} to ${b}, ${n} of 5">${n}</button>`).join('')}
+    </div>
+    <div class="scale-ends"><span>← strongly ${a.toLowerCase()}</span><span>strongly ${b.toLowerCase()} →</span></div>
+  `;
+  scaleBlocks.appendChild(div);
+});
+
+// Build color swatches
+const colorGrid = document.getElementById('colorGrid');
+COLORS.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'color-swatch';
+  el.dataset.value = c.name;
+  el.innerHTML = `<div class="swatch-bar" style="background:${c.bar}"></div><div class="swatch-label">${c.name}<span class="swatch-sub">${c.sub}</span></div>`;
+  el.onclick = () => { el.classList.toggle('on'); trackSection(4); };
+  colorGrid.appendChild(el);
+});
+
+// Build style cards
+const styleGrid = document.getElementById('styleGrid');
+STYLES.forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'style-card';
+  el.dataset.value = s.name;
+  el.innerHTML = `
+    <div class="style-check">${makeSvg('M20 6L9 17l-5-5')}</div>
+    <div class="style-icon">${makeSvg(s.icon)}</div>
+    <div class="style-name">${s.name}</div>
+    <div class="style-desc">${s.desc}</div>
+  `;
+  el.onclick = () => pickStyle(el);
+  styleGrid.appendChild(el);
+});
+
+// Font pairings data
+const FONTS = [
+  {
+    personality: 'Classic',
+    display: { name: 'Playfair Display', family: "'Playfair Display', serif", role: 'Display / headlines' },
+    body: { name: 'Lora', family: "'Lora', serif", role: 'Body / descriptions' },
+    sample: 'Beyond the Cities',
+    bodyText: 'A transnational network of artists\u2019 residencies rooted in the rural landscapes of the Western Balkans.',
+  },
+  {
+    personality: 'Modern',
+    display: { name: 'Space Grotesk', family: "'Space Grotesk', sans-serif", role: 'Display / headlines' },
+    body: { name: 'DM Sans', family: "'DM Sans', sans-serif", role: 'Body / descriptions' },
+    sample: 'Beyond the Cities',
+    bodyText: 'A transnational network of artists\u2019 residencies rooted in the rural landscapes of the Western Balkans.',
+  },
+  {
+    personality: 'Handcrafted',
+    display: { name: 'Caveat', family: "'Caveat', cursive", role: 'Display / headlines' },
+    body: { name: 'Libre Baskerville', family: "'Libre Baskerville', serif", role: 'Body / descriptions' },
+    sample: 'Beyond the Cities',
+    bodyText: 'A transnational network of artists\u2019 residencies rooted in the rural landscapes of the Western Balkans.',
+  },
+  {
+    personality: 'Bold',
+    display: { name: 'Spectral', family: "'Spectral', serif", role: 'Display / headlines', weight: 700 },
+    body: { name: 'IBM Plex Mono', family: "'IBM Plex Mono', monospace", role: 'Body / descriptions' },
+    sample: 'Beyond the Cities',
+    bodyText: 'A transnational network of artists\u2019 residencies rooted in the rural landscapes of the Western Balkans.',
+  },
+];
+
+const fontGrid = document.getElementById('fontGrid');
+FONTS.forEach(f => {
+  const el = document.createElement('div');
+  el.className = 'font-card';
+  el.dataset.value = `${f.personality} (${f.display.name} + ${f.body.name})`;
+  el.innerHTML = `
+    <div class="font-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="font-personality">${f.personality}</div>
+    <div class="font-display-sample" style="font-family:${f.display.family};font-weight:${f.display.weight||400}">${f.sample}</div>
+    <div class="font-body-sample" style="font-family:${f.body.family}">${f.bodyText}</div>
+    <div class="font-meta">
+      <div class="font-name-row">
+        <span class="font-name" style="font-family:${f.display.family}">${f.display.name}</span>
+        <span class="font-role">${f.display.role}</span>
+      </div>
+      <div class="font-name-row">
+        <span class="font-name" style="font-family:${f.body.family}">${f.body.name}</span>
+        <span class="font-role">${f.body.role}</span>
+      </div>
+    </div>
+  `;
+  el.onclick = () => {
+    fontGrid.querySelectorAll('.font-card').forEach(c => c.classList.remove('on'));
+    el.classList.add('on');
+    trackSection(8);
+  };
+  fontGrid.appendChild(el);
+});
+
+// Build progress dots
+const dotsEl = document.getElementById('progressDots');
+for (let i = 0; i < 9; i++) {
+  const d = document.createElement('div');
+  d.className = 'progress-dot';
+  d.id = 'dot' + i;
+  dotsEl.appendChild(d);
+}
+
+function updateProgress() {
+  const total = 9;
+  const done = sectionDone.size;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} of ${total} sections completed`;
+  for (let i = 0; i < 9; i++) {
+    const d = document.getElementById('dot' + i);
+    d.className = 'progress-dot' + (sectionDone.has(i) ? ' done' : '');
+  }
+}
+
+function trackSection(i) { sectionDone.add(i); updateProgress(); }
+
+let adjCount = 0;
+
+function toggleAdj(el) {
+  if (!el.classList.contains('on') && adjCount >= 3) {
+    const w = document.getElementById('adjWarn');
+    w.classList.add('show');
+    setTimeout(() => w.classList.remove('show'), 2000);
+    return;
+  }
+  el.classList.toggle('on');
+  adjCount = document.querySelectorAll('#adjGrid .tag.on').length;
+  trackSection(1);
+}
+
+function toggleVal(el) {
+  const on = document.querySelectorAll('#valGrid .tag.on').length;
+  if (!el.classList.contains('on') && on >= 5) return;
+  el.classList.toggle('on');
+  trackSection(2);
+}
+
+function pickScale(btn, group) {
+  btn.closest('.scale-row').querySelectorAll('.scale-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  trackSection(3);
+}
+
+function pickStyle(el) {
+  document.querySelectorAll('#styleGrid .style-card').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  trackSection(7);
+}
+
+// Track about you
+document.querySelectorAll('#sec0 input').forEach(el => el.addEventListener('input', () => {
+  if (document.getElementById('f-name').value.trim()) trackSection(0);
+}));
+
+updateProgress();
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mojorlzp';
+
+async function submitForm() {
+  const btn = document.querySelector('.btn-submit');
+
+  const data = {
+    name: document.getElementById('f-name').value,
+    role: document.getElementById('f-role').value,
+    organisation: document.getElementById('f-org').value,
+    country: document.getElementById('f-country').value,
+    adjectives: [...document.querySelectorAll('#adjGrid .tag.on')].map(el => el.dataset.value),
+    adjectives_other: document.getElementById('adj-other').value,
+    values: [...document.querySelectorAll('#valGrid .tag.on')].map(el => el.dataset.value),
+    values_why: document.getElementById('val-why').value,
+    tone_scales: [...document.querySelectorAll('.scale-block')].map(block => {
+      const picked = block.querySelector('.scale-btn.on');
+      return `${block.dataset.pair}: ${picked ? picked.textContent : 'no answer'}`;
+    }),
+    color_moods: [...document.querySelectorAll('#colorGrid .color-swatch.on')].map(el => el.dataset.value),
+    color_other: document.getElementById('color-other').value,
+    name_proposals: [...document.querySelectorAll('#sec5 input')].map(el => el.value).filter(Boolean),
+    visual_references: [...document.querySelectorAll('#sec6 input')].map(el => el.value).filter(Boolean),
+    style_direction: document.querySelector('#styleGrid .style-card.on')?.dataset.value || '',
+    style_why: document.getElementById('style-why').value,
+    font_pairing: document.querySelector('#fontGrid .font-card.on')?.dataset.value || '',
+    font_notes: document.getElementById('font-notes').value,
+    open_comments: document.getElementById('open-comments').value,
+  };
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Request failed with status ' + res.status);
+
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('thankYou').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Submit responses';
+    alert('Something went wrong sending your responses. Please check your internet connection and try again, or contact the Goethe-Institut Belgrade project coordination team.');
+  }
+}
+</script>
+</body>
+</html>
