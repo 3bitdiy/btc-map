@@ -927,6 +927,10 @@ function editorPage(session, env) {
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
+    `.signed-in{margin-bottom:4px}` +
+    `.si-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff4326;margin-bottom:7px}` +
+    `.si-list{display:flex;flex-wrap:wrap;gap:6px}` +
+    `.si-chip{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:#1c1c1c}` +
     `.picker{margin:8px 0 20px}` +
     `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:320px;overflow:auto}` +
     `.picker-item{width:100%;text-align:left;border:1px solid rgba(28,28,28,.15);background:#fff;border-radius:10px;` +
@@ -977,7 +981,7 @@ function editorPage(session, env) {
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
     `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
-    `<div class="wrap"><p id="signed-in" style="opacity:.8">Signed in — ${roleLine}.</p>` +
+    `<div class="wrap"><div id="signed-in" class="signed-in" style="opacity:.8">Signed in — ${roleLine}.</div>` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
@@ -1020,7 +1024,9 @@ const EDITOR_JS =
   "async function loadColonies(){" +
   "var r=await fetch('/api/colonies');if(!r.ok){setStatus('Could not load colony list');return}" +
   "var data=await r.json();pickerColonies=data.colonies||[];" +
-  "if(document.body.dataset.role!=='admin'){var nm=pickerColonies.map(function(c){return c.name});q('signed-in').textContent='Signed in — '+(nm.join(', ')||'no colonies assigned')+'.'}" +
+  "if(document.body.dataset.role!=='admin'){var si=q('signed-in');si.style.opacity='1';si.innerHTML='';" +
+  "var lbl=document.createElement('div');lbl.className='si-label';lbl.textContent=pickerColonies.length?'Colonies you can edit':'No colonies assigned yet';si.appendChild(lbl);" +
+  "if(pickerColonies.length){var list=document.createElement('div');list.className='si-list';pickerColonies.forEach(function(c){var chip=document.createElement('span');chip.className='si-chip';chip.textContent=c.name;list.appendChild(chip)});si.appendChild(list)}}" +
   "q('picker-search').addEventListener('input',function(e){pickerTerm=e.target.value;renderPicker()});" +
   "renderCountryChips();renderPicker();" +
   "if(document.body.dataset.role!=='admin'&&pickerColonies.length===1){loadColony(pickerColonies[0].id)}}" +
