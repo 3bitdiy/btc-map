@@ -898,10 +898,10 @@ function editorPage(session, env) {
     ? `<div id="panel-access" style="display:none">` +
       `<h2 style="color:#000;margin:0 0 4px">Access</h2>` +
       `<p style="opacity:.75;font-size:13px;margin:0 0 18px">Changes take effect the next time the person signs in.</p>` +
-      `<div class="acc-sec"><h3>Admins — can edit everything</h3><div id="admins-list"></div>` +
+      `<div class="acc-sec"><h3>Admins <span class="h-sub">(can edit everything)</span></h3><div id="admins-list"></div>` +
       `<div class="acc-add" id="add-admin-row"><input id="admin-email" type="email" placeholder="email@example.com"/>` +
       `<button class="btn ghost" onclick="addAdmin()">Add admin</button></div></div>` +
-      `<div class="acc-sec"><h3>Organizers — edit only their assigned colonies</h3><div id="orgs-list"></div>` +
+      `<div class="acc-sec"><h3>Organizers <span class="h-sub">(edit only their assigned colonies)</span></h3><div id="orgs-list"></div>` +
       `<div class="acc-add"><input id="org-email" type="email" placeholder="email@example.com"/>` +
       `<button class="btn ghost" onclick="addOrganizer()">Add organizer</button></div></div>` +
       `<div class="actions"><button class="btn" onclick="saveAccess()">Save access</button><span id="access-status"></span></div></div>`
@@ -945,6 +945,7 @@ function editorPage(session, env) {
     `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
     `#post-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px;margin-top:14px}` +
     `.acc-sec{margin-bottom:22px}.acc-sec h3{color:#000;margin:0 0 10px;font-size:16px}` +
+    `.h-sub{font-weight:400;color:#6b6b6b}` +
     `.acc-sec+.acc-sec{border-top:1px solid rgba(28,28,28,.14);padding-top:26px;margin-top:8px}` +
     `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
     `.acc-org{flex-direction:column;align-items:stretch;gap:8px}` +
