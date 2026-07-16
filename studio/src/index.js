@@ -889,6 +889,7 @@ function editorPage(session, env) {
     `<button class="btn ghost" onclick="cancelPost()">Cancel</button><span id="p-status"></span></div></div>`;
 
   const isAdmin = session.role === "admin";
+  const roleLabel = session.owner ? "owner" : session.role;
   const accessTab = isAdmin
     ? `<button id="tab-access" class="tab" onclick="showTab('access')">Access</button>`
     : "";
@@ -916,7 +917,8 @@ function editorPage(session, env) {
     `.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;` +
     `background:#fff;border-bottom:1px solid rgba(28,28,28,.15);flex-wrap:wrap}` +
     `.bar b{color:#000}.badge{background:#ff4326;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
-    `.badge-soft{background:transparent;border:1px solid rgba(28,28,28,.25);color:#1c1c1c;border-radius:999px;padding:1px 9px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}` +
+    `.role{display:inline-block;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.5;vertical-align:middle}` +
+    `.role.owner{background:#ff4326;color:#fff}.role.admin{background:#1c1c1c;color:#fff}.role.organizer{background:transparent;border:1px solid rgba(28,28,28,.3);color:#1c1c1c}` +
     `.bar-brand{display:flex;align-items:center;gap:10px}.bar-logo{height:30px;width:auto;display:block}` +
     `.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}` +
     `.bar-site{font-weight:700;opacity:.7}.bar-site:hover{opacity:1;color:#ff4326}` +
@@ -975,7 +977,7 @@ function editorPage(session, env) {
     `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
-    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="badge">${escapeHtml(session.role)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
+    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="role ${escapeHtml(roleLabel)}">${escapeHtml(roleLabel)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
     `<div class="wrap">` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
@@ -1175,15 +1177,15 @@ const EDITOR_JS =
   "function renderAccess(){renderAdmins();renderOrgs()}" +
   "function renderAdmins(){var box=q('admins-list');box.innerHTML='';" +
   "accessOwners.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
-  "var b=elx('span','badge');b.textContent='owner';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);box.appendChild(row)});" +
+  "var b=elx('span','role owner');b.textContent='owner';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);box.appendChild(row)});" +
   "accessState.admins.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
-  "var b=elx('span','badge-soft');b.textContent='admin';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);" +
+  "var b=elx('span','role admin');b.textContent='admin';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);" +
   "if(isOwner){var rm=btnx('Remove');rm.onclick=function(){removeAdmin(email)};row.appendChild(rm)}box.appendChild(row)});" +
   "var addRow=q('add-admin-row');if(addRow)addRow.style.display=isOwner?'flex':'none'}" +
   "function renderOrgs(){var box=q('orgs-list');box.innerHTML='';Object.keys(accessState.organizers).forEach(function(email){" +
   "var ids=accessState.organizers[email]||[];var row=elx('div','acc-row acc-org');" +
   "var head=elx('div','acc-org-head');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
-  "var b=elx('span','badge-soft');b.textContent='organizer';b.style.marginLeft='6px';s.appendChild(b);" +
+  "var b=elx('span','role organizer');b.textContent='organizer';b.style.marginLeft='6px';s.appendChild(b);" +
   "var rm=btnx('Remove');rm.onclick=function(){removeOrganizer(email)};head.appendChild(s);head.appendChild(rm);" +
   "var chips=elx('div','chips');ids.forEach(function(id){var c=elx('span','chip on');c.textContent=colonyName(id)+'  \\u00d7';c.style.cursor='pointer';c.onclick=function(){removeColonyFromOrg(email,id)};chips.appendChild(c)});" +
   "var sel=document.createElement('select');var ph=document.createElement('option');ph.value='';ph.textContent='+ add colony…';sel.appendChild(ph);" +
