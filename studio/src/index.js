@@ -889,7 +889,8 @@ function editorPage(session, env) {
     `<button class="btn ghost" onclick="cancelPost()">Cancel</button><span id="p-status"></span></div></div>`;
 
   const isAdmin = session.role === "admin";
-  const roleLabel = session.owner ? "owner" : session.role;
+  const roleClass = session.owner ? "owner" : session.role;
+  const roleLabel = session.owner ? "maintainer" : session.role;
   const accessTab = isAdmin
     ? `<button id="tab-access" class="tab" onclick="showTab('access')">Access</button>`
     : "";
@@ -977,7 +978,7 @@ function editorPage(session, env) {
     `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
-    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="role ${escapeHtml(roleLabel)}">${escapeHtml(roleLabel)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
+    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="role ${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
     `<div class="wrap">` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
@@ -1177,7 +1178,7 @@ const EDITOR_JS =
   "function renderAccess(){renderAdmins();renderOrgs()}" +
   "function renderAdmins(){var box=q('admins-list');box.innerHTML='';" +
   "accessOwners.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
-  "var b=elx('span','role owner');b.textContent='owner';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);box.appendChild(row)});" +
+  "var b=elx('span','role owner');b.textContent='maintainer';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);box.appendChild(row)});" +
   "accessState.admins.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
   "var b=elx('span','role admin');b.textContent='admin';b.style.marginLeft='6px';s.appendChild(b);row.appendChild(s);" +
   "if(isOwner){var rm=btnx('Remove');rm.onclick=function(){removeAdmin(email)};row.appendChild(rm)}box.appendChild(row)});" +
