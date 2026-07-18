@@ -159,6 +159,7 @@ const dirInner = `
           ${countries.map((c) => `<button data-country="${esc(c)}">${esc(c)}</button>`).join("")}
         </div>
       </div>
+      <p id="col-count" class="col-count" aria-live="polite">${colonies.length} colonies</p>
     </header>
     <section id="col-grid" class="col-grid">
       ${colonies.map(dirCard).join("")}

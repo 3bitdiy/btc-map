@@ -152,6 +152,13 @@ a {
   align-items: center;
 }
 
+.col-count {
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6b6b;
+}
+
 #col-search {
   flex: 1 1 240px;
   max-width: 340px;

@@ -11,6 +11,7 @@ const search = document.getElementById("col-search");
 const grid = document.getElementById("col-grid");
 const empty = document.getElementById("col-empty");
 const chips = document.getElementById("col-country-filter");
+const count = document.getElementById("col-count");
 const cards = grid ? [...grid.querySelectorAll(".col-card")] : [];
 
 let term = "";
@@ -30,7 +31,15 @@ function apply() {
     if (show) visible += 1;
   }
   if (empty) empty.hidden = visible > 0;
+  if (count) {
+    count.textContent =
+      visible === cards.length
+        ? `${cards.length} colonies`
+        : `${visible} of ${cards.length} colonies`;
+  }
 }
+
+apply();
 
 search?.addEventListener("input", (event) => {
   term = foldSearch(event.target.value.trim());

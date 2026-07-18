@@ -858,7 +858,7 @@ function editorPage(session, env) {
     photoField +
     select("scope", "Scope", ["National", "Regional", "International", "Unspecified"]) +
     field("art_colony_organisers", "Organisers") +
-    field("contact_person", "Contact person") +
+    multi("contact_person", "Contact person(s)", "+ Add person") +
     multi("contact_telephone", "Telephone(s)", "+ Add phone") +
     multi("email_address", "Email(s)", "+ Add email") +
     multi("web_page", "Website(s)", "+ Add website") +
@@ -927,9 +927,12 @@ function editorPage(session, env) {
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
     `.load{display:flex;gap:8px;margin:8px 0 20px}` +
-    `.picker{margin:8px 0 20px}` +
+    `.picker{margin:8px 0 6px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:14px 16px}` +
+    `.picker-sep{border:0;border-top:2px solid rgba(28,28,28,.14);margin:0 0 22px}` +
     `.picker-head{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff4326;margin-bottom:9px}` +
-    `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:320px;overflow:auto}` +
+    `.picker-count{font-size:11px;font-weight:600;color:#6b6b6b;text-transform:none;letter-spacing:0;margin-left:6px}` +
+    `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:300px;overflow-y:scroll;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(28,28,28,.3) rgba(28,28,28,.08)}` +
+    `#picker-results::-webkit-scrollbar{width:10px}#picker-results::-webkit-scrollbar-track{background:rgba(28,28,28,.08);border-radius:6px}#picker-results::-webkit-scrollbar-thumb{background:rgba(28,28,28,.3);border-radius:6px}` +
     `.picker-item{width:100%;text-align:left;border:1px solid rgba(28,28,28,.15);background:#fff;border-radius:10px;` +
     `padding:9px 12px;cursor:pointer;font:inherit;color:#1c1c1c;display:flex;flex-direction:column;gap:2px;align-items:flex-start}` +
     `.picker-item:hover{border-color:#ff4326}.picker-item.on{background:#ff4326;border-color:#ff4326;color:#fff}` +
@@ -983,10 +986,11 @@ function editorPage(session, env) {
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
-    `<div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}</div>` +
+    `<div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}<span id="picker-count" class="picker-count"></span></div>` +
     `<input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off"/>` +
     `<div id="picker-countries" class="chips" style="margin-top:8px"></div>` +
     `<div id="picker-results"><p style="opacity:.7;font-size:13px;padding:8px 2px">Loading colonies…</p></div></div>` +
+    `<hr class="picker-sep"/>` +
     `<h2 id="title" style="color:#000"></h2>` +
     `<div id="form"><div class="grid">${form}</div>` +
     `<div class="actions"><button class="btn" onclick="save()">Save changes</button><span id="status"></span></div></div>` +
@@ -1004,9 +1008,9 @@ function editorPage(session, env) {
 
 // Client script — plain concatenation, no backticks/template literals.
 const EDITOR_JS =
-  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','contact_person','time_period','duration'];" +
-  "var MULTI=['contact_telephone','email_address','web_page'];" +
-  "function splitMulti(v){return String(v||'').split(/\\s*[&,;]\\s*|\\s+and\\s+/i).map(function(s){return s.trim()}).filter(Boolean)}" +
+  "var FIELDS=['art_colony_name','city','place','country','latitude','longitude','scope','art_colony_organisers','time_period','duration'];" +
+  "var MULTI=['contact_person','contact_telephone','email_address','web_page'];" +
+  "function splitMulti(v){return String(v||'').split(/\\s*[&,;]\\s*|\\s+and\\s+|\\s+i\\s+/i).map(function(s){return s.trim()}).filter(Boolean)}" +
   "function addMulti(name,value){var box=q('ml-'+name);var row=document.createElement('div');row.className='ml-row';" +
   "var inp=document.createElement('input');inp.type='text';inp.value=value||'';" +
   "var rm=document.createElement('button');rm.type='button';rm.className='btn ghost ml-rm';rm.textContent='\\u00d7';" +
@@ -1035,6 +1039,7 @@ const EDITOR_JS =
   "function renderPicker(){var box=q('picker-results');box.innerHTML='';var term=foldSearch(pickerTerm.trim());" +
   "var list=pickerColonies.filter(function(c){if(pickerCountry&&c.country!==pickerCountry)return false;" +
   "if(term){var hay=foldSearch(c.name+' '+(c.place||''));if(hay.indexOf(term)===-1)return false}return true});" +
+  "var cnt=q('picker-count');if(cnt){var tot=pickerColonies.length;cnt.textContent=list.length+(list.length!==tot?(' of '+tot):'')+(list.length===1?' colony':' colonies')}" +
   "if(!list.length){var p=document.createElement('p');p.style.cssText='opacity:.7;font-size:13px;padding:6px 2px';p.textContent='No colonies match.';box.appendChild(p);return}" +
   "list.slice(0,60).forEach(function(c){var b=document.createElement('button');b.type='button';b.className='picker-item'+(String(c.id)===String(currentId)?' on':'');" +
   "var n=document.createElement('span');n.className='pi-name';n.textContent=c.name;" +
