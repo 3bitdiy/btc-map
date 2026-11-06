@@ -474,8 +474,15 @@ async function apiPostPut(request, env, slug) {
   if (res.status === 409) return json({ error: "conflict" }, 409);
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
   if (existing) {
-    const oldCover = parseFrontMatter(existing.text).data.cover;
-    if (oldCover && oldCover !== (body.cover || "")) await deleteRepoImage(env, oldCover, session.email);
+    const old = parseFrontMatter(existing.text);
+    const keep = bodyImages(body.body);
+    if (body.cover) keep.add(body.cover);
+    const oldCover = old.data.cover;
+    if (oldCover && !keep.has(oldCover)) await deleteRepoImage(env, oldCover, session.email);
+    // Inline images removed from the body since the last save.
+    for (const img of bodyImages(old.body)) {
+      if (!keep.has(img) && img !== oldCover) await deleteRepoImage(env, img, session.email);
+    }
   }
   return json({ ok: true, slug, commit: res.commit });
 }
@@ -488,10 +495,14 @@ async function apiPostDelete(request, env, slug) {
   const colonies = normalizeColonies(parseFrontMatter(file.text).data.colonies);
   if (!canEditPost(session, colonies)) return json({ error: "forbidden" }, 403);
 
-  const cover = parseFrontMatter(file.text).data.cover;
+  const parsed = parseFrontMatter(file.text);
+  const cover = parsed.data.cover;
   const res = await ghDeleteFile(env, `${BLOG_DIR}/${slug}.md`, file.sha, `delete post: ${slug} (studio, ${session.email})`);
   if (!res.ok) return json({ error: "delete_failed", detail: res.detail }, 502);
   if (cover) await deleteRepoImage(env, cover, session.email);
+  for (const img of bodyImages(parsed.body)) {
+    if (img !== cover) await deleteRepoImage(env, img, session.email);
+  }
   return json({ ok: true, commit: res.commit });
 }
 
@@ -500,11 +511,12 @@ async function apiUpload(request, env) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
 
-  let file, title, replace;
+  let file, title, replace, kind;
   try {
     const form = await request.formData();
     file = form.get("file");
     title = form.get("title");
+    kind = form.get("kind"); // "inline" = image inside the post body
     replace = form.get("replace"); // a just-uploaded, unsaved cover to clean up
   } catch {
     return json({ error: "invalid_upload" }, 400);
@@ -517,7 +529,8 @@ async function apiUpload(request, env) {
 
   // SEO/readable filename from the post title, e.g. open-call-2026-cover-<ts>.webp
   const slug = slugify(title);
-  const name = `${slug ? slug + "-" : ""}cover-${Date.now()}.${ext}`;
+  const role = kind === "inline" ? `img-${Math.random().toString(36).slice(2, 6)}` : "cover";
+  const name = `${slug ? slug + "-" : ""}${role}-${Date.now()}.${ext}`;
   const res = await ghCommitFile(env, `${BLOG_IMG_DIR}/${name}`, bytesToBase64(bytes), null, `blog image (studio, ${session.email})`);
   if (!res.ok) return json({ error: "image_commit_failed", detail: res.detail }, 502);
   // Drop the previous, unsaved cover from this editing session (blog folder only).
@@ -680,6 +693,11 @@ async function ghListDir(env, path) {
 // Best-effort delete of a previously-uploaded image (colony photo or blog
 // cover). Restricted to our upload folders so it can never touch the shared
 // placeholder or anything else. Failures are ignored.
+// Blog-folder images referenced in a markdown body (inline uploads).
+function bodyImages(md) {
+  return new Set(String(md || "").match(/\/assets\/images\/blog\/[A-Za-z0-9._-]+/g) || []);
+}
+
 async function deleteRepoImage(env, publicPath, email) {
   if (typeof publicPath !== "string") return;
   if (
@@ -1134,7 +1152,21 @@ const EDITOR_JS =
   "sel.onchange=function(){if(sel.value)addPostColony(sel.value)}}" +
   "function addPostColony(id){if(postColonies.indexOf(String(id))===-1)postColonies.push(String(id));renderPostColonies()}" +
   "function removePostColony(id){postColonies=postColonies.filter(function(x){return x!==String(id)});renderPostColonies()}" +
-  "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false,toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link','image','|','preview','guide']})}" +
+  "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false," +
+  "uploadImage:true,imageAccept:'image/png, image/jpeg, image/webp',imageMaxSize:30*1024*1024,imageUploadFunction:queueBodyImage," +
+  "toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link',{name:'upload-image',action:EasyMDE.drawUploadedImage,className:'fa fa-image',title:'Insert image(s) — upload from your computer (you can also drag & drop or paste)'},'|','preview','guide']})}" +
+  // Inline images: uploaded one at a time (parallel commits to the same branch conflict), inserted on their own line.
+  "var bodyImgQueue=[];var bodyImgBusy=false;" +
+  "function queueBodyImage(file,onSuccess,onError){bodyImgQueue.push({file:file,onError:onError});runBodyImages()}" +
+  "async function runBodyImages(){if(bodyImgBusy)return;bodyImgBusy=true;" +
+  "while(bodyImgQueue.length){var job=bodyImgQueue.shift();var left=bodyImgQueue.length;" +
+  "setPostStatus('Uploading image'+(left?' ('+left+' more queued)':'')+'…');" +
+  "try{var blob=await optimizeImage(job.file);var fd=new FormData();fd.append('file',blob,'image.webp');fd.append('kind','inline');fd.append('title',q('p-title').value||'');" +
+  "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
+  "if(!r.ok){setPostStatus('Image upload failed: '+(out.detail||out.error));job.onError('Upload failed: '+(out.detail||out.error));continue}" +
+  "var cm=easyMDE.codemirror;var cur=cm.getCursor();var pre=cur.ch>0?'\\n\\n':'';cm.replaceSelection(pre+'![]('+out.path+')\\n\\n');cm.focus();" +
+  "}catch(e){setPostStatus('Image upload failed');job.onError('Upload failed')}}" +
+  "bodyImgBusy=false;setPostStatus('Image(s) inserted \\u2713 — remember to Save post')}" +
   "function getBody(){return easyMDE?easyMDE.value():q('p-body').value}" +
   "function newPost(){editingSlug=null;postCover='';savedCover='';q('pe-title').textContent='New post';" +
   "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
