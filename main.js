@@ -1515,6 +1515,58 @@ function wireSheetDrag() {
   window.addEventListener("mouseup", onUp);
 }
 
+// Does the colony pass every active filter group except `skip`? Used to count
+// what each option would give: options OR within a group, groups AND together,
+// so an option's count only depends on the OTHER groups' selections.
+function matchesOtherGroups(colony, skip) {
+  if (!getColonyLocations(colony).length) return false;
+  if (skip !== "country" && state.activeCountries.size &&
+      !state.activeCountries.has(getColonyCountry(colony))) return false;
+  if (skip !== "scope" && state.activeScopes.size &&
+      !state.activeScopes.has(getColonyScope(colony))) return false;
+  if (skip !== "discipline" && state.activeDisciplines.size &&
+      !getColonyDisciplines(colony).some((d) => state.activeDisciplines.has(d))) return false;
+  return true;
+}
+
+// Show a count on every art-field / scope / (phone) country pill and disable
+// the unselected ones that would give no colonies — so a filter combination
+// can never end in "No colonies match". Selected pills always stay clickable.
+function updateOptionAvailability() {
+  const groups = [
+    ["discipline", 'input[name="discipline"]', (c, v) => getColonyDisciplines(c).includes(v)],
+    ["scope", 'input[name="scope"]', (c, v) => getColonyScope(c) === v],
+    ["country", 'input[name="m-country"]', (c, v) => getColonyCountry(c) === v],
+  ];
+  groups.forEach(([group, selector, has]) => {
+    const pool = state.colonies.filter((c) => matchesOtherGroups(c, group));
+    document.querySelectorAll(selector).forEach((input) => {
+      if (!(input instanceof HTMLInputElement)) return;
+      const n = pool.filter((c) => has(c, input.value)).length;
+      const label = input.closest(".pill-filter-item");
+      if (!label) return;
+      let count = label.querySelector(".pill-count");
+      if (!count) {
+        count = document.createElement("span");
+        count.className = "pill-count";
+        label.appendChild(count);
+      }
+      count.textContent = String(n);
+      const off = n === 0 && !input.checked;
+      input.disabled = off;
+      label.classList.toggle("is-disabled", off);
+    });
+  });
+  // Desktop country rows: same rule for their checkboxes.
+  document.querySelectorAll('#country-accordion input[name="country"]').forEach((input) => {
+    if (!(input instanceof HTMLInputElement)) return;
+    const n = getCountryColonies(input.value).length;
+    const off = n === 0 && !input.checked;
+    input.disabled = off;
+    input.closest(".country-section")?.classList.toggle("is-disabled", off);
+  });
+}
+
 // Phones: countries as chips in the full-screen filters (same look as the
 // art-field / scope pills). Count = colonies matching the other filters.
 function renderMobileCountryChips() {
@@ -1532,10 +1584,7 @@ function renderMobileCountryChips() {
     input.checked = on;
     const text = document.createElement("span");
     text.textContent = country;
-    const count = document.createElement("span");
-    count.className = "m-chip-count";
-    count.textContent = String(getCountryColonies(country).length);
-    label.append(input, text, count);
+    label.append(input, text); // count added by updateOptionAvailability()
     wrap.appendChild(label);
   });
 }
@@ -1808,6 +1857,7 @@ function updateFilterResults() {
         : "No colonies match"
       : "Done";
   }
+  updateOptionAvailability();
   renderBrowseList();
 
   if (

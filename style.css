@@ -898,6 +898,26 @@ ul {
   opacity: 1;
 }
 
+/* How many colonies the option gives (with the other groups' filters) */
+.pill-count {
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+/* Would give no colonies → greyed out and not clickable */
+.pill-filter-item.is-disabled {
+  opacity: 0.32;
+  cursor: default;
+  pointer-events: none;
+}
+
+.country-section.is-disabled .country-toggle {
+  opacity: 0.32;
+  pointer-events: none;
+}
+
 .is-round {
   margin-top: 10px;
 }
@@ -2321,13 +2341,6 @@ ul {
   #m-country-chips {
     display: flex;
     flex-wrap: wrap;
-  }
-
-  .m-chip-count {
-    margin-left: 6px;
-    font-size: 10.5px;
-    font-weight: 700;
-    opacity: 0.7;
   }
 
   #detail-panel.is-peek #browse-list {
