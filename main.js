@@ -1515,6 +1515,43 @@ function wireSheetDrag() {
   window.addEventListener("mouseup", onUp);
 }
 
+// Phones: countries as chips in the full-screen filters (same look as the
+// art-field / scope pills). Count = colonies matching the other filters.
+function renderMobileCountryChips() {
+  const wrap = document.getElementById("m-country-chips");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  DEFAULT_COUNTRIES.forEach((country) => {
+    const on = state.activeCountries.has(country);
+    const label = document.createElement("label");
+    label.className = `pill-filter-item${on ? "" : " is-off"}`;
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = "m-country";
+    input.value = country;
+    input.checked = on;
+    const text = document.createElement("span");
+    text.textContent = country;
+    const count = document.createElement("span");
+    count.className = "m-chip-count";
+    count.textContent = String(getCountryColonies(country).length);
+    label.append(input, text, count);
+    wrap.appendChild(label);
+  });
+}
+
+function wireMobileCountryChips() {
+  const wrap = document.getElementById("m-country-chips");
+  if (!wrap) return;
+  wrap.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.name !== "m-country") return;
+    if (target.checked) state.activeCountries.add(target.value);
+    else state.activeCountries.delete(target.value);
+    syncFilters();
+  });
+}
+
 // Phones: the colony list inside the sheet (filtered + optional search).
 function renderBrowseList() {
   const list = document.getElementById("browse-list");
@@ -1760,6 +1797,7 @@ function updateFilterResults() {
 
   const visible = getVisibleColonies();
   renderCountryAccordion();
+  renderMobileCountryChips();
   document.getElementById("colony-count").textContent = String(visible.length);
   // Phones: the close button doubles as the result count.
   const done = document.getElementById("filter-done-btn");
@@ -2271,6 +2309,7 @@ async function bootstrap() {
   wireMobileSidebar();
   wireMobileFilterActions();
   wireMobileBar();
+  wireMobileCountryChips();
   document
     .getElementById("filter-reset-desktop")
     ?.addEventListener("click", resetFilters);
