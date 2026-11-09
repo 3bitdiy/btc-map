@@ -1,3 +1,7 @@
+import { wireLightboxLinks } from "./lightbox.js";
+
+wireLightboxLinks(document);
+
 // Colony page: show this colony's blog posts in the "News from this colony"
 // section. Posts are static markdown (public/data/blog/*.md); the build emits
 // public/data/blog-index.json, and a post opts into a colony by listing its id

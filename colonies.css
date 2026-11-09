@@ -361,11 +361,68 @@ a {
   background: var(--paper-2);
 }
 
+.col-photo { position: relative; }
+
 .col-photo img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+
+.col-photo a,
+.col-thumbs a,
+.post-gallery a,
+.post__body a[data-lightbox] {
+  display: block;
+  cursor: zoom-in;
+}
+
+.col-photo__count {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+}
+
+/* Extra photos under the main one (colony page) and the post gallery. */
+.col-thumbs,
+.post-gallery {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.post-gallery { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.col-thumbs li,
+.post-gallery li {
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+.col-thumbs img,
+.post-gallery img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.25s, opacity 0.25s;
+}
+.col-thumbs a:hover img,
+.post-gallery a:hover img { transform: scale(1.04); opacity: 0.9; }
+
+@media (max-width: 640px) {
+  .col-thumbs { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .post-gallery { grid-template-columns: repeat(2, 1fr); gap: 8px; }
 }
 
 .col-body {

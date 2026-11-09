@@ -271,8 +271,12 @@
       <button type="button" id="panel-back">‹ All colonies</button>
 
       <div id="panel-content">
-        <div id="panel-photo-wrap">
-          <img id="panel-photo" src="" alt="" />
+        <div id="panel-photo-wrap" class="pcar">
+          <div id="panel-photos" class="pcar__track"></div>
+          <button type="button" class="pcar__nav pcar__prev" aria-label="Previous photo">&#8249;</button>
+          <button type="button" class="pcar__nav pcar__next" aria-label="Next photo">&#8250;</button>
+          <span class="pcar__count" aria-hidden="true"></span>
+          <div class="pcar__dots" aria-hidden="true"></div>
         </div>
 
         <header id="panel-header">

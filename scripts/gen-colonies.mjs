@@ -65,11 +65,39 @@ const disciplines = (c) =>
 // Main photo: first real photo from the JSON, else the shared placeholder.
 // (Same rule the map uses — once per-colony photos land in the data, both show
 // them automatically.)
-const photoUrl = (c) => {
-  const p = (c.photos || [])[0];
-  if (!p || String(p).includes("placehold.co"))
-    return "/assets/images/colony-placeholder.png";
-  return p;
+const realPhotos = (c) =>
+  (Array.isArray(c.photos) ? c.photos : [])
+    .map((p) => String(p || "").trim())
+    .filter((p) => p && !p.includes("placehold.co"))
+    .slice(0, 7); // main photo + up to 6 more
+const photoUrl = (c) =>
+  realPhotos(c)[0] || "/assets/images/colony-placeholder.png";
+
+// Main photo + thumbnail strip; every real photo opens the full-screen viewer
+// (lightbox.js, wired in colony.js).
+const photoBlock = (c) => {
+  const photos = realPhotos(c);
+  const name = esc(c.art_colony_name);
+  if (!photos.length) {
+    return `<div class="col-photo"><img src="${esc(photoUrl(c))}" alt="${name}" loading="lazy" /></div>`;
+  }
+  const more = photos.slice(1);
+  return `<div class="col-photo">
+      <a href="${esc(photos[0])}" data-lightbox="colony" aria-label="Open photo 1 of ${photos.length}">
+        <img src="${esc(photos[0])}" alt="${name}" />
+      </a>
+      ${photos.length > 1 ? `<span class="col-photo__count">${photos.length} photos</span>` : ""}
+    </div>
+    ${
+      more.length
+        ? `<ul class="col-thumbs">${more
+            .map(
+              (p, i) =>
+                `<li><a href="${esc(p)}" data-lightbox="colony" aria-label="Open photo ${i + 2} of ${photos.length}"><img src="${esc(p)}" alt="${name} — photo ${i + 2}" loading="lazy" /></a></li>`,
+            )
+            .join("")}</ul>`
+        : ""
+    }`;
 };
 
 // --- shared chrome -----------------------------------------------------------
@@ -207,9 +235,7 @@ const colonyInner = (c) => {
       <a class="col-map-btn" href="/map.html?colony=${encodeURIComponent(c.id)}">Show on map →</a>
     </header>
 
-    <div class="col-photo">
-      <img src="${esc(photoUrl(c))}" alt="${esc(c.art_colony_name)}" loading="lazy" />
-    </div>
+    ${photoBlock(c)}
 
     <section class="col-body">
       <dl class="col-details">

@@ -250,6 +250,22 @@
   border-top: 1px solid rgba(var(--wine-rgb), 0.15);
 }
 
+.post__body a[data-lightbox] {
+  text-decoration: none;
+}
+
+.post__gallery {
+  margin-top: 40px;
+}
+
+.post__gallery h2 {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rose);
+}
+
 .post__foot-back {
   margin-top: 44px;
 }

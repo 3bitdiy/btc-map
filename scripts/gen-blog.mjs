@@ -86,6 +86,9 @@ const posts = existsSync(SRC)
           author: data.author || "",
           excerpt: data.excerpt || "",
           cover: cover(data.cover),
+          gallery: (Array.isArray(data.gallery) ? data.gallery : [])
+            .map((g) => String(g).trim())
+            .filter(Boolean),
           tags: Array.isArray(data.tags) ? data.tags : [],
           colonies: (Array.isArray(data.colonies) ? data.colonies : [])
             .map((n) => String(n).trim())
@@ -142,7 +145,7 @@ const logoDefs =
     /<svg[^>]*class="svg-defs"[\s\S]*?<\/svg>/,
   )?.[0] || "";
 
-const page = (bodyClass, title, description, canonical, inner, image) => `<!doctype html>
+const page = (bodyClass, title, description, canonical, inner, image, js) => `<!doctype html>
 <html lang="en">
 <head>${head(title, description, canonical, image)}</head>
 <body class="${bodyClass}">
@@ -150,6 +153,7 @@ ${logoDefs}
 ${nav("blog")}
 ${inner}
 ${footer()}
+${js ? `<script type="module" src="/${js}"></script>` : ""}
 <script type="module" src="/theme-switcher.js"></script>
 </body>
 </html>
@@ -192,6 +196,19 @@ const postInner = (p) => `
     </header>
     <div class="post__cover"><img src="${esc(p.cover)}" alt="${esc(p.title)}" /></div>
     <article class="post__body">${p.html}</article>
+    ${
+      p.gallery.length
+        ? `<section class="post__gallery" aria-label="Photo gallery">
+      <h2>Gallery</h2>
+      <ul class="post-gallery">${p.gallery
+        .map(
+          (g, i) =>
+            `<li><a href="${esc(g)}" data-lightbox="post" aria-label="Open photo ${i + 1} of ${p.gallery.length}"><img src="${esc(g)}" alt="${esc(p.title)} — photo ${i + 1}" loading="lazy" /></a></li>`,
+        )
+        .join("")}</ul>
+    </section>`
+        : ""
+    }
     <a class="col-back post__foot-back" href="/blog/">← All posts</a>
   </main>`;
 
@@ -220,6 +237,7 @@ for (const p of posts) {
       `${SITE}/blog/${p.slug}.html`,
       postInner(p),
       p.cover,
+      "blog-post.js",
     ),
   );
 }

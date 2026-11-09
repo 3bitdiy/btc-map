@@ -19,7 +19,7 @@ const EDITABLE_COLONY_FIELDS = [
   "art_colony_name", "city", "place", "country",
   "latitude", "longitude", "art_field", "scope",
   "art_colony_organisers", "contact_person", "contact_telephone",
-  "email_address", "web_page", "time_period", "duration", "photos",
+  "email_address", "web_page", "time_period", "duration",
 ];
 
 // Canonical disciplines for the "Art field" multi-select (matches the CMS list).
@@ -32,9 +32,12 @@ const DISCIPLINES = [
 ];
 
 // Photo upload constraints. Colony photos live under public/ and are referenced
-// as /assets/images/colonies/<file>; the map/colony page show photos[0].
+// as /assets/images/colonies/<file>. photos[0] is the main photo (map, cards);
+// the rest form the gallery. Blog posts get the same gallery via front-matter.
 const PHOTO_DIR = "public/assets/images/colonies";
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_COLONY_PHOTOS = 7; // main + 6 more
+const MAX_POST_GALLERY = 12;
 const IMAGE_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // Blog posts: one markdown file per post (front-matter + body).
@@ -63,10 +66,10 @@ export default {
       if (pathname === "/api/me") return apiMe(request, env);
       if (pathname === "/api/colonies") return apiColonies(request, env);
 
-      const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photo$/);
+      const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photos?$/);
       if (photoMatch) {
         if (request.method === "POST") return apiColonyPhotoPost(request, env, photoMatch[1]);
-        if (request.method === "DELETE") return apiColonyPhotoDelete(request, env, photoMatch[1]);
+        if (request.method === "PUT") return apiColonyPhotosPut(request, env, photoMatch[1]);
         return json({ error: "method_not_allowed" }, 405);
       }
 
@@ -295,7 +298,7 @@ async function apiColonyPut(request, env, id) {
   return json({ ok: true, commit: res.commit, colony });
 }
 
-// Set the colony's photos[0] by committing an uploaded image + patching the JSON.
+// Add one photo to the colony (appended; becomes main if it's the first one).
 async function apiColonyPhotoPost(request, env, id) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
@@ -317,6 +320,10 @@ async function apiColonyPhotoPost(request, env, id) {
   const found = await findColony(env, id);
   if (!found) return json({ error: "colony_not_found" }, 404);
   const colony = found.list[found.index];
+  const existing = realPhotos(colony.photos);
+  if (existing.length >= MAX_COLONY_PHOTOS) {
+    return json({ error: "too_many", detail: `Max ${MAX_COLONY_PHOTOS} photos — remove one first.` }, 409);
+  }
 
   // SEO/readable filename: colony-name slug + a short unique suffix.
   const slug = slugify(colony.art_colony_name) || `colony-${id}`;
@@ -327,41 +334,68 @@ async function apiColonyPhotoPost(request, env, id) {
   const imgRes = await ghCommitFile(env, imgPath, bytesToBase64(bytes), null, `photo: ${colony.art_colony_name || "colony " + id} (studio, ${session.email})`);
   if (!imgRes.ok) return json({ error: "image_commit_failed", detail: imgRes.detail }, 502);
 
-  const existing = Array.isArray(colony.photos) ? colony.photos : [];
-  const prevMain = existing[0];
-  colony.photos = [publicPath, ...existing.slice(1)];
+  colony.photos = [...existing, publicPath];
   found.list[found.index] = colony;
 
   const jsonRes = await ghPutFile(
     env, found.path, JSON.stringify(found.data, null, 2) + "\n", found.sha,
-    `edit: ${colony.art_colony_name || "colony " + id} main photo (studio, ${session.email})`,
+    `edit: ${colony.art_colony_name || "colony " + id} add photo (studio, ${session.email})`,
   );
-  if (!jsonRes.ok) return json({ error: "commit_failed", detail: jsonRes.detail }, 502);
-  if (prevMain && prevMain !== publicPath) await deleteRepoImage(env, prevMain, session.email);
+  if (!jsonRes.ok) {
+    await deleteRepoImage(env, publicPath, session.email); // don't leave an orphan
+    return json({ error: "commit_failed", detail: jsonRes.detail }, 502);
+  }
   return json({ ok: true, photo: publicPath, photos: colony.photos, commit: jsonRes.commit });
 }
 
-async function apiColonyPhotoDelete(request, env, id) {
+// Real (non-placeholder) photo paths.
+function realPhotos(list) {
+  return (Array.isArray(list) ? list : [])
+    .map((p) => String(p || "").trim())
+    .filter((p) => p && !p.includes("placehold.co"));
+}
+
+// Reorder / choose the main photo / remove photos. Body: { photos: [...] } —
+// must be a subset of the current photos (no new paths can be injected here).
+// Photos left out are deleted from the repo.
+async function apiColonyPhotosPut(request, env, id) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
   if (!canEditColony(session, id)) return json({ error: "forbidden" }, 403);
 
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
   const found = await findColony(env, id);
   if (!found) return json({ error: "colony_not_found" }, 404);
   const colony = found.list[found.index];
-  const existing = Array.isArray(colony.photos) ? colony.photos : [];
-  if (!existing.length) return json({ ok: true, photos: [], unchanged: true });
-  const removed = existing[0];
-  colony.photos = existing.slice(1);
+  const existing = realPhotos(colony.photos);
+
+  const next = [...new Set(realPhotos(body.photos))];
+  if (next.some((p) => !existing.includes(p))) {
+    return json({ error: "unknown_photo", detail: "Photos changed since you loaded them — reload and retry." }, 409);
+  }
+  if (next.join("\n") === existing.join("\n") && existing.length === (colony.photos || []).length) {
+    return json({ ok: true, photos: existing, unchanged: true });
+  }
+  colony.photos = next;
   found.list[found.index] = colony;
 
+  const removed = existing.filter((p) => !next.includes(p));
+  const what = removed.length
+    ? `remove ${removed.length} photo${removed.length > 1 ? "s" : ""}`
+    : "reorder photos";
   const res = await ghPutFile(
     env, found.path, JSON.stringify(found.data, null, 2) + "\n", found.sha,
-    `edit: ${colony.art_colony_name || "colony " + id} remove main photo (studio, ${session.email})`,
+    `edit: ${colony.art_colony_name || "colony " + id} ${what} (studio, ${session.email})`,
   );
+  if (res.status === 409) return json({ error: "conflict", detail: "This file changed since you loaded it — reload and retry." }, 409);
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
-  await deleteRepoImage(env, removed, session.email);
-  return json({ ok: true, photos: colony.photos, commit: res.commit });
+  for (const p of removed) await deleteRepoImage(env, p, session.email);
+  return json({ ok: true, photos: next, commit: res.commit });
 }
 
 // --- blog posts (A2.2 / A3.3) ------------------------------------------------
@@ -416,6 +450,7 @@ async function apiPostGet(request, env, slug) {
       author: data.author || "",
       excerpt: data.excerpt || "",
       cover: data.cover || "",
+      gallery: realPhotos(data.gallery),
       tags: Array.isArray(data.tags) ? data.tags : [],
       colonies,
       draft: String(data.draft).toLowerCase() === "true",
@@ -461,6 +496,9 @@ async function apiPostPut(request, env, slug) {
     author: body.author || "",
     excerpt: body.excerpt || "",
     cover: body.cover || "",
+    gallery: realPhotos(body.gallery)
+      .filter((g) => g.startsWith("/assets/images/"))
+      .slice(0, MAX_POST_GALLERY),
     tags: (Array.isArray(body.tags) ? body.tags : []).map((t) => String(t).trim()).filter(Boolean),
     colonies,
     draft: Boolean(body.draft),
@@ -477,11 +515,11 @@ async function apiPostPut(request, env, slug) {
     const old = parseFrontMatter(existing.text);
     const keep = bodyImages(body.body);
     if (body.cover) keep.add(body.cover);
-    const oldCover = old.data.cover;
-    if (oldCover && !keep.has(oldCover)) await deleteRepoImage(env, oldCover, session.email);
-    // Inline images removed from the body since the last save.
-    for (const img of bodyImages(old.body)) {
-      if (!keep.has(img) && img !== oldCover) await deleteRepoImage(env, img, session.email);
+    for (const g of realPhotos(body.gallery)) keep.add(g);
+    // Cover, inline and gallery images dropped since the last save.
+    const before = new Set([old.data.cover, ...bodyImages(old.body), ...realPhotos(old.data.gallery)]);
+    for (const img of before) {
+      if (img && !keep.has(img)) await deleteRepoImage(env, img, session.email);
     }
   }
   return json({ ok: true, slug, commit: res.commit });
@@ -499,9 +537,9 @@ async function apiPostDelete(request, env, slug) {
   const cover = parsed.data.cover;
   const res = await ghDeleteFile(env, `${BLOG_DIR}/${slug}.md`, file.sha, `delete post: ${slug} (studio, ${session.email})`);
   if (!res.ok) return json({ error: "delete_failed", detail: res.detail }, 502);
-  if (cover) await deleteRepoImage(env, cover, session.email);
-  for (const img of bodyImages(parsed.body)) {
-    if (img !== cover) await deleteRepoImage(env, img, session.email);
+  const imgs = new Set([cover, ...bodyImages(parsed.body), ...realPhotos(parsed.data.gallery)]);
+  for (const img of imgs) {
+    if (img) await deleteRepoImage(env, img, session.email);
   }
   return json({ ok: true, commit: res.commit });
 }
@@ -516,7 +554,7 @@ async function apiUpload(request, env) {
     const form = await request.formData();
     file = form.get("file");
     title = form.get("title");
-    kind = form.get("kind"); // "inline" = image inside the post body
+    kind = form.get("kind"); // "inline" = in the post body, "gallery" = post gallery
     replace = form.get("replace"); // a just-uploaded, unsaved cover to clean up
   } catch {
     return json({ error: "invalid_upload" }, 400);
@@ -529,7 +567,8 @@ async function apiUpload(request, env) {
 
   // SEO/readable filename from the post title, e.g. open-call-2026-cover-<ts>.webp
   const slug = slugify(title);
-  const role = kind === "inline" ? `img-${Math.random().toString(36).slice(2, 6)}` : "cover";
+  const rnd = Math.random().toString(36).slice(2, 6);
+  const role = kind === "inline" ? `img-${rnd}` : kind === "gallery" ? `gallery-${rnd}` : "cover";
   const name = `${slug ? slug + "-" : ""}${role}-${Date.now()}.${ext}`;
   const res = await ghCommitFile(env, `${BLOG_IMG_DIR}/${name}`, bytesToBase64(bytes), null, `blog image (studio, ${session.email})`);
   if (!res.ok) return json({ error: "image_commit_failed", detail: res.detail }, 502);
@@ -627,6 +666,9 @@ function serializePost(p) {
     `colonies: [${(p.colonies || []).join(", ")}]`,
     `draft: ${p.draft ? "true" : "false"}`,
   ];
+  if (p.gallery && p.gallery.length) {
+    fm.push("gallery:", ...p.gallery.map((g) => `  - ${g}`));
+  }
   return `---\n${fm.join("\n")}\n---\n\n${String(p.body || "").trim()}\n`;
 }
 
@@ -706,6 +748,8 @@ async function deleteRepoImage(env, publicPath, email) {
   ) {
     return;
   }
+  // Demo/placeholder images are shared between colonies — never delete them.
+  if (/\/demo-[^/]*$/.test(publicPath)) return;
   const path = `public${publicPath}`;
   try {
     const file = await ghGetFile(env, path);
@@ -855,15 +899,13 @@ function editorPage(session, env) {
     `<input id="f-art_field_other" type="text" placeholder="Other (comma-separated)…" style="margin-top:8px"/></div>`;
 
   const photoField =
-    `<div class="fld full"><span>Main photo</span>` +
-    `<div class="photo"><img id="photo-preview" alt="" />` +
-    `<div class="photo-ctl">` +
-    `<input type="file" id="photo-file" accept="image/png,image/jpeg,image/webp"/>` +
-    `<div style="display:flex;gap:8px"><button type="button" class="btn ghost" onclick="uploadPhoto()">Upload photo</button>` +
-    `<button type="button" class="btn ghost" onclick="removePhoto()">Remove</button></div>` +
-    `<span id="photo-status" style="font-size:12px"></span>` +
-    `<span style="font-size:11px;opacity:.7">Committed immediately · JPEG/PNG/WebP · max 5 MB</span>` +
-    `</div></div></div>`;
+    `<div class="fld full"><span>Photos <b id="photo-count" class="pcount"></b></span>` +
+    `<div id="photo-grid" class="pgrid"></div>` +
+    `<div class="photo-add"><label class="btn ghost file-btn">+ Add photos` +
+    `<input type="file" id="photo-file" multiple accept="image/png,image/jpeg,image/webp" onchange="addPhotos(this.files)"/></label>` +
+    `<span id="photo-status" class="pstatus"></span></div>` +
+    `<span class="hint">The first photo is the <b>main</b> one — shown on the map and colony cards. Up to ${MAX_COLONY_PHOTOS} photos; ` +
+    `landscape (about 16:9), at least 1600 px wide. You can select several at once. Changes are saved immediately.</span></div>`;
 
   const form =
     field("art_colony_name", "Name") +
@@ -899,6 +941,13 @@ function editorPage(session, env) {
     `<div class="photo-ctl"><input type="file" id="p-cover-file" accept="image/png,image/jpeg,image/webp"/>` +
     `<button type="button" class="btn ghost" onclick="uploadCover()">Upload cover</button>` +
     `<span id="p-cover-status" style="font-size:12px"></span></div></div></div>` +
+    `<div class="fld full"><span>Gallery <b id="pg-count" class="pcount"></b></span>` +
+    `<div id="pg-grid" class="pgrid"></div>` +
+    `<div class="photo-add"><label class="btn ghost file-btn">+ Add gallery photos` +
+    `<input type="file" id="pg-file" multiple accept="image/png,image/jpeg,image/webp" onchange="addGallery(this.files)"/></label>` +
+    `<span id="pg-status" class="pstatus"></span></div>` +
+    `<span class="hint">Optional. Shown as thumbnails under the post; a click opens them full-screen. Up to ${MAX_POST_GALLERY}. ` +
+    `For a photo inside the text, use the image button in the editor below.</span></div>` +
     `<label class="fld full"><span>Body (markdown)</span><textarea id="p-body" rows="12"></textarea></label>` +
     `<label class="fld" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="p-draft" style="width:auto"/><span>Draft (kept off the blog)</span></label>` +
     `</div>` +
@@ -986,9 +1035,24 @@ function editorPage(session, env) {
     `.ml-rm{width:auto;flex:0 0 auto;padding:0 13px}` +
     `.ml-add{width:auto;margin-top:6px;font-size:12px;padding:6px 12px}` +
     `.photo{display:flex;gap:14px;align-items:flex-start}` +
-    `#photo-preview,#p-cover-preview{width:150px;height:100px;object-fit:cover;border-radius:10px;` +
+    `#p-cover-preview{width:150px;height:100px;object-fit:cover;border-radius:10px;` +
     `background:#f7f7f5;border:1px solid rgba(28,28,28,.2);flex:0 0 auto}` +
     `.photo-ctl{display:flex;flex-direction:column;gap:8px}` +
+    `.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}` +
+    `.ptile{position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(28,28,28,.2);background:#f7f7f5;aspect-ratio:3/2}` +
+    `.ptile.is-main{border:2.5px solid #ff4326}` +
+    `.ptile img{width:100%;height:100%;object-fit:cover;display:block}` +
+    `.pmain{position:absolute;top:6px;left:6px;background:#ff4326;color:#fff;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:999px;opacity:1!important}` +
+    `.pbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:5px;justify-content:flex-end;padding:6px;background:linear-gradient(transparent,rgba(0,0,0,.5))}` +
+    `.pbtn{width:30px;height:30px;flex:0 0 auto;border-radius:999px;border:0;background:rgba(255,255,255,.94);color:#1c1c1c;font:700 16px/1 system-ui,sans-serif;cursor:pointer;padding:0}` +
+    `.pbtn:hover{background:#fff;color:#ff4326}.pbtn:disabled{opacity:.35;cursor:default;color:#1c1c1c}` +
+    `.pbtn.star{position:absolute;top:6px;right:6px;width:auto;height:24px;padding:0 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}` +
+    `.photo-add{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}` +
+    `.file-btn{position:relative;overflow:hidden;display:inline-block;font-size:13px}` +
+    `.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}` +
+    `.file-btn:has(input:disabled){opacity:.45}.file-btn:has(input:disabled) input{cursor:default}` +
+    `.pstatus{font-size:12px}.hint{font-size:11.5px;font-weight:500;opacity:.7!important;line-height:1.45}` +
+    `.pcount{font-weight:600;opacity:.6;margin-left:4px}.pempty{font-size:13px;opacity:.7;margin:0;grid-column:1/-1}` +
     `input[type=file]{border:0;padding:0;font-size:12px}` +
     `.fld span{opacity:.8}.actions{margin-top:18px;display:flex;gap:10px;align-items:center}` +
     `#status{font-size:13px;font-weight:600;opacity:.85}a{color:#1c1c1c}` +
@@ -1038,6 +1102,7 @@ const EDITOR_JS =
   "function getMulti(name){return [].slice.call(q('ml-'+name).querySelectorAll('input')).map(function(i){return i.value.trim()}).filter(Boolean).join(', ')}" +
   "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
   "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
+  "var MAXP=" + MAX_COLONY_PHOTOS + ";var MAXG=" + MAX_POST_GALLERY + ";var photoBusy=false;var postGallery=[];var galleryBusy=false;var localPrev={};" +
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
   "function setPhotoStatus(t){q('photo-status').textContent=t}" +
@@ -1071,13 +1136,60 @@ const EDITOR_JS =
   "FIELDS.forEach(function(f){var el=q('f-'+f);if(el)el.value=(c[f]==null?'':c[f])});" +
   "MULTI.forEach(function(f){renderMulti(f,splitMulti(c[f]))});" +
   "setArtField(c.art_field||'');" +
-  "currentPhotos=Array.isArray(c.photos)?c.photos:[];setPhotoPreview();q('photo-file').value='';setPhotoStatus('');" +
-  "currentId=id;q('title').textContent=c.art_colony_name||('Colony '+id);" +
+  "currentPhotos=realList(c.photos);q('photo-file').value='';setPhotoStatus('');" +
+  "currentId=id;renderPhotos();q('title').textContent=c.art_colony_name||('Colony '+id);" +
   "renderPicker();q('form').style.display='block';setStatus('Loaded from '+data.file)}" +
-  "function mainPhoto(){return currentPhotos.length?String(currentPhotos[0]):''}" +
-  "function setPhotoPreview(){var p=mainPhoto();var src;" +
-  "if(!p||p.indexOf('placehold.co')!==-1){src=RAW+'/assets/images/colony-placeholder.png'}" +
-  "else if(/^https?:/.test(p)){src=p}else{src=RAW+p}q('photo-preview').src=src}" +
+  // --- photo grids (colony photos + post gallery) ---
+  "function realList(l){return (Array.isArray(l)?l:[]).map(function(p){return String(p||'').trim()}).filter(function(p){return p&&p.indexOf('placehold.co')===-1})}" +
+  "function photoSrc(p){if(localPrev[p])return localPrev[p];return /^https?:/.test(p)?p:RAW+p}" +
+  "function renderGrid(id,list,markMain,act,busy){var box=q(id);box.innerHTML='';" +
+  "list.forEach(function(p,i){var t=elx('div','ptile'+(markMain&&i===0?' is-main':''));" +
+  "var img=document.createElement('img');img.src=photoSrc(p);img.alt='';img.loading='lazy';t.appendChild(img);" +
+  "if(markMain&&i===0){var m=elx('span','pmain');m.textContent='Main';t.appendChild(m)}" +
+  "var bar=elx('div','pbar');" +
+  "function mk(txt,title,fn,dis,cls){var b=elx('button','pbtn'+(cls?' '+cls:''));b.type='button';b.textContent=txt;b.title=title;b.setAttribute('aria-label',title);b.disabled=!!dis||busy;b.onclick=fn;(cls==='star'?t:bar).appendChild(b)}" +
+  "if(markMain&&i>0)mk('\u2605 Set main','Make this the main photo',function(){act('main',i)},false,'star');" +
+  "mk('\u2039','Move left',function(){act('move',i,-1)},i===0);" +
+  "mk('\u203a','Move right',function(){act('move',i,1)},i===list.length-1);" +
+  "mk('\u00d7','Remove',function(){act('remove',i)});" +
+  "t.appendChild(bar);box.appendChild(t)})}" +
+  "function reorder(list,op,i,d){var a=list.slice();if(op==='main'){a.unshift(a.splice(i,1)[0])}" +
+  "else if(op==='move'){var j=i+d;if(j<0||j>=a.length)return a;var x=a[i];a[i]=a[j];a[j]=x}else if(op==='remove'){a.splice(i,1)}return a}" +
+  "function renderPhotos(){renderGrid('photo-grid',currentPhotos,true,photoAction,photoBusy);" +
+  "if(!currentPhotos.length)q('photo-grid').innerHTML='<p class=\"pempty\">No photos yet \u2014 the map shows a placeholder.</p>';" +
+  "q('photo-count').textContent=currentPhotos.length+' / '+MAXP;q('photo-file').disabled=photoBusy||currentPhotos.length>=MAXP}" +
+  "async function photoAction(op,i,d){if(photoBusy||!currentId)return;" +
+  "if(op==='remove'&&!confirm('Remove this photo? It will be deleted from the site.'))return;" +
+  "var next=reorder(currentPhotos,op,i,d);photoBusy=true;renderPhotos();setPhotoStatus('Saving\u2026');" +
+  "try{var r=await fetch('/api/colony/'+currentId+'/photos',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({photos:next})});var out=await r.json();" +
+  "if(!r.ok){setPhotoStatus('Failed: '+(out.detail||out.error))}else{currentPhotos=realList(out.photos||next);" +
+  "setPhotoStatus(out.unchanged?'No change':('Saved \u2713 commit '+String(out.commit||'').slice(0,7)+' \u2014 live in ~1\u20132 min'))}}" +
+  "catch(e){setPhotoStatus('Failed \u2014 check your connection')}photoBusy=false;renderPhotos()}" +
+  // Uploads go one at a time (parallel commits to the same branch conflict).
+  "async function addPhotos(files){var list=[].slice.call(files||[]);q('photo-file').value='';if(!currentId||photoBusy||!list.length)return;" +
+  "var room=MAXP-currentPhotos.length;if(list.length>room){alert('A colony can have up to '+MAXP+' photos \u2014 only the first '+room+' will be added.');list=list.slice(0,room)}" +
+  "if(!list.length)return;photoBusy=true;renderPhotos();var done=0,last='';" +
+  "for(var k=0;k<list.length;k++){setPhotoStatus('Uploading '+(k+1)+' of '+list.length+'\u2026');" +
+  "try{var blob=await optimizeImage(list[k]);var fd=new FormData();fd.append('file',blob,'photo.webp');" +
+  "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'POST',body:fd});var out=await r.json();" +
+  "if(!r.ok){setPhotoStatus('Upload failed: '+(out.detail||out.error));break}" +
+  "localPrev[out.photo]=URL.createObjectURL(blob);currentPhotos=realList(out.photos);done++;last=out.commit;renderPhotos()}" +
+  "catch(e){setPhotoStatus('Upload failed \u2014 check your connection');break}}" +
+  "photoBusy=false;renderPhotos();" +
+  "if(done&&done===list.length)setPhotoStatus((done>1?done+' photos':'Photo')+' added \u2713 commit '+String(last||'').slice(0,7)+' \u2014 live in ~1\u20132 min')}" +
+  "function renderGallery(){renderGrid('pg-grid',postGallery,false,galleryAction,galleryBusy);" +
+  "q('pg-count').textContent=postGallery.length?(postGallery.length+' / '+MAXG):'';q('pg-file').disabled=galleryBusy||postGallery.length>=MAXG}" +
+  "function galleryAction(op,i,d){if(galleryBusy)return;postGallery=reorder(postGallery,op,i,d);renderGallery();q('pg-status').textContent='Changed \u2014 remember to Save post'}" +
+  "async function addGallery(files){var list=[].slice.call(files||[]);q('pg-file').value='';if(galleryBusy||!list.length)return;" +
+  "var room=MAXG-postGallery.length;if(list.length>room){alert('Up to '+MAXG+' gallery photos \u2014 only the first '+room+' will be added.');list=list.slice(0,room)}" +
+  "if(!list.length)return;galleryBusy=true;renderGallery();var st=q('pg-status');" +
+  "for(var k=0;k<list.length;k++){st.textContent='Uploading '+(k+1)+' of '+list.length+'\u2026';" +
+  "try{var blob=await optimizeImage(list[k]);var fd=new FormData();fd.append('file',blob,'gallery.webp');fd.append('kind','gallery');fd.append('title',q('p-title').value||'');" +
+  "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
+  "if(!r.ok){st.textContent='Upload failed: '+(out.detail||out.error);galleryBusy=false;renderGallery();return}" +
+  "localPrev[out.path]=URL.createObjectURL(blob);postGallery.push(out.path);renderGallery()}" +
+  "catch(e){st.textContent='Upload failed \u2014 check your connection';galleryBusy=false;renderGallery();return}}" +
+  "galleryBusy=false;renderGallery();st.textContent='Uploaded \u2713 \u2014 remember to Save post'}" +
   // Resize (max 1600px) + convert to WebP in the browser before upload.
   "function optimizeImage(file){return new Promise(function(resolve){" +
   "if(!/^image\\/(jpeg|png|webp)$/.test(file.type)){resolve(file);return}" +
@@ -1086,19 +1198,6 @@ const EDITOR_JS =
   "if(w>maxW){h=Math.round(h*maxW/w);w=maxW}var cv=document.createElement('canvas');cv.width=w;cv.height=h;" +
   "cv.getContext('2d').drawImage(img,0,0,w,h);cv.toBlob(function(b){resolve(b&&b.size<file.size?b:file)},'image/webp',0.82)};" +
   "img.onerror=function(){URL.revokeObjectURL(url);resolve(file)};img.src=url})}" +
-  "async function uploadPhoto(){if(!currentId)return;var f=q('photo-file').files[0];" +
-  "if(!f){setPhotoStatus('Choose an image first');return}" +
-  "q('photo-preview').src=URL.createObjectURL(f);setPhotoStatus('Optimising…');var blob=await optimizeImage(f);" +
-  "setPhotoStatus('Uploading…');var fd=new FormData();fd.append('file',blob,'photo.webp');" +
-  "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'POST',body:fd});var out=await r.json();" +
-  "if(!r.ok){setPhotoStatus('Upload failed: '+(out.detail||out.error));return}" +
-  "currentPhotos=out.photos||[out.photo];q('photo-file').value='';" +
-  "setPhotoStatus('Photo updated \\u2713 commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
-  "async function removePhoto(){if(!currentId)return;setPhotoStatus('Removing…');" +
-  "var r=await fetch('/api/colony/'+currentId+'/photo',{method:'DELETE'});var out=await r.json();" +
-  "if(!r.ok){setPhotoStatus('Remove failed: '+(out.detail||out.error));return}" +
-  "currentPhotos=out.photos||[];setPhotoPreview();q('photo-file').value='';" +
-  "setPhotoStatus(out.unchanged?'No photo to remove':('Photo removed \\u2713 commit '+String(out.commit||'').slice(0,7)))}" +
   "function setArtField(v){" +
   "var chips=document.querySelectorAll('#art-chips .chip');chips.forEach(function(ch){ch.classList.remove('on')});" +
   "var other=[];String(v).split(',').map(function(s){return s.trim()}).filter(Boolean).forEach(function(t){" +
@@ -1173,6 +1272,7 @@ const EDITOR_JS =
   "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
   "postColonies=(document.body.dataset.role!=='admin'?taggable.map(function(c){return String(c.id)}):[]);renderPostColonies();" +
   "setCoverPreview('');setPostStatus('');q('p-cover-file').value='';q('p-cover-status').textContent='';q('posts-status').textContent='';" +
+  "postGallery=[];q('pg-status').textContent='';renderGallery();" +
   "q('pe-delete').style.display='none';q('post-editor').style.display='block';initEditor();easyMDE.value('');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
@@ -1180,6 +1280,7 @@ const EDITOR_JS =
   "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
   "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');postColonies=(p.colonies||[]).map(String);renderPostColonies();" +
   "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
+  "postGallery=realList(p.gallery);q('pg-status').textContent='';renderGallery();" +
   "q('pe-delete').style.display='';q('post-editor').style.display='block';initEditor();easyMDE.value(p.body||'');" +
   "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
@@ -1191,9 +1292,10 @@ const EDITOR_JS =
   "postCover=out.path;q('p-cover-status').textContent='Cover uploaded \\u2713'}" +
   "async function savePost(){var title=q('p-title').value.trim();if(!title){setPostStatus('Title is required');return}" +
   "var slug=editingSlug||slugify(title);if(!slug){setPostStatus('Could not build a slug from the title');return}" +
-  "var body={title:title,date:q('p-date').value||'',author:q('p-author').value,excerpt:q('p-excerpt').value,cover:postCover,body:getBody(),draft:q('p-draft').checked," +
+  "var body={title:title,date:q('p-date').value||'',author:q('p-author').value,excerpt:q('p-excerpt').value,cover:postCover,gallery:postGallery.slice(),body:getBody(),draft:q('p-draft').checked," +
   "tags:q('p-tags').value.split(',').map(function(s){return s.trim()}).filter(Boolean)," +
   "colonies:postColonies.slice()};" +
+  "if(galleryBusy||bodyImgBusy){setPostStatus('Wait for the uploads to finish');return}" +
   "setPostStatus('Saving…');var r=await fetch('/api/post/'+slug,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();if(!r.ok){setPostStatus('Save failed: '+(out.detail||out.error));return}" +
   "q('post-editor').style.display='none';editingSlug=null;" +

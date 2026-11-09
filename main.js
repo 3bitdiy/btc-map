@@ -1,6 +1,7 @@
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { assignSlugs } from "./colony-slug.js";
+import { openLightbox } from "./lightbox.js";
 
 const protocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile.bind(protocol));
@@ -428,12 +429,88 @@ function applyMapTheme() {
   });
 }
 
+const COLONY_PLACEHOLDER = "/assets/images/colony-placeholder.png";
+const MAX_COLONY_PHOTOS = 7; // main photo + up to 6 more
+
+// Real photos of a colony (main first); empty when it has none yet.
+function colonyPhotos(colony) {
+  return (Array.isArray(colony.photos) ? colony.photos : [])
+    .map((p) => String(p || "").trim())
+    .filter((p) => p && !p.includes("placehold.co"))
+    .slice(0, MAX_COLONY_PHOTOS);
+}
+
 function resolveColonyPhoto(colony) {
-  const firstPhoto = colony.photos?.[0];
-  if (!firstPhoto) return "/assets/images/colony-placeholder.png";
-  if (firstPhoto.includes("placehold.co"))
-    return "/assets/images/colony-placeholder.png";
-  return firstPhoto;
+  return colonyPhotos(colony)[0] || COLONY_PLACEHOLDER;
+}
+
+// Detail-panel photo carousel: swipe on touch (scroll-snap), arrows on
+// desktop, dots + counter; a tap/click opens the full-screen viewer.
+const carousel = { photos: [], alt: "" };
+
+function carouselIndex() {
+  const track = document.getElementById("panel-photos");
+  return track.clientWidth
+    ? Math.round(track.scrollLeft / track.clientWidth)
+    : 0;
+}
+
+function syncCarousel() {
+  const wrap = document.getElementById("panel-photo-wrap");
+  const i = carouselIndex();
+  const n = carousel.photos.length;
+  wrap.querySelectorAll(".pcar__dots span").forEach((d, k) =>
+    d.classList.toggle("is-on", k === i),
+  );
+  wrap.querySelector(".pcar__count").textContent = n > 1 ? `${i + 1}/${n}` : "";
+  wrap.querySelector(".pcar__prev").disabled = i <= 0;
+  wrap.querySelector(".pcar__next").disabled = i >= n - 1;
+}
+
+function renderCarousel(colony) {
+  const wrap = document.getElementById("panel-photo-wrap");
+  const track = document.getElementById("panel-photos");
+  const photos = colonyPhotos(colony);
+  carousel.photos = photos;
+  carousel.alt = getColonyName(colony);
+  const shown = photos.length ? photos : [COLONY_PLACEHOLDER];
+  track.innerHTML = shown
+    .map(
+      (src, i) =>
+        `<img src="${src}" alt="${escapeAttr(carousel.alt)}" draggable="false" ${i ? 'loading="lazy"' : ""} />`,
+    )
+    .join("");
+  wrap.classList.toggle("is-multi", photos.length > 1);
+  wrap.classList.toggle("is-zoomable", photos.length > 0);
+  wrap.querySelector(".pcar__dots").innerHTML =
+    photos.length > 1 ? photos.map(() => "<span></span>").join("") : "";
+  track.scrollLeft = 0;
+  syncCarousel();
+}
+
+function escapeAttr(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function wireCarousel() {
+  const wrap = document.getElementById("panel-photo-wrap");
+  const track = document.getElementById("panel-photos");
+  const step = (d) => {
+    track.scrollTo({
+      left: (carouselIndex() + d) * track.clientWidth,
+      behavior: "smooth",
+    });
+  };
+  wrap.querySelector(".pcar__prev").addEventListener("click", () => step(-1));
+  wrap.querySelector(".pcar__next").addEventListener("click", () => step(1));
+  track.addEventListener("scroll", () => requestAnimationFrame(syncCarousel), {
+    passive: true,
+  });
+  track.addEventListener("click", () => {
+    if (carousel.photos.length) {
+      openLightbox(carousel.photos, carouselIndex(), carousel.alt);
+    }
+  });
 }
 
 async function loadColoniesData() {
@@ -1294,9 +1371,7 @@ function openPanel(
     document.getElementById("panel-content").scrollTop = 0;
   }
 
-  const photo = document.getElementById("panel-photo");
-  photo.src = resolveColonyPhoto(colony);
-  photo.alt = getColonyName(colony);
+  renderCarousel(colony);
   document.getElementById("panel-photo-wrap").style.display = "";
 
   const panelMarkerIcon = document.getElementById("panel-marker-icon");
@@ -2359,6 +2434,7 @@ async function bootstrap() {
   wireMobileSidebar();
   wireMobileFilterActions();
   wireMobileBar();
+  wireCarousel();
   wireMobileCountryChips();
   document
     .getElementById("filter-reset-desktop")

@@ -29,7 +29,7 @@ The whole stack is free and the map has **no backend** — it must survive being
 
 - **Frontend** — Cloudflare Pages (static; push to `main`)
 - **Map data** — static JSON in `public/data/` (no database, no API)
-- **Photos** — static placeholder `public/assets/images/colony-placeholder.png` (all colonies; per-colony photos not used yet)
+- **Photos** — `colony.photos[]` in the JSON (max 7; `[0]` = main photo on map/cards, the rest = gallery), files in `public/assets/images/colonies/`; placeholder `colony-placeholder.png` when empty. Blog posts: `cover` + optional `gallery:` front-matter list. Full-screen viewer: `lightbox.js` (map panel carousel, colony pages via `colony.js`, posts via `blog-post.js`). Organizers manage photos in the studio Worker.
 - **Map tiles** — PMTiles on Cloudflare R2 (free tier; free egress)
 - **CDN/proxy/SSL** — Cloudflare free tier
 - **Domain** — custom domain while funded; free fallback `*.pages.dev` (or `is-a.dev`/`js.org`)
