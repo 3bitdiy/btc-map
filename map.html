@@ -104,6 +104,14 @@
       </div>
 
       <section id="filter-card" aria-label="Map filters">
+        <!-- Phones only: header of the full-screen filters -->
+        <div id="m-filters-head">
+          <h2>Filters</h2>
+          <button type="button" id="m-filters-reset">Reset</button>
+          <button type="button" id="m-filters-close" aria-label="Close filters">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></svg>
+          </button>
+        </div>
         <div id="filter-content">
           <div id="colony-search-wrap">
             <input id="colony-search" type="search" placeholder="Search colonies…" autocomplete="off" aria-label="Search colonies" />
@@ -167,6 +175,29 @@
     </aside>
 
     <main id="map-container" aria-label="Interactive map">
+      <!-- Phones only: compact bar = logo/menu · search · Filters -->
+      <div id="m-bar">
+        <div id="m-brand-wrap">
+          <button type="button" id="m-brand" aria-label="Menu" aria-expanded="false" aria-controls="m-menu">
+            <svg class="brand-mark" aria-hidden="true"><use href="#btc-logo" /></svg>
+          </button>
+          <nav id="m-menu" hidden aria-label="Site navigation">
+            <a href="/">Home</a>
+            <a href="/colonies/">Colonies</a>
+            <a href="/blog/">Blog</a>
+            <a href="https://studio.beyondthecities.org/">Organizers</a>
+          </nav>
+        </div>
+        <label id="m-search-wrap">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.4" /><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /></svg>
+          <input id="m-search" type="search" placeholder="Search colonies…" autocomplete="off" aria-label="Search colonies" />
+        </label>
+        <button type="button" id="m-filters" aria-label="Filters">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h11v2H4V6zm0 5h16v2H4v-2zm0 5h9v2H4v-2z" fill="currentColor" /><circle cx="17.5" cy="7" r="2" fill="currentColor" /><circle cx="8.5" cy="12" r="2" fill="currentColor" /><circle cx="15.5" cy="17" r="2" fill="currentColor" /></svg>
+          <span>Filters</span>
+          <span id="m-filters-badge" hidden>0</span>
+        </button>
+      </div>
       <button type="button" id="filter-toggle" aria-label="Toggle filters" aria-expanded="false">
         <img src="/assets/icons/btc-logo.svg" alt="" class="filter-toggle-mark" />
         <span class="filter-toggle-label">Filters</span>
@@ -222,6 +253,16 @@
         </p>
         <p class="panel-intro-hint">Select a marker on the map or a colony from the list to see its details.</p>
       </div>
+
+      <!-- Phones only: browse list shown in the sheet when no colony is open -->
+      <div id="panel-browse">
+        <button type="button" id="browse-head">
+          <strong id="browse-count">0 colonies</strong>
+          <span id="browse-hint">Swipe up for the list</span>
+        </button>
+        <div id="browse-list"></div>
+      </div>
+      <button type="button" id="panel-back">‹ All colonies</button>
 
       <div id="panel-content">
         <div id="panel-photo-wrap">

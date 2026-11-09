@@ -1266,6 +1266,11 @@ function openPanel(
       center: [coords.longitude, coords.latitude],
       zoom: Math.max(state.map.getZoom(), focusZoom),
     };
+    // Phones: stay closer to the overview so the colony is shown in context
+    // (and the selected marker doesn't balloon), not zoomed right in.
+    if (isMobileViewport()) {
+      flyOpts.zoom = Math.max(state.map.getZoom(), Math.min(focusZoom, MOBILE_FOCUS_ZOOM));
+    }
     // On mobile the half sheet covers the bottom; lift the target up so the
     // colony lands centred in the map strip that stays visible above it, and
     // cap the zoom so the whole (large) marker + its place label fit with room.
@@ -1283,8 +1288,10 @@ function openPanel(
   document.getElementById("app").classList.add("panel-open");
   setPanelMinimized(false);
   if (isMobileViewport()) {
-    snapSheet(SHEET_HALF); // open partway so the fly-to stays visible above
+    panel.classList.remove("is-browse");
+    snapSheet("half"); // open partway so the fly-to stays visible above
     setFilterPanelMinimized(true); // and collapse filters — one panel at a time
+    document.getElementById("panel-content").scrollTop = 0;
   }
 
   const photo = document.getElementById("panel-photo");
@@ -1377,97 +1384,286 @@ function closePanel() {
   updateMarkerSelection();
 
   const panel = document.getElementById("detail-panel");
+  if (isMobileViewport()) {
+    // Phones: the sheet never goes away — it returns to the colony list.
+    panel.classList.add("is-open", "is-browse");
+    panel.classList.remove("is-intro");
+    panel.setAttribute("aria-hidden", "false");
+    document.getElementById("app").classList.remove("panel-open");
+    setPanelMinimized(false);
+    snapSheet(state.browseSnap || "peek");
+    return;
+  }
+  panel.classList.remove("is-browse");
   panel.classList.remove("is-open");
   panel.classList.remove("is-intro");
   panel.setAttribute("aria-hidden", "true");
   document.getElementById("app").classList.remove("panel-open");
 }
 
-// Mobile bottom-sheet snap positions (% translateY): full and half. Open at
-// half so the fly-to stays visible; drag up to full, down past half to close.
-const SHEET_FULL = 0;
-const SHEET_HALF = 48;
+// Mobile bottom sheet. Three snaps: "peek" (just the header strip), "half"
+// and "full". --sheet-y is the translate in px; --sheet-visible is how much
+// of the sheet is on screen, so its scroll areas end at the screen edge.
+const SHEET_PEEK_PX = 86;
+const MOBILE_FOCUS_ZOOM = 8.2;
 
 function isMobileViewport() {
   return window.matchMedia("(max-width: 767px)").matches;
 }
 
-function setSheetSnap(pct) {
-  document
-    .getElementById("detail-panel")
-    .style.setProperty("--sheet-y", `${pct}%`);
+function sheetOffset(name) {
+  const h = document.getElementById("detail-panel").offsetHeight || window.innerHeight * 0.86;
+  if (name === "full") return 0;
+  if (name === "half") return Math.round(h * 0.46);
+  return Math.max(0, h - SHEET_PEEK_PX);
 }
 
-// Settle the sheet at a snap AND cap the scrollable content to the part that's
-// actually on screen, so the content scrolls at half height (not only at full).
-function snapSheet(pct) {
+function setSheetY(px) {
   const panel = document.getElementById("detail-panel");
-  setSheetSnap(pct);
-  const content = document.getElementById("panel-content");
-  if (!content) return;
-  if (pct <= 4) {
-    content.style.maxHeight = "";
-  } else {
-    const visible = panel.offsetHeight * (1 - pct / 100) - 40;
-    content.style.maxHeight = `${Math.max(140, Math.round(visible))}px`;
-  }
+  panel.style.setProperty("--sheet-y", `${Math.round(px)}px`);
+  panel.style.setProperty(
+    "--sheet-visible",
+    `${Math.max(SHEET_PEEK_PX, Math.round(panel.offsetHeight - px))}px`,
+  );
 }
 
-// Drag the handle to move the sheet; on release snap to the nearest point, or
-// dismiss if dragged below the peek.
+function snapSheet(name) {
+  state.sheetSnap = name;
+  const panel = document.getElementById("detail-panel");
+  if (panel.classList.contains("is-browse")) state.browseSnap = name;
+  panel.classList.toggle("is-peek", name === "peek");
+  setSheetY(sheetOffset(name));
+  updateBrowseHint();
+}
+
+// Drag the handle (or the list header) to move the sheet; release snaps to
+// the nearest point, a quick flick moves one step. In the detail view,
+// dragging below half returns to the list. A tap on the list header steps
+// peek → half → full.
 function wireSheetDrag() {
   const panel = document.getElementById("detail-panel");
-  const handle = document.getElementById("panel-handle");
-  if (!panel || !handle) return;
+  const grips = [
+    document.getElementById("panel-handle"),
+    document.getElementById("browse-head"),
+  ].filter(Boolean);
+  if (!panel || !grips.length) return;
 
-  let dragging = false;
-  let startY = 0;
-  let startPct = SHEET_HALF;
-  let height = 1;
-
-  const currentPct = () => {
-    const value = parseFloat(panel.style.getPropertyValue("--sheet-y"));
-    return Number.isFinite(value) ? value : SHEET_HALF;
-  };
+  let drag = null;
 
   const onDown = (event) => {
     if (!isMobileViewport()) return;
-    dragging = true;
-    startY = event.touches ? event.touches[0].clientY : event.clientY;
-    startPct = currentPct();
-    height = panel.offsetHeight || 1;
+    const y = event.touches ? event.touches[0].clientY : event.clientY;
+    drag = { startY: y, base: sheetOffset(state.sheetSnap || "peek"), moved: false, target: event.currentTarget };
     panel.classList.add("is-dragging");
-    event.preventDefault();
+    panel.classList.remove("is-peek");
   };
 
   const onMove = (event) => {
-    if (!dragging) return;
+    if (!drag) return;
     const y = event.touches ? event.touches[0].clientY : event.clientY;
-    const pct = Math.min(
-      100,
-      Math.max(0, startPct + ((y - startY) / height) * 100),
-    );
-    setSheetSnap(pct);
+    const dy = y - drag.startY;
+    if (Math.abs(dy) > 5) drag.moved = true;
+    if (!drag.moved) return;
+    setSheetY(Math.min(sheetOffset("peek") + 40, Math.max(0, drag.base + dy)));
     event.preventDefault();
   };
 
-  const onUp = () => {
-    if (!dragging) return;
-    dragging = false;
+  const onUp = (event) => {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
     panel.classList.remove("is-dragging");
-    const pct = currentPct();
-    // Past half → dismiss; near the top → full; otherwise rest at half.
-    if (pct > 70) closePanel();
-    else if (pct < 24) snapSheet(SHEET_FULL);
-    else snapSheet(SHEET_HALF);
+    const browsing = panel.classList.contains("is-browse");
+    const order = browsing ? ["full", "half", "peek"] : ["full", "half"];
+    const current = state.sheetSnap || "peek";
+
+    if (!d.moved) {
+      if (d.target.id === "browse-head") {
+        snapSheet(current === "peek" ? "half" : current === "half" ? "full" : "half");
+      } else {
+        snapSheet(current);
+      }
+      return;
+    }
+
+    const y = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+    const dy = y - d.startY;
+    const pos = d.base + dy;
+    if (!browsing && pos > sheetOffset("half") + 70) {
+      closePanel(); // detail dragged down → back to the list
+      return;
+    }
+    let target;
+    if (Math.abs(dy) > 50) {
+      const i = Math.max(0, order.indexOf(current));
+      target = order[Math.max(0, Math.min(order.length - 1, i + (dy > 0 ? 1 : -1)))];
+    } else {
+      target = order.reduce((best, n) =>
+        Math.abs(sheetOffset(n) - pos) < Math.abs(sheetOffset(best) - pos) ? n : best,
+      order[0]);
+    }
+    snapSheet(target);
   };
 
-  handle.addEventListener("touchstart", onDown, { passive: false });
-  handle.addEventListener("mousedown", onDown);
+  grips.forEach((grip) => {
+    grip.addEventListener("touchstart", onDown, { passive: true });
+    grip.addEventListener("mousedown", onDown);
+  });
   window.addEventListener("touchmove", onMove, { passive: false });
   window.addEventListener("mousemove", onMove);
   window.addEventListener("touchend", onUp);
   window.addEventListener("mouseup", onUp);
+}
+
+// Phones: the colony list inside the sheet (filtered + optional search).
+function renderBrowseList() {
+  const list = document.getElementById("browse-list");
+  if (!list) return;
+  const q = foldSearch((state.browseQuery || "").trim());
+  const visible = getVisibleColonies().filter((c) => {
+    if (!q) return true;
+    return (
+      foldSearch(getColonyName(c)).includes(q) ||
+      foldSearch(getColonyCity(c)).includes(q) ||
+      foldSearch(getColonyPlace(c)).includes(q)
+    );
+  });
+  state.browseCount = visible.length;
+
+  list.innerHTML = "";
+  if (!visible.length) {
+    const empty = document.createElement("p");
+    empty.className = "browse-empty";
+    empty.textContent = q ? "No colonies match your search." : "No colonies match. Try fewer filters.";
+    list.appendChild(empty);
+  }
+  DEFAULT_COUNTRIES.forEach((country) => {
+    const rows = visible
+      .filter((c) => getColonyCountry(c) === country)
+      .sort((a, b) =>
+        (getColonyCity(a) || getColonyPlace(a)).localeCompare(getColonyCity(b) || getColonyPlace(b)) ||
+        getColonyName(a).localeCompare(getColonyName(b)),
+      );
+    if (!rows.length) return;
+    const head = document.createElement("div");
+    head.className = "browse-group";
+    head.innerHTML = `<span></span><span>${rows.length}</span>`;
+    head.firstChild.textContent = country;
+    list.appendChild(head);
+    rows.forEach((colony) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "browse-row";
+      btn.dataset.idx = String(state.colonies.indexOf(colony));
+      const img = document.createElement("img");
+      img.loading = "lazy";
+      img.alt = "";
+      img.src = resolveColonyPhoto(colony);
+      const text = document.createElement("span");
+      text.className = "browse-text";
+      const name = document.createElement("span");
+      name.className = "browse-name";
+      name.textContent = getColonyName(colony);
+      const sub = document.createElement("span");
+      sub.className = "browse-sub";
+      const place = getColonyCity(colony) || getColonyPlace(colony);
+      const fields = getColonyDisciplines(colony).slice(0, 3).join(", ");
+      sub.textContent = [place, fields].filter(Boolean).join(" · ");
+      text.append(name, sub);
+      btn.append(img, text);
+      list.appendChild(btn);
+    });
+  });
+  updateBrowseHint();
+}
+
+function updateBrowseHint() {
+  const countEl = document.getElementById("browse-count");
+  const hintEl = document.getElementById("browse-hint");
+  if (!countEl || !hintEl) return;
+  const n = state.browseCount ?? 0;
+  const searching = !!(state.browseQuery || "").trim();
+  countEl.textContent = `${n} ${n === 1 ? "colony" : "colonies"}`;
+  const filtering =
+    state.activeCountries.size + state.activeDisciplines.size + state.activeScopes.size > 0;
+  hintEl.textContent =
+    (state.sheetSnap || "peek") === "peek"
+      ? "Swipe up for the list"
+      : searching
+        ? "matching your search"
+        : filtering
+          ? "with current filters"
+          : "in 3 countries";
+}
+
+// Phones: compact top bar (menu · search · Filters) + full-screen filters.
+function wireMobileBar() {
+  const brand = document.getElementById("m-brand");
+  const menu = document.getElementById("m-menu");
+  const search = document.getElementById("m-search");
+  const filtersBtn = document.getElementById("m-filters");
+  const list = document.getElementById("browse-list");
+  if (!brand || !menu || !search || !filtersBtn || !list) return;
+
+  const setMenu = (open) => {
+    menu.hidden = !open;
+    brand.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  brand.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setMenu(menu.hidden);
+  });
+  document.addEventListener("click", (event) => {
+    if (!menu.hidden && !menu.contains(event.target)) setMenu(false);
+  });
+
+  search.addEventListener("input", () => {
+    state.browseQuery = search.value;
+    if (state.selectedColony) closePanel();
+    renderBrowseList();
+    if (search.value.trim() && (state.sheetSnap || "peek") === "peek") snapSheet("half");
+    document.getElementById("browse-list").scrollTop = 0;
+  });
+  search.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") search.blur();
+    if (event.key === "Escape") {
+      search.value = "";
+      state.browseQuery = "";
+      renderBrowseList();
+      search.blur();
+    }
+  });
+
+  list.addEventListener("click", (event) => {
+    const row = event.target instanceof Element ? event.target.closest(".browse-row") : null;
+    if (!(row instanceof HTMLButtonElement)) return;
+    const colony = state.colonies[Number(row.dataset.idx)];
+    if (!colony) return;
+    search.blur();
+    openPanel(colony, true, null, COLONY_LIST_FOCUS_ZOOM);
+  });
+
+  document.getElementById("panel-back")?.addEventListener("click", closePanel);
+
+  filtersBtn.addEventListener("click", () => {
+    if (state.selectedColony) closePanel();
+    setFilterPanelMinimized(false);
+    // Everything visible at once in the full-screen filters (no dropdowns).
+    document.querySelectorAll("#filter-card .select-row").forEach((row) => {
+      const panel = document.getElementById(row.getAttribute("data-toggle-target"));
+      if (panel) panel.hidden = false;
+      row.setAttribute("aria-expanded", "true");
+    });
+    document.getElementById("filter-content").scrollTop = 0;
+  });
+  document.getElementById("m-filters-close")?.addEventListener("click", () =>
+    setFilterPanelMinimized(true),
+  );
+  document.getElementById("m-filters-reset")?.addEventListener("click", resetFilters);
+
+  window.addEventListener("resize", () => {
+    if (isMobileViewport()) snapSheet(state.sheetSnap || "peek");
+  });
 }
 
 function syncPanelMaximizeButtons() {
@@ -1522,6 +1718,7 @@ function setFilterPanelMinimized(minimized) {
   // Collapse the sections when closing so it reopens clean (not stuck on the
   // accordion left open from a previous visit).
   if (minimized) collapseFilterSections();
+  document.body.classList.toggle("m-filters-open", !minimized && isMobileViewport());
   syncPanelMaximizeButtons();
 }
 
@@ -1564,6 +1761,16 @@ function updateFilterResults() {
   const visible = getVisibleColonies();
   renderCountryAccordion();
   document.getElementById("colony-count").textContent = String(visible.length);
+  // Phones: the close button doubles as the result count.
+  const done = document.getElementById("filter-done-btn");
+  if (done) {
+    done.textContent = isMobileViewport()
+      ? visible.length
+        ? `Show ${visible.length} ${visible.length === 1 ? "colony" : "colonies"}`
+        : "No colonies match"
+      : "Done";
+  }
+  renderBrowseList();
 
   if (
     state.selectedColony &&
@@ -1646,6 +1853,12 @@ function updateFilterToggleBadge() {
 
   const resetBtn = document.getElementById("filter-reset-desktop");
   if (resetBtn) resetBtn.hidden = activeCount === 0;
+
+  const mBadge = document.getElementById("m-filters-badge");
+  if (mBadge) {
+    mBadge.textContent = String(activeCount);
+    mBadge.hidden = activeCount === 0;
+  }
 }
 
 function wirePillVisuals() {
@@ -1698,6 +1911,15 @@ function wireCountryAccordion() {
     }
 
     const expandBtn = target.closest(".country-expand");
+    if (expandBtn instanceof HTMLButtonElement && isMobileViewport()) {
+      // Phones: the list lives in the bottom sheet; the row is just a filter.
+      const box = expandBtn.closest(".country-section")?.querySelector('input[name="country"]');
+      if (box instanceof HTMLInputElement) {
+        box.checked = !box.checked;
+        box.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      return;
+    }
     if (expandBtn instanceof HTMLButtonElement && !expandBtn.disabled) {
       const country = expandBtn.closest(".country-section")?.dataset.country;
       if (!country) return;
@@ -2017,6 +2239,9 @@ async function bootstrap() {
   // on the bare map, not on a marker).
   state.map.on("click", () => {
     if (state.selectedColony) closePanel();
+    else if (isMobileViewport() && state.sheetSnap && state.sheetSnap !== "peek") {
+      snapSheet("peek");
+    }
     // On mobile a bare-map tap also tucks the filters away (one tap clears all).
     if (isMobileViewport() && !state.filterPanelMinimized) {
       setFilterPanelMinimized(true);
@@ -2045,6 +2270,7 @@ async function bootstrap() {
   wireBrandMenu();
   wireMobileSidebar();
   wireMobileFilterActions();
+  wireMobileBar();
   document
     .getElementById("filter-reset-desktop")
     ?.addEventListener("click", resetFilters);
