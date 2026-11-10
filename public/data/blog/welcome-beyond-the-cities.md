@@ -6,6 +6,13 @@ excerpt: An interactive map of the Western Balkans' rural artist colonies is now
 cover: /assets/images/blog/beyond-the-cities-is-live-cover-1783859930374.webp
 tags: [Network, Announcement]
 colonies: []
+gallery:
+  - /assets/images/colonies/demo-rural-3.webp
+  - /assets/images/colonies/demo-painting-2.webp
+  - /assets/images/colonies/demo-sculpture-2.webp
+  - /assets/images/colonies/demo-writing-4.webp
+  - /assets/images/colonies/demo-performance-3.webp
+  - /assets/images/colonies/demo-gallery-4.webp
 draft: false
 ---
 

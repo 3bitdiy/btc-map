@@ -18,7 +18,11 @@
       "latitude": 41.59353635601829,
       "longitude": 20.64918727838237,
       "photos": [
-        "/assets/images/colonies/demo-rural-4.webp"
+        "/assets/images/colonies/demo-rural-4.webp",
+        "/assets/images/colonies/demo-painting-1.webp",
+        "/assets/images/colonies/demo-sculpture-1.webp",
+        "/assets/images/colonies/demo-gallery-2.webp",
+        "/assets/images/colonies/demo-ceramics-3.webp"
       ]
     },
     {
@@ -144,7 +148,11 @@
       "latitude": 41.59353635601829,
       "longitude": 20.64918727838237,
       "photos": [
-        "/assets/images/colonies/demo-writing-1.webp"
+        "/assets/images/colonies/demo-writing-1.webp",
+        "/assets/images/colonies/demo-writing-2.webp",
+        "/assets/images/colonies/demo-writing-3.webp",
+        "/assets/images/colonies/demo-writing-4.webp",
+        "/assets/images/colonies/demo-rural-2.webp"
       ]
     },
     {

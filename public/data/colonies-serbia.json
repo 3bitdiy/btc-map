@@ -18,7 +18,11 @@
       "latitude": 45.36056,
       "longitude": 19.59167,
       "photos": [
-        "/assets/images/colonies/demo-painting-2.webp"
+        "/assets/images/colonies/demo-painting-2.webp",
+        "/assets/images/colonies/demo-painting-1.webp",
+        "/assets/images/colonies/demo-painting-4.webp",
+        "/assets/images/colonies/demo-gallery-2.webp",
+        "/assets/images/colonies/demo-rural-3.webp"
       ]
     },
     {
@@ -102,7 +106,12 @@
       "latitude": 45.82972,
       "longitude": 20.46528,
       "photos": [
-        "/assets/images/colonies/demo-sculpture-3.webp"
+        "/assets/images/colonies/demo-sculpture-3.webp",
+        "/assets/images/colonies/demo-sculpture-1.webp",
+        "/assets/images/colonies/demo-ceramics-1.webp",
+        "/assets/images/colonies/demo-ceramics-3.webp",
+        "/assets/images/colonies/demo-sculpture-4.webp",
+        "/assets/images/colonies/demo-gallery-1.webp"
       ]
     },
     {
@@ -643,7 +652,10 @@
       "latitude": 44.80401,
       "longitude": 20.46513,
       "photos": [
-        "/assets/images/colonies/demo-performance-2.webp"
+        "/assets/images/colonies/demo-performance-2.webp",
+        "/assets/images/colonies/demo-performance-3.webp",
+        "/assets/images/colonies/demo-performance-4.webp",
+        "/assets/images/colonies/demo-gallery-3.webp"
       ]
     },
     {
@@ -790,7 +802,10 @@
       "latitude": 44.87297196052243,
       "longitude": 20.649728685407506,
       "photos": [
-        "/assets/images/colonies/demo-street-2.webp"
+        "/assets/images/colonies/demo-street-2.webp",
+        "/assets/images/colonies/demo-street-3.webp",
+        "/assets/images/colonies/demo-gallery-4.webp",
+        "/assets/images/colonies/demo-photography-2.webp"
       ]
     },
     {
