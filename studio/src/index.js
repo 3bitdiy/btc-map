@@ -1095,6 +1095,12 @@ function editorPage(session, env) {
     `.acc-sec{padding:14px 12px}.acc-row{flex-wrap:wrap;padding:10px 12px}.acc-row span{overflow-wrap:anywhere}.acc-org-head{flex-wrap:wrap;gap:8px}.acc-add{flex-wrap:wrap}.acc-add .btn{width:100%}.acc-org .chip{max-width:100%;white-space:normal;text-align:left}` +
     `.chip{padding:7px 12px}` +
     `#p-body .toastui-editor-toolbar{overflow-x:auto}` +
+    // Toolbar popups (headings, link, image) are placed next to their button and
+    // run off a narrow screen — pin them inside the editor instead.
+    `#p-body .toastui-editor-popup{left:8px!important;right:auto!important;max-width:calc(100% - 16px);box-sizing:border-box;margin-left:0!important}` +
+    `#p-body .toastui-editor-popup-add-link,#p-body .toastui-editor-popup-add-image{width:calc(100% - 16px)!important}` +
+    `#p-body .toastui-editor-popup-body input[type=text]{width:100%!important;box-sizing:border-box}` +
+    `#p-body .toastui-editor-popup .toastui-editor-button-container{text-align:right}` +
     `.studio-foot{padding:24px 16px;font-size:12px}` +
     `}` +
     `</style>` +
