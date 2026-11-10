@@ -86,10 +86,32 @@ Requires the `beyondthecities.org` zone to be on this Cloudflare account.
 Signed-in organizers see a **Network** tab with two sub-views:
 **Directory** (who the other organizers are, how to reach them) and
 **Notices** (open calls, partner searches, offers, questions). A monthly
-digest goes out by email. Built in phases before the Nov 2026 workshop;
-phase 0 (database + tab shell + profile row at sign-in) is live.
+digest goes out by email (phase 3, not built yet).
 
-`GET /api/network/me` returns the signed-in person's profile.
+**Directory** — everyone with a studio account, grouped by the country of
+their colonies; each person edits their own profile (name, phone, about,
+languages, show-email / hidden / digest switches). Admins see who has not
+filled in a profile. The "Group chat" card links the organizers' Viber/WhatsApp
+group (link set by an admin in the Access tab).
+
+**Notices** — a notice has a type (open call · looking for partners ·
+offering · question · other), title, details, optional deadline and colony.
+It stays on the board until the end of its deadline day, or 90 days after
+posting when there is none; the author's expired/closed notices stay in a
+"Your closed & expired notices" section where they can be edited and
+reposted (a new deadline is required if the old one passed). Replies go
+straight to the author (Reply by email / WhatsApp / Viber — the author's
+email is always shown on their notice); there are no comments. The author
+can edit, close, reopen or delete; admins can close or delete any notice.
+Limits: 120-char title, 2000-char details, 20 open notices per person.
+Visible to signed-in organizers only (the `is_public` column is reserved
+for a possible public `/calls` page; nothing sets it yet).
+
+API (all require a session): `GET/PUT /api/network/me`,
+`GET /api/network/directory`, `PUT /api/network/community` (admin),
+`GET/POST /api/network/notices`, `PUT /api/network/notice/:id`
+(`{status}` alone closes/reopens; a full body edits + reposts),
+`DELETE /api/network/notice/:id`.
 
 ## Known follow-ups (deferred)
 

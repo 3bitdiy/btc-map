@@ -79,6 +79,17 @@ export default {
       }
       if (pathname === "/api/network/directory") return apiNetworkDirectory(request, env);
       if (pathname === "/api/network/community" && request.method === "PUT") return apiNetworkCommunityPut(request, env);
+      if (pathname === "/api/network/notices") {
+        if (request.method === "GET") return apiNoticesList(request, env);
+        if (request.method === "POST") return apiNoticeCreate(request, env);
+        return json({ error: "method_not_allowed" }, 405);
+      }
+      const noticeMatch = pathname.match(/^\/api\/network\/notice\/(\d+)$/);
+      if (noticeMatch) {
+        if (request.method === "PUT") return apiNoticeUpdate(request, env, noticeMatch[1]);
+        if (request.method === "DELETE") return apiNoticeDelete(request, env, noticeMatch[1]);
+        return json({ error: "method_not_allowed" }, 405);
+      }
       if (pathname === "/api/colonies") return apiColonies(request, env);
 
       const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photos?$/);
@@ -838,6 +849,192 @@ async function apiNetworkDirectory(request, env) {
   return json({ people, community, isAdmin });
 }
 
+// --- network: notice board ---------------------------------------------------
+// Open calls, partner searches, offers and questions between organizers. A
+// notice is visible to every signed-in organizer until its deadline passes
+// (or 90 days after posting when there is none); the author can edit, close
+// or delete it, admins can close or delete any. Replies go straight to the
+// author (email / WhatsApp / Viber) — there are no comments.
+const NOTICE_TYPES = ["open_call", "partners", "offering", "question", "other"];
+const NOTICE_LIMITS = { title: 120, body: 2000 };
+const NOTICE_DEFAULT_DAYS = 90;
+const MAX_OPEN_NOTICES = 20;
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// When a notice drops off the board: end of the deadline day, else N days on.
+function noticeExpiry(deadline, fromIso) {
+  if (deadline) return deadline + "T23:59:59.999Z";
+  const d = new Date(fromIso);
+  d.setUTCDate(d.getUTCDate() + NOTICE_DEFAULT_DAYS);
+  return d.toISOString();
+}
+
+// Validate + normalise the fields a client sends for a notice.
+function readNotice(body, session) {
+  const type = String(body.type || "").trim();
+  if (!NOTICE_TYPES.includes(type)) return { error: "bad_type", detail: "Pick a notice type." };
+  const title = String(body.title || "").trim().slice(0, NOTICE_LIMITS.title);
+  if (!title) return { error: "missing_title", detail: "A title is required." };
+  const text = String(body.body || "").trim().slice(0, NOTICE_LIMITS.body);
+  const deadline = String(body.deadline || "").trim();
+  if (deadline) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline) || Number.isNaN(Date.parse(deadline))) {
+      return { error: "bad_deadline", detail: "The deadline must be a date." };
+    }
+    if (deadline < todayIso()) return { error: "past_deadline", detail: "The deadline is in the past." };
+  }
+  const colonyId = String(body.colony_id || "").trim();
+  if (colonyId && session.role !== "admin" && !(session.colonies || []).map(String).includes(colonyId)) {
+    return { error: "forbidden_colony", detail: "You can only post for your own colony." };
+  }
+  return { data: { type, title, body: text, deadline: deadline || null, colony_id: colonyId, is_public: body.is_public ? 1 : 0 } };
+}
+
+function noticeView(r, author, colony, me, isAdmin, now) {
+  const mine = r.author_email === me;
+  return {
+    id: r.id,
+    type: r.type,
+    title: r.title,
+    body: r.body,
+    deadline: r.deadline,
+    colony_id: r.colony_id,
+    colony: colony ? { id: colony.id, name: colony.name, city: colony.city, country: colony.country } : null,
+    // The author posted to get replies, so their email is always shown here
+    // (the directory's "show my email" switch does not apply to notices).
+    author: {
+      email: r.author_email,
+      name: (author && (author.name || author.google_name)) || "",
+      phone: author ? author.phone || "" : "",
+    },
+    status: r.status,
+    expired: r.expires_at <= now,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    expires_at: r.expires_at,
+    mine,
+    can_edit: mine,
+    can_close: mine || isAdmin,
+    can_delete: mine || isAdmin,
+  };
+}
+
+// Open notices for everyone, plus the caller's own closed/expired ones (so
+// they can repost or delete them).
+async function apiNoticesList(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  const me = profileKey(session.email);
+  const isAdmin = session.role === "admin";
+  const now = nowIso();
+  const [open, mine, colonies] = await Promise.all([
+    env.NETWORK.prepare("SELECT * FROM notices WHERE status = 'open' AND expires_at > ?1 ORDER BY created_at DESC").bind(now).all(),
+    env.NETWORK.prepare(
+      "SELECT * FROM notices WHERE author_email = ?1 AND (status != 'open' OR expires_at <= ?2) ORDER BY updated_at DESC LIMIT 30",
+    ).bind(me, now).all(),
+    listAllColonies(env),
+  ]);
+  const openRows = open.results || [];
+  const mineRows = mine.results || [];
+  const emails = [...new Set([...openRows, ...mineRows].map((r) => r.author_email))];
+  const authors = new Map();
+  if (emails.length) {
+    const ph = emails.map((_, i) => "?" + (i + 1)).join(",");
+    const res = await env.NETWORK.prepare("SELECT email, name, google_name, phone FROM profiles WHERE email IN (" + ph + ")").bind(...emails).all();
+    for (const r of res.results || []) authors.set(r.email, r);
+  }
+  const byId = new Map(colonies.map((c) => [c.id, c]));
+  const view = (r) => noticeView(r, authors.get(r.author_email), byId.get(r.colony_id), me, isAdmin, now);
+  return json({ notices: openRows.map(view), mine: mineRows.map(view), isAdmin });
+}
+
+async function apiNoticeCreate(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  const parsed = readNotice(body, session);
+  if (parsed.error) return json(parsed, 400);
+  const d = parsed.data;
+  const me = profileKey(session.email);
+  const now = nowIso();
+  const cnt = await env.NETWORK.prepare(
+    "SELECT COUNT(*) AS n FROM notices WHERE author_email = ?1 AND status = 'open' AND expires_at > ?2",
+  ).bind(me, now).first();
+  if (cnt && cnt.n >= MAX_OPEN_NOTICES) {
+    return json({ error: "too_many", detail: `You already have ${MAX_OPEN_NOTICES} open notices — close some first.` }, 400);
+  }
+  await touchProfile(env, me, session.name);
+  const res = await env.NETWORK.prepare(
+    "INSERT INTO notices (type, title, body, deadline, colony_id, author_email, is_public, status, created_at, updated_at, expires_at) " +
+      "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?8, ?8, ?9)",
+  )
+    .bind(d.type, d.title, d.body, d.deadline, d.colony_id, me, d.is_public, now, noticeExpiry(d.deadline, now))
+    .run();
+  return json({ ok: true, id: res.meta && res.meta.last_row_id }, 201);
+}
+
+// Two shapes: `{status:'open'|'closed'}` alone closes/reopens (author or
+// admin); a full notice body edits it (author only) and reposts it.
+async function apiNoticeUpdate(request, env, id) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  const row = await env.NETWORK.prepare("SELECT * FROM notices WHERE id = ?1").bind(Number(id)).first();
+  if (!row) return json({ error: "not_found" }, 404);
+  const me = profileKey(session.email);
+  const mine = row.author_email === me;
+  const isAdmin = session.role === "admin";
+  const now = nowIso();
+
+  if (body.status !== undefined && body.title === undefined) {
+    if (!mine && !isAdmin) return json({ error: "forbidden" }, 403);
+    const status = body.status === "closed" ? "closed" : "open";
+    if (status === "open" && row.expires_at <= now) {
+      return json({ error: "expired", detail: "This notice has expired — edit it with a new deadline to repost it." }, 400);
+    }
+    await env.NETWORK.prepare("UPDATE notices SET status = ?2, updated_at = ?3 WHERE id = ?1").bind(row.id, status, now).run();
+    return json({ ok: true, status });
+  }
+
+  if (!mine) return json({ error: "forbidden", detail: "Only the author can edit a notice." }, 403);
+  const parsed = readNotice(body, session);
+  if (parsed.error) return json(parsed, 400);
+  const d = parsed.data;
+  await env.NETWORK.prepare(
+    "UPDATE notices SET type = ?2, title = ?3, body = ?4, deadline = ?5, colony_id = ?6, is_public = ?7, status = 'open', updated_at = ?8, expires_at = ?9 WHERE id = ?1",
+  )
+    .bind(row.id, d.type, d.title, d.body, d.deadline, d.colony_id, d.is_public, now, noticeExpiry(d.deadline, now))
+    .run();
+  return json({ ok: true });
+}
+
+async function apiNoticeDelete(request, env, id) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  const row = await env.NETWORK.prepare("SELECT id, author_email FROM notices WHERE id = ?1").bind(Number(id)).first();
+  if (!row) return json({ error: "not_found" }, 404);
+  if (row.author_email !== profileKey(session.email) && session.role !== "admin") return json({ error: "forbidden" }, 403);
+  await env.NETWORK.prepare("DELETE FROM notices WHERE id = ?1").bind(row.id).run();
+  return json({ ok: true });
+}
+
 // --- front-matter parse / serialize (mirrors scripts/gen-blog.mjs) ------------
 function parseFrontMatter(raw) {
   const m = String(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -1189,8 +1386,7 @@ function editorPage(session, env) {
       `<div class="actions"><button class="btn" onclick="saveCommunity()">Save group link</button><span id="community-status"></span></div></div></div>`
     : "";
 
-  // Network tab: Directory / Notices sub-views (phase 0 = shell; the lists
-  // arrive in the next phases).
+  // Network tab: Directory / Notices sub-views.
   const networkPanel =
     `<div id="panel-network" style="display:none">` +
     `<div class="net-head"><h2 style="color:#000;margin:0 0 4px">Network</h2>` +
@@ -1219,7 +1415,27 @@ function editorPage(session, env) {
     `<div class="search-wrap" style="margin-bottom:14px"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>` +
     `<input id="dir-search" type="search" placeholder="Search people, colonies, cities…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="dir-search" aria-label="Clear search" hidden>×</button></div>` +
     `<div id="dir-list"><p style="opacity:.7;font-size:13px">Loading…</p></div></div>` +
-    `<div id="subpanel-notices" style="display:none"><p class="pempty">The notice board (open calls, partner searches, offers, questions) is coming in the next update.</p></div>` +
+    `<div id="subpanel-notices" style="display:none">` +
+    `<div id="notices-index"><div class="notice-head"><p>Open calls, partner searches, offers and questions for other organizers. A notice stays up until its deadline, or for 90 days.</p>` +
+    `<button class="btn" onclick="newNotice()">+ New notice</button></div>` +
+    `<div id="notice-filters" class="chips" style="margin-bottom:14px"></div>` +
+    `<div id="notices-list"><p class="pempty">Loading…</p></div>` +
+    `<div id="notices-mine" hidden><div class="dir-group">Your closed &amp; expired notices</div><div id="notices-mine-list"></div></div></div>` +
+    `<div id="notice-editor" style="display:none">` +
+    `<button type="button" class="back" onclick="cancelNotice()">‹ All notices</button>` +
+    `<h3 id="ne-title" style="color:#000;margin:0 0 12px"></h3>` +
+    `<div class="grid">` +
+    `<label class="fld"><span>Type</span><select id="n-type">` +
+    `<option value="open_call">Open call</option><option value="partners">Looking for partners</option><option value="offering">Offering</option>` +
+    `<option value="question">Question</option><option value="other">Other</option></select></label>` +
+    `<label class="fld"><span>Deadline (optional)</span><input id="n-deadline" type="date"/></label>` +
+    `<label class="fld full"><span>Title</span><input id="n-title" type="text" maxlength="${NOTICE_LIMITS.title}" placeholder="e.g. Open call: residency for ceramic artists, July 2027"/></label>` +
+    `<label class="fld full"><span>Details</span><textarea id="n-body" rows="6" maxlength="${NOTICE_LIMITS.body}" placeholder="What you are offering or looking for, for whom, when, and how to reply."></textarea></label>` +
+    `<label class="fld full"><span>Colony</span><select id="n-colony"></select></label>` +
+    `<p id="n-contact" class="hint" style="grid-column:1/-1;margin:0"></p></div>` +
+    `<div class="actions"><button id="n-save" class="btn" onclick="saveNotice()">Post notice</button>` +
+    `<button class="btn ghost" onclick="cancelNotice()">Cancel</button><span id="n-status"></span></div></div>` +
+    `</div>` +
     `</div>`;
 
   const html =
@@ -1302,6 +1518,18 @@ function editorPage(session, env) {
     `.person .chips{margin-top:8px}.person .chip{cursor:default;padding:3px 10px;font-size:11.5px}` +
     `.person-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.person-actions a{font-size:12.5px;padding:7px 14px;text-decoration:none;display:inline-block}` +
     `.person-note{font-size:11.5px;color:#9a3b00;margin-top:8px}` +
+    `.notice-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}.notice-head p{margin:0;font-size:13px;opacity:.75;line-height:1.5}` +
+    `.notice{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:14px 16px;margin-bottom:10px}.notice.mine{border-color:#ff4326}.notice.off{opacity:.72}` +
+    `.notice-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}` +
+    `.ntype{display:inline-block;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.5;color:#fff;background:#6b6b6b}` +
+    `.ntype.open_call{background:#ff4326}.ntype.partners{background:#726a5d}.ntype.offering{background:#2f6f4f}.ntype.question{background:#1c5f9c}` +
+    `.ndead{font-size:12px;font-weight:700;color:#6b6b6b}.ndead.soon{color:#ff4326}` +
+    `.notice h4{margin:0;font-size:16px;color:#000;line-height:1.3}` +
+    `.nmeta{font-size:12.5px;opacity:.75;margin-top:4px}.nmeta a{font-weight:600}.nmeta a:hover{color:#ff4326}` +
+    `.nbody{font-size:13.5px;line-height:1.55;margin:10px 0 0;white-space:pre-line;overflow-wrap:anywhere}` +
+    `.nacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.nacts a,.nacts button{font-size:12.5px;padding:7px 14px;text-decoration:none;display:inline-block;width:auto}` +
+    `.nstate{font-size:11.5px;color:#9a3b00;margin-top:8px}` +
+    `#notice-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px}` +
     `.acc-sec{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}.acc-sec h3{color:#000;margin:0 0 12px;font-size:16px}` +
     `.h-sub{font-weight:400;color:#6b6b6b}` +
     `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
@@ -1373,6 +1601,7 @@ function editorPage(session, env) {
     `.posts-head{gap:10px;flex-wrap:wrap}` +
     `.post-row{flex-direction:column;align-items:stretch}.post-row .btn{flex:1}` +
     `.net-card{padding:14px 12px}.subtabs{overflow-x:auto;scrollbar-width:none}.subtab{flex:0 0 auto}.person-actions a{flex:1 1 auto;text-align:center}` +
+    `.notice-head{flex-wrap:wrap}.notice-head .btn{width:100%}#notice-editor{padding:16px 14px;border-radius:14px}.nacts a,.nacts button{flex:1 1 auto;text-align:center}` +
     `.acc-sec{padding:14px 12px}.acc-row{flex-wrap:wrap;padding:10px 12px}.acc-row span{overflow-wrap:anywhere}.acc-org-head{flex-wrap:wrap;gap:8px}.acc-add{flex-wrap:wrap}.acc-add .btn{width:100%}.acc-org .chip{max-width:100%;white-space:normal;text-align:left}` +
     `.chip{padding:7px 12px}` +
     `#p-body .toastui-editor-toolbar{overflow-x:auto}` +
@@ -1584,7 +1813,8 @@ const EDITOR_JS =
   "var COUNTRY_ORDER=['Serbia','Bosnia and Herzegovina','North Macedonia'];" +
   "function showSub(name){netSub=name;['directory','notices'].forEach(function(n){" +
   "var p=q('subpanel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
-  "var t=q('sub-'+n);if(t){t.classList.toggle('on',n===name);t.setAttribute('aria-selected',String(n===name))}})}" +
+  "var t=q('sub-'+n);if(t){t.classList.toggle('on',n===name);t.setAttribute('aria-selected',String(n===name))}});" +
+  "if(name==='notices'&&!notices)loadNotices()}" +
   "async function loadNetwork(){if(!netMe){var r=await fetch('/api/network/me');var out=await r.json().catch(function(){return{}});" +
   "if(!r.ok){q('net-me').textContent='Could not load your profile: '+(out.detail||out.error||r.status);return}netMe=out.profile}" +
   "renderNetMe();if(!dirPeople)loadDirectory()}" +
@@ -1637,6 +1867,62 @@ const EDITOR_JS =
   "if(notes.length){var n=elx('div','person-note');n.textContent=notes.join(' \\u00b7 ');card.appendChild(n)}}" +
   "return card}" +
   "document.addEventListener('input',function(e){if(e.target&&e.target.id==='dir-search'){dirTerm=e.target.value;syncClear('dir-search');if(dirPeople)renderDirectory()}});" +
+  // --- network: notice board ---
+  "var NOTICE_TYPES={open_call:'Open call',partners:'Looking for partners',offering:'Offering',question:'Question',other:'Other'};" +
+  "var notices=null;var noticesMine=[];var noticeAdmin=false;var noticeFilter='all';var editingNotice=null;var noticeDirty=false;" +
+  "async function loadNotices(){var box=q('notices-list');box.innerHTML='<p class=\"pempty\">Loading…</p>';" +
+  "var r=await fetch('/api/network/notices');var out=await r.json().catch(function(){return{}});" +
+  "if(!r.ok){box.innerHTML='';var pe=elx('p','pempty');pe.textContent='Could not load notices: '+(out.detail||out.error||r.status);box.appendChild(pe);return}" +
+  "notices=out.notices||[];noticesMine=out.mine||[];noticeAdmin=!!out.isAdmin;renderNoticeFilters();renderNotices();" +
+  "q('sub-notices').textContent='Notices'+(notices.length?' ('+notices.length+')':'')}" +
+  "function renderNoticeFilters(){var box=q('notice-filters');box.innerHTML='';var counts={};notices.forEach(function(n){counts[n.type]=(counts[n.type]||0)+1});" +
+  "if(noticeFilter!=='all'&&!counts[noticeFilter])noticeFilter='all';" +
+  "function mk(label,val,cnt){var b=elx('button','chip'+(noticeFilter===val?' on':''));b.type='button';b.textContent=label+(cnt?' \\u00b7 '+cnt:'');b.onclick=function(){noticeFilter=val;renderNoticeFilters();renderNotices()};box.appendChild(b)}" +
+  "if(!notices.length)return;mk('All','all',notices.length);Object.keys(NOTICE_TYPES).forEach(function(t){if(counts[t])mk(NOTICE_TYPES[t],t,counts[t])})}" +
+  "function fmtDate(s){if(!s)return '';var d=new Date(s.length===10?s+'T12:00:00Z':s);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}" +
+  "function daysUntil(ymd){var t=new Date();var today=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());var p=ymd.split('-');return Math.round((Date.UTC(+p[0],+p[1]-1,+p[2])-today)/864e5)}" +
+  "function renderNotices(){var box=q('notices-list');box.innerHTML='';var list=notices.filter(function(n){return noticeFilter==='all'||n.type===noticeFilter});" +
+  "if(!list.length){var pe=elx('p','pempty');pe.textContent=notices.length?'No notices of this type.':'No open notices yet. Post the first one \\u2014 an open call, a partner search, an offer or a question.';box.appendChild(pe)}" +
+  "list.forEach(function(n){box.appendChild(noticeCard(n,false))});" +
+  "var ml=q('notices-mine-list');ml.innerHTML='';noticesMine.forEach(function(n){ml.appendChild(noticeCard(n,true))});q('notices-mine').hidden=!noticesMine.length}" +
+  "function noticeCard(n,off){var card=elx('div','notice'+(n.mine?' mine':'')+(off?' off':''));var top=elx('div','notice-top');" +
+  "var ty=elx('span','ntype '+n.type);ty.textContent=NOTICE_TYPES[n.type]||n.type;top.appendChild(ty);" +
+  "if(n.deadline){var dl=elx('span','ndead');var d=daysUntil(n.deadline);var when=d<0?'passed':d===0?'today':d===1?'tomorrow':'in '+d+' days';if(d>=0&&d<=7)dl.className+=' soon';dl.textContent='Deadline '+fmtDate(n.deadline)+' \\u00b7 '+when;top.appendChild(dl)}" +
+  "card.appendChild(top);var h=document.createElement('h4');h.textContent=n.title;card.appendChild(h);" +
+  "var meta=elx('div','nmeta');meta.appendChild(document.createTextNode(n.mine?'You':(n.author.name||n.author.email)));" +
+  "if(n.colony){meta.appendChild(document.createTextNode(' \\u00b7 '));var a=document.createElement('a');a.href='https://beyondthecities.org/map.html?colony='+encodeURIComponent(n.colony.id);a.target='_blank';a.rel='noopener';a.textContent=n.colony.name;meta.appendChild(a);if(n.colony.city)meta.appendChild(document.createTextNode(', '+n.colony.city))}" +
+  "meta.appendChild(document.createTextNode(' \\u00b7 '+fmtDate(n.created_at)));card.appendChild(meta);" +
+  "if(n.body){var b=elx('p','nbody');b.textContent=n.body;card.appendChild(b)}" +
+  "var acts=elx('div','nacts');" +
+  "if(!n.mine&&!off){var m=document.createElement('a');m.className='btn ghost';m.href='mailto:'+n.author.email+'?subject='+encodeURIComponent('Re: '+n.title);m.textContent='Reply by email';acts.appendChild(m);" +
+  "var dg=phoneDigits(n.author.phone);if(dg){var w=document.createElement('a');w.className='btn ghost';w.href='https://wa.me/'+dg+'?text='+encodeURIComponent('Hi, about your notice \\u201c'+n.title+'\\u201d: ');w.target='_blank';w.rel='noopener';w.textContent='WhatsApp';acts.appendChild(w);" +
+  "var v=document.createElement('a');v.className='btn ghost';v.href='viber://chat?number=%2B'+dg;v.textContent='Viber';acts.appendChild(v)}}" +
+  "if(n.can_edit){var e=btnx(off?'Edit & repost':'Edit');e.onclick=function(){editNotice(n)};acts.appendChild(e)}" +
+  "if(n.can_close&&!n.expired){if(n.status==='open'){var c=btnx('Close');c.onclick=function(){setNoticeStatus(n.id,'closed')};acts.appendChild(c)}else{var ro=btnx('Reopen');ro.onclick=function(){setNoticeStatus(n.id,'open')};acts.appendChild(ro)}}" +
+  "if(n.can_delete){var del=btnx('Delete');del.onclick=function(){deleteNotice(n.id)};acts.appendChild(del)}" +
+  "if(acts.children.length)card.appendChild(acts);" +
+  "if(off){var st=elx('div','nstate');st.textContent=n.expired?(n.deadline?'Expired \\u2014 the deadline has passed. Edit it with a new deadline to repost.':'Expired after 90 days. Edit it to repost.'):'Closed';card.appendChild(st)}" +
+  "return card}" +
+  "function fillNoticeColonies(sel){sel.innerHTML='';var o=document.createElement('option');o.value='';o.textContent='\\u2014 none / general \\u2014';sel.appendChild(o);" +
+  "pickerColonies.forEach(function(c){var op=document.createElement('option');op.value=c.id;op.textContent=c.name+(c.place?' \\u00b7 '+c.place:'');sel.appendChild(op)})}" +
+  "function noticeContactLine(){var t='Replies come straight to you: other organizers see your email'+(netMe?' ('+netMe.email+')':'')+(netMe&&netMe.phone?' and your phone for WhatsApp / Viber':'')+'. Notices are visible to signed-in organizers only.';q('n-contact').textContent=t}" +
+  "function openNoticeEditor(){noticeDirty=false;q('notices-index').style.display='none';q('notice-editor').style.display='block';scrollTo(0,0)}" +
+  "function closeNoticeEditor(){q('notice-editor').style.display='none';q('notices-index').style.display='block';editingNotice=null;scrollTo(0,0)}" +
+  "function cancelNotice(){if(noticeDirty&&!confirm('Discard unsaved changes?'))return;closeNoticeEditor()}" +
+  "function newNotice(){editingNotice=null;q('ne-title').textContent='New notice';q('n-type').value='open_call';q('n-title').value='';q('n-body').value='';q('n-deadline').value='';" +
+  "var sel=q('n-colony');fillNoticeColonies(sel);sel.value=pickerColonies.length===1?String(pickerColonies[0].id):'';q('n-status').textContent='';q('n-save').textContent='Post notice';noticeContactLine();openNoticeEditor();q('n-title').focus()}" +
+  "function editNotice(n){editingNotice=n.id;q('ne-title').textContent='Edit notice';q('n-type').value=n.type;q('n-title').value=n.title;q('n-body').value=n.body||'';q('n-deadline').value=n.deadline||'';" +
+  "var sel=q('n-colony');fillNoticeColonies(sel);sel.value=n.colony_id||'';q('n-status').textContent='';q('n-save').textContent=(n.status!=='open'||n.expired)?'Save & repost':'Save changes';noticeContactLine();openNoticeEditor()}" +
+  "async function saveNotice(){var title=q('n-title').value.trim();if(!title){q('n-status').textContent='A title is required';q('n-title').focus();return}q('n-status').textContent='Saving…';" +
+  "var body={type:q('n-type').value,title:title,body:q('n-body').value,deadline:q('n-deadline').value,colony_id:q('n-colony').value};" +
+  "var r=await fetch(editingNotice?'/api/network/notice/'+editingNotice:'/api/network/notices',{method:editingNotice?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
+  "var out=await r.json().catch(function(){return{}});if(!r.ok){q('n-status').textContent=out.detail||out.error||('Error '+r.status);return}" +
+  "noticeDirty=false;closeNoticeEditor();noticeFilter='all';loadNotices()}" +
+  "async function setNoticeStatus(id,status){var r=await fetch('/api/network/notice/'+id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({status:status})});" +
+  "var out=await r.json().catch(function(){return{}});if(!r.ok){alert(out.detail||out.error||('Error '+r.status));return}loadNotices()}" +
+  "async function deleteNotice(id){if(!confirm('Delete this notice? This cannot be undone.'))return;var r=await fetch('/api/network/notice/'+id,{method:'DELETE'});" +
+  "var out=await r.json().catch(function(){return{}});if(!r.ok){alert(out.detail||out.error||('Error '+r.status));return}loadNotices()}" +
+  "document.addEventListener('input',function(e){if(e.target&&e.target.closest&&e.target.closest('#notice-editor'))noticeDirty=true});" +
   "function setPostStatus(t){q('p-status').textContent=t}" +
   "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
   "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
