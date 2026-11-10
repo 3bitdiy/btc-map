@@ -1075,6 +1075,8 @@ function editorPage(session, env) {
     `#p-body .ProseMirror{font-family:'Montserrat',system-ui,sans-serif}` +
     `#p-body .toastui-editor-mode-switch{border-radius:0 0 10px 10px}` +
     // --- phones (organizers at the workshop) ---
+    // Touch screens: editor tooltips stick after a tap and cover the menus.
+    `@media (hover:none){#p-body .toastui-editor-tooltip{display:none!important}}` +
     `@media (max-width:640px){` +
     `.bar{padding:10px 14px;gap:6px}.bar-logo{height:26px}.bar-brand{font-size:14px}` +
     `.bar-right{font-size:12px;gap:6px 8px;width:100%}.bar-site{order:3;margin-left:auto}` +
