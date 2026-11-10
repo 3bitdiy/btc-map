@@ -72,7 +72,13 @@ export default {
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
       if (pathname === "/auth/logout") return authLogout(origin);
       if (pathname === "/api/me") return apiMe(request, env);
-      if (pathname === "/api/network/me") return apiNetworkMe(request, env);
+      if (pathname === "/api/network/me") {
+        if (request.method === "GET") return apiNetworkMe(request, env);
+        if (request.method === "PUT") return apiNetworkMePut(request, env);
+        return json({ error: "method_not_allowed" }, 405);
+      }
+      if (pathname === "/api/network/directory") return apiNetworkDirectory(request, env);
+      if (pathname === "/api/network/community" && request.method === "PUT") return apiNetworkCommunityPut(request, env);
       if (pathname === "/api/colonies") return apiColonies(request, env);
 
       const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photos?$/);
@@ -601,7 +607,7 @@ async function apiAccessGet(request, env) {
   access.admins = (access.admins || []).filter(
     (a) => !owners.some((o) => o.toLowerCase() === String(a).toLowerCase()),
   );
-  return json({ access, colonies: await listAllColonies(env), owners, isOwner: !!session.owner });
+  return json({ access, colonies: await listAllColonies(env), owners, isOwner: !!session.owner, community: await loadCommunity(env) });
 }
 
 async function apiAccessPut(request, env) {
@@ -703,6 +709,135 @@ async function apiNetworkMe(request, env) {
   return json({ profile: profileView(row), role: session.role });
 }
 
+// Field limits for the self-edited profile.
+const PROFILE_LIMITS = { name: 80, phone: 40, about: 600, languages: 80 };
+
+// A profile counts as "filled in" once the person has saved it at least once.
+function profileFilled(row) {
+  return !!row && row.updated_at !== row.created_at;
+}
+
+async function apiNetworkMePut(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  const key = profileKey(session.email);
+  const str = (k) => String(body[k] == null ? "" : body[k]).trim().slice(0, PROFILE_LIMITS[k]);
+  const name = str("name");
+  const phone = str("phone").replace(/[^\d+\s().\/-]/g, "").trim();
+  const about = str("about");
+  const languages = str("languages").split(",").map((x) => x.trim()).filter(Boolean).join(", ");
+  const flag = (k, dflt) => (body[k] == null ? dflt : body[k] ? 1 : 0);
+  // Make sure the row exists (accounts from before the network).
+  await touchProfile(env, key, session.name);
+  await env.NETWORK.prepare(
+    "UPDATE profiles SET name = ?2, phone = ?3, about = ?4, languages = ?5, show_email = ?6, visible = ?7, newsletter = ?8, updated_at = ?9 WHERE email = ?1",
+  )
+    .bind(key, name, phone, about, languages, flag("show_email", 1), flag("visible", 1), flag("newsletter", 1), nowIso())
+    .run();
+  const row = await env.NETWORK.prepare("SELECT * FROM profiles WHERE email = ?1").bind(key).first();
+  return json({ ok: true, profile: profileView(row) });
+}
+
+// Link to the organizers' group chat (Viber/WhatsApp), set by admins in the
+// Access tab. Stored in KV so it can change without a redeploy.
+async function loadCommunity(env) {
+  try {
+    const raw = await env.ACCESS.get("community");
+    const c = raw ? JSON.parse(raw) : {};
+    return { url: String(c.url || ""), label: String(c.label || "") };
+  } catch {
+    return { url: "", label: "" };
+  }
+}
+
+async function apiNetworkCommunityPut(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  const url = String(body.url || "").trim().slice(0, 300);
+  if (url && !/^https:\/\//i.test(url)) return json({ error: "bad_url", detail: "The link must start with https://" }, 400);
+  const label = String(body.label || "").trim().slice(0, 60);
+  await env.ACCESS.put("community", JSON.stringify({ url, label }));
+  return json({ ok: true, community: { url, label } });
+}
+
+// Everyone with a studio account, joined with their profile, for the directory.
+// Organizers only see what people chose to share; admins also see who has not
+// filled in a profile or never signed in.
+async function apiNetworkDirectory(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable" }, 503);
+  const isAdmin = session.role === "admin";
+  const me = profileKey(session.email);
+
+  const [access, colonies, community] = await Promise.all([loadAccess(env), listAllColonies(env), loadCommunity(env)]);
+  const byId = new Map(colonies.map((c) => [c.id, c]));
+  const owners = ownerEmails(env);
+
+  // email (lower-cased) → { role, colonyIds }
+  const accounts = new Map();
+  for (const e of owners) accounts.set(profileKey(e), { role: "admin", owner: true, ids: [] });
+  for (const e of access.admins || []) if (!accounts.has(profileKey(e))) accounts.set(profileKey(e), { role: "admin", owner: false, ids: [] });
+  for (const e of Object.keys(access.organizers || {})) {
+    const k = profileKey(e);
+    const ids = (access.organizers[e] || []).map(String);
+    if (accounts.has(k)) accounts.get(k).ids.push(...ids);
+    else accounts.set(k, { role: "organizer", owner: false, ids });
+  }
+
+  const keys = [...accounts.keys()];
+  const rows = new Map();
+  if (keys.length) {
+    const ph = keys.map((_, i) => "?" + (i + 1)).join(",");
+    const res = await env.NETWORK.prepare("SELECT * FROM profiles WHERE email IN (" + ph + ")").bind(...keys).all();
+    for (const r of res.results || []) rows.set(r.email, r);
+  }
+
+  const people = [];
+  for (const [email, acc] of accounts) {
+    const row = rows.get(email);
+    const cols = [...new Set(acc.ids)].map((id) => byId.get(id)).filter(Boolean);
+    const countries = [...new Set(cols.map((c) => c.country).filter(Boolean))];
+    const visible = row ? !!row.visible : true;
+    const filled = profileFilled(row);
+    if (!isAdmin && email !== me && !visible) continue;
+    const showEmail = isAdmin || email === me || !row || !!row.show_email;
+    people.push({
+      email: showEmail ? email : "",
+      name: (row && (row.name || row.google_name)) || "",
+      role: acc.role,
+      owner: acc.owner,
+      colonies: cols.map((c) => ({ id: c.id, name: c.name, city: c.city, country: c.country })),
+      countries,
+      phone: row ? row.phone || "" : "",
+      about: row ? row.about || "" : "",
+      languages: row ? row.languages || "" : "",
+      me: email === me,
+      // admin-only hints
+      visible: isAdmin ? visible : undefined,
+      filled: isAdmin ? filled : undefined,
+      signed_in: isAdmin ? !!row : undefined,
+      last_login: isAdmin && row ? row.last_login : undefined,
+    });
+  }
+  people.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
+  return json({ people, community, isAdmin });
+}
+
 // --- front-matter parse / serialize (mirrors scripts/gen-blog.mjs) ------------
 function parseFrontMatter(raw) {
   const m = String(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -767,7 +902,7 @@ async function listAllColonies(env) {
     if (!file) continue;
     const data = JSON.parse(file.text);
     const list = Array.isArray(data) ? data : data.colonies || [];
-    for (const c of list) out.push({ id: String(c.id), name: c.art_colony_name });
+    for (const c of list) out.push({ id: String(c.id), name: c.art_colony_name, country: c.country || "", city: c.city || "" });
   }
   out.sort((a, b) => String(a.name).localeCompare(String(b.name)));
   return out;
@@ -1047,7 +1182,11 @@ function editorPage(session, env) {
       `<div class="acc-sec"><h3>Organizers <span class="h-sub">(edit only their assigned colonies)</span></h3><div id="orgs-list"></div>` +
       `<div class="acc-add"><input id="org-email" type="email" placeholder="email@example.com"/>` +
       `<button class="btn ghost" onclick="addOrganizer()">Add organizer</button></div></div>` +
-      `<div class="actions"><button class="btn" onclick="saveAccess()">Save access</button><span id="access-status"></span></div></div>`
+      `<div class="actions"><button class="btn" onclick="saveAccess()">Save access</button><span id="access-status"></span></div>` +
+      `<div class="acc-sec" style="margin-top:28px"><h3>Organizers' group chat <span class="h-sub">(shown in the Network tab)</span></h3>` +
+      `<div class="grid"><label class="fld"><span>Invite link (Viber / WhatsApp)</span><input id="community-url" type="url" placeholder="https://invite.viber.com/…" maxlength="300"/></label>` +
+      `<label class="fld"><span>Label</span><input id="community-label" type="text" placeholder="Viber group" maxlength="60"/></label></div>` +
+      `<div class="actions"><button class="btn" onclick="saveCommunity()">Save group link</button><span id="community-status"></span></div></div></div>`
     : "";
 
   // Network tab: Directory / Notices sub-views (phase 0 = shell; the lists
@@ -1058,9 +1197,28 @@ function editorPage(session, env) {
     `<p style="opacity:.75;font-size:13px;margin:0 0 14px">Other colony organizers across the Western Balkans — find each other, share calls and offers. Visible only to signed-in organizers.</p></div>` +
     `<div class="subtabs" role="tablist"><button id="sub-directory" class="subtab on" role="tab" onclick="showSub('directory')">Directory</button>` +
     `<button id="sub-notices" class="subtab" role="tab" onclick="showSub('notices')">Notices</button></div>` +
-    `<div id="subpanel-directory"><div class="net-card"><div class="picker-head">You</div><p id="net-me" class="net-me">Loading…</p>` +
-    `<p class="hint">Your profile is the card other organizers will see in the directory. Editing it comes with the next update.</p></div>` +
-    `<p class="pempty">The organizer directory is coming in the next update.</p></div>` +
+    `<div id="subpanel-directory">` +
+    `<div class="net-card" id="me-card"><div class="picker-head">You</div>` +
+    `<div id="me-view"><p id="net-me" class="net-me">Loading…</p><p id="me-summary" class="me-summary"></p>` +
+    `<div class="actions" style="margin-top:10px"><button class="btn ghost" onclick="editProfile()">Edit profile</button></div></div>` +
+    `<div id="me-edit" style="display:none"><div class="grid">` +
+    `<label class="fld"><span>Name</span><input id="me-name" type="text" maxlength="${PROFILE_LIMITS.name}"/></label>` +
+    `<label class="fld"><span>Phone (WhatsApp / Viber, with country code)</span><input id="me-phone" type="tel" placeholder="+381 6x xxx xxxx" maxlength="${PROFILE_LIMITS.phone}"/></label>` +
+    `<label class="fld full"><span>About you — what you do, what you're looking for</span><textarea id="me-about" rows="3" maxlength="${PROFILE_LIMITS.about}"></textarea></label>` +
+    `<label class="fld full"><span>Languages (comma-separated)</span><input id="me-languages" type="text" placeholder="Serbian, English, German" maxlength="${PROFILE_LIMITS.languages}"/></label>` +
+    `<label class="fld chk"><input type="checkbox" id="me-show_email"/><span>Show my email to other organizers</span></label>` +
+    `<label class="fld chk"><input type="checkbox" id="me-visible"/><span>List me in the directory</span></label>` +
+    `<label class="fld chk"><input type="checkbox" id="me-newsletter"/><span>Send me the monthly network digest</span></label>` +
+    `</div><div class="actions"><button class="btn" onclick="saveProfile()">Save profile</button>` +
+    `<button class="btn ghost" onclick="cancelProfile()">Cancel</button><span id="me-status"></span></div></div></div>` +
+    `<div id="community-card" class="net-card community" hidden><div class="picker-head">Group chat</div>` +
+    `<p class="net-me">Quick questions and day-to-day chat happen in the organizers' group.</p>` +
+    `<div class="actions" style="margin-top:10px"><a id="community-link" class="btn" target="_blank" rel="noopener">Open group ↗</a></div>` +
+    `<p id="community-admin" class="hint" hidden>No group link yet — set it in the Access tab.</p></div>` +
+    `<p id="dir-admin-note" class="hint" style="margin:0 0 10px" hidden></p>` +
+    `<div class="search-wrap" style="margin-bottom:14px"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>` +
+    `<input id="dir-search" type="search" placeholder="Search people, colonies, cities…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="dir-search" aria-label="Clear search" hidden>×</button></div>` +
+    `<div id="dir-list"><p style="opacity:.7;font-size:13px">Loading…</p></div></div>` +
     `<div id="subpanel-notices" style="display:none"><p class="pempty">The notice board (open calls, partner searches, offers, questions) is coming in the next update.</p></div>` +
     `</div>`;
 
@@ -1133,7 +1291,17 @@ function editorPage(session, env) {
     `.subtab{background:none;border:0;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;padding:8px 12px;font:inherit;font-weight:700;font-size:13.5px;color:#1c1c1c;opacity:.6;cursor:pointer;width:auto}` +
     `.subtab:hover{opacity:1}.subtab.on{opacity:1;border-bottom-color:#ff4326;color:#000}` +
     `.net-card{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}` +
-    `.net-me{margin:0 0 8px;font-size:14px}.net-me b{color:#000}` +
+    `.net-me{margin:0 0 8px;font-size:14px}.net-me b{color:#000}.me-summary{margin:0;font-size:13px;opacity:.8;white-space:pre-line}` +
+    `.fld.chk{flex-direction:row;align-items:center;gap:8px}.fld.chk input{width:auto}` +
+    `.net-card.community{background:#fff}` +
+    `.dir-group{margin:18px 0 8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff4326}.dir-group small{font-weight:600;color:#6b6b6b;text-transform:none;letter-spacing:0;margin-left:6px}` +
+    `.person{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:12px 14px;margin-bottom:8px}.person.me{border-color:#ff4326}` +
+    `.person-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.person-head b{color:#000;font-size:15px}` +
+    `.person-col{font-size:13px;margin-top:3px}.person-col a{font-weight:600}.person-col a:hover{color:#ff4326}` +
+    `.person-about{font-size:13.5px;line-height:1.5;margin:8px 0 0;white-space:pre-line}` +
+    `.person .chips{margin-top:8px}.person .chip{cursor:default;padding:3px 10px;font-size:11.5px}` +
+    `.person-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.person-actions a{font-size:12.5px;padding:7px 14px;text-decoration:none;display:inline-block}` +
+    `.person-note{font-size:11.5px;color:#9a3b00;margin-top:8px}` +
     `.acc-sec{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}.acc-sec h3{color:#000;margin:0 0 12px;font-size:16px}` +
     `.h-sub{font-weight:400;color:#6b6b6b}` +
     `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
@@ -1204,7 +1372,7 @@ function editorPage(session, env) {
     `.actions{flex-wrap:wrap;gap:8px}.actions .btn{flex:1 1 auto;padding:12px 18px}.actions span{flex-basis:100%}` +
     `.posts-head{gap:10px;flex-wrap:wrap}` +
     `.post-row{flex-direction:column;align-items:stretch}.post-row .btn{flex:1}` +
-    `.net-card{padding:14px 12px}.subtabs{overflow-x:auto;scrollbar-width:none}.subtab{flex:0 0 auto}` +
+    `.net-card{padding:14px 12px}.subtabs{overflow-x:auto;scrollbar-width:none}.subtab{flex:0 0 auto}.person-actions a{flex:1 1 auto;text-align:center}` +
     `.acc-sec{padding:14px 12px}.acc-row{flex-wrap:wrap;padding:10px 12px}.acc-row span{overflow-wrap:anywhere}.acc-org-head{flex-wrap:wrap;gap:8px}.acc-add{flex-wrap:wrap}.acc-add .btn{width:100%}.acc-org .chip{max-width:100%;white-space:normal;text-align:left}` +
     `.chip{padding:7px 12px}` +
     `#p-body .toastui-editor-toolbar{overflow-x:auto}` +
@@ -1412,16 +1580,63 @@ const EDITOR_JS =
   "var t=q('tab-'+n);if(t)t.classList.toggle('on',n===name)});" +
   "if(name==='posts')loadPosts();if(name==='network')loadNetwork();if(name==='access')loadAccessPanel()}" +
   // --- network (directory / notices) ---
-  "var netSub='directory';var netMe=null;" +
+  "var netSub='directory';var netMe=null;var dirPeople=null;var dirAdmin=false;var dirTerm='';" +
+  "var COUNTRY_ORDER=['Serbia','Bosnia and Herzegovina','North Macedonia'];" +
   "function showSub(name){netSub=name;['directory','notices'].forEach(function(n){" +
   "var p=q('subpanel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
   "var t=q('sub-'+n);if(t){t.classList.toggle('on',n===name);t.setAttribute('aria-selected',String(n===name))}})}" +
-  "async function loadNetwork(){var box=q('net-me');if(netMe){renderNetMe();return}" +
-  "var r=await fetch('/api/network/me');var out=await r.json().catch(function(){return{}});" +
-  "if(!r.ok){box.textContent='Could not load your profile: '+(out.detail||out.error||r.status);return}" +
-  "netMe=out.profile;renderNetMe()}" +
+  "async function loadNetwork(){if(!netMe){var r=await fetch('/api/network/me');var out=await r.json().catch(function(){return{}});" +
+  "if(!r.ok){q('net-me').textContent='Could not load your profile: '+(out.detail||out.error||r.status);return}netMe=out.profile}" +
+  "renderNetMe();if(!dirPeople)loadDirectory()}" +
   "function renderNetMe(){var box=q('net-me');box.innerHTML='';var b=document.createElement('b');b.textContent=netMe.name||netMe.email;box.appendChild(b);" +
-  "if(netMe.name){box.appendChild(document.createTextNode(' \u00b7 '+netMe.email))}}" +
+  "if(netMe.name)box.appendChild(document.createTextNode(' \\u00b7 '+netMe.email));" +
+  "var parts=[];if(netMe.phone)parts.push(netMe.phone);if(netMe.languages)parts.push(netMe.languages);if(netMe.about)parts.push(netMe.about);" +
+  "var sum=q('me-summary');sum.textContent=parts.length?parts.join('\\n'):'Your profile is empty — add a phone, languages and a line about yourself so other organizers can reach you.';" +
+  "var flags=[];if(!netMe.visible)flags.push('hidden from the directory');if(!netMe.show_email)flags.push('email hidden');if(!netMe.newsletter)flags.push('no digest');" +
+  "if(flags.length)sum.textContent+='\\n('+flags.join(', ')+')'}" +
+  "function editProfile(){q('me-name').value=netMe.name||'';q('me-phone').value=netMe.phone||'';q('me-about').value=netMe.about||'';q('me-languages').value=netMe.languages||'';" +
+  "q('me-show_email').checked=!!netMe.show_email;q('me-visible').checked=!!netMe.visible;q('me-newsletter').checked=!!netMe.newsletter;" +
+  "q('me-status').textContent='';q('me-view').style.display='none';q('me-edit').style.display='block';q('me-name').focus()}" +
+  "function cancelProfile(){q('me-edit').style.display='none';q('me-view').style.display='block'}" +
+  "async function saveProfile(){q('me-status').textContent='Saving…';var body={name:q('me-name').value,phone:q('me-phone').value,about:q('me-about').value,languages:q('me-languages').value," +
+  "show_email:q('me-show_email').checked,visible:q('me-visible').checked,newsletter:q('me-newsletter').checked};" +
+  "var r=await fetch('/api/network/me',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});var out=await r.json().catch(function(){return{}});" +
+  "if(!r.ok){q('me-status').textContent='Save failed: '+(out.detail||out.error||r.status);return}" +
+  "netMe=out.profile;renderNetMe();cancelProfile();dirPeople=null;loadDirectory()}" +
+  "async function loadDirectory(){var box=q('dir-list');box.innerHTML='<p style=\"opacity:.7;font-size:13px\">Loading…</p>';" +
+  "var r=await fetch('/api/network/directory');var out=await r.json().catch(function(){return{}});" +
+  "if(!r.ok){box.innerHTML='';var pe=elx('p','pempty');pe.textContent='Could not load the directory: '+(out.detail||out.error||r.status);box.appendChild(pe);return}" +
+  "dirPeople=out.people||[];dirAdmin=!!out.isAdmin;renderCommunity(out.community||{});renderDirectory()}" +
+  "function renderCommunity(c){var card=q('community-card');var a=q('community-link');var note=q('community-admin');" +
+  "if(c.url){a.href=c.url;a.textContent='Open '+(c.label||'group')+' \\u2197';a.hidden=false;note.hidden=true;card.hidden=false}" +
+  "else if(dirAdmin){a.hidden=true;note.hidden=false;card.hidden=false}else{card.hidden=true}}" +
+  "function phoneDigits(p){var d=String(p||'').replace(/\\D/g,'');if(d.indexOf('00')===0)d=d.slice(2);return d}" +
+  "function personMatches(p,t){if(!t)return true;var hay=[p.name,p.email,p.about,p.languages].concat(p.colonies.map(function(c){return c.name+' '+c.city+' '+c.country})).join(' ').toLowerCase();return hay.indexOf(t)!==-1}" +
+  "function groupOf(p){if(p.countries.length)return p.countries[0];return p.role==='admin'?'Project team':'Other'}" +
+  "function renderDirectory(){var box=q('dir-list');box.innerHTML='';var t=dirTerm.trim().toLowerCase();" +
+  "var note=q('dir-admin-note');if(dirAdmin){var tot=dirPeople.length,filled=dirPeople.filter(function(p){return p.filled}).length,never=dirPeople.filter(function(p){return !p.signed_in}).length;" +
+  "note.textContent=filled+' of '+tot+' accounts have filled in a profile'+(never?' \\u00b7 '+never+' never signed in':'')+'. Only you see these notes.';note.hidden=false}else note.hidden=true;" +
+  "var groups={};dirPeople.forEach(function(p){if(!personMatches(p,t))return;var g=groupOf(p);(groups[g]=groups[g]||[]).push(p)});" +
+  "var names=Object.keys(groups).sort(function(a,b){var ia=COUNTRY_ORDER.indexOf(a),ib=COUNTRY_ORDER.indexOf(b);if(ia===-1)ia=a==='Project team'?99:50;if(ib===-1)ib=b==='Project team'?99:50;return ia-ib||a.localeCompare(b)});" +
+  "if(!names.length){var pe=elx('p','pempty');pe.textContent=t?'No one matches \\u201c'+dirTerm.trim()+'\\u201d.':'No organizers yet.';box.appendChild(pe);return}" +
+  "names.forEach(function(g){var h=elx('div','dir-group');h.textContent=g;var sm=document.createElement('small');sm.textContent=String(groups[g].length);h.appendChild(sm);box.appendChild(h);" +
+  "groups[g].forEach(function(p){box.appendChild(personCard(p))})})}" +
+  "function personCard(p){var card=elx('div','person'+(p.me?' me':''));var head=elx('div','person-head');var b=document.createElement('b');b.textContent=p.name||p.email||'(no name yet)';head.appendChild(b);" +
+  "var pill=elx('span','role '+(p.owner?'owner':p.role));pill.textContent=p.owner?'maintainer':p.role;head.appendChild(pill);" +
+  "if(p.me){var you=elx('span','hint');you.textContent='you';head.appendChild(you)}card.appendChild(head);" +
+  "if(p.colonies.length){var col=elx('div','person-col');p.colonies.forEach(function(c,i){if(i)col.appendChild(document.createTextNode(' \\u00b7 '));" +
+  "var a=document.createElement('a');a.href='https://beyondthecities.org/map.html?colony='+encodeURIComponent(c.id);a.target='_blank';a.rel='noopener';a.textContent=c.name;col.appendChild(a);" +
+  "if(c.city)col.appendChild(document.createTextNode(', '+c.city))});card.appendChild(col)}" +
+  "if(p.about){var ab=elx('p','person-about');ab.textContent=p.about;card.appendChild(ab)}" +
+  "if(p.languages){var ch=elx('div','chips');p.languages.split(',').forEach(function(l){l=l.trim();if(!l)return;var c=elx('span','chip');c.textContent=l;ch.appendChild(c)});card.appendChild(ch)}" +
+  "var acts=elx('div','person-actions');if(p.email&&!p.me){var m=document.createElement('a');m.className='btn ghost';m.href='mailto:'+p.email;m.textContent='Email';acts.appendChild(m)}" +
+  "var d=phoneDigits(p.phone);if(d&&!p.me){var w=document.createElement('a');w.className='btn ghost';w.href='https://wa.me/'+d;w.target='_blank';w.rel='noopener';w.textContent='WhatsApp';acts.appendChild(w);" +
+  "var v=document.createElement('a');v.className='btn ghost';v.href='viber://chat?number=%2B'+d;v.textContent='Viber';acts.appendChild(v)}" +
+  "if(acts.children.length)card.appendChild(acts);" +
+  "if(dirAdmin){var notes=[];if(!p.signed_in)notes.push('Has not signed in yet');else if(!p.filled)notes.push('No profile yet');if(p.visible===false)notes.push('Hidden from the directory');" +
+  "if(notes.length){var n=elx('div','person-note');n.textContent=notes.join(' \\u00b7 ');card.appendChild(n)}}" +
+  "return card}" +
+  "document.addEventListener('input',function(e){if(e.target&&e.target.id==='dir-search'){dirTerm=e.target.value;syncClear('dir-search');if(dirPeople)renderDirectory()}});" +
   "function setPostStatus(t){q('p-status').textContent=t}" +
   "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
   "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
@@ -1523,7 +1738,11 @@ const EDITOR_JS =
   "function colonyName(id){var c=allColonies.filter(function(x){return String(x.id)===String(id)})[0];return c?c.name:('#'+id)}" +
   "async function loadAccessPanel(){setAccessStatus('');var r=await fetch('/api/access');if(!r.ok){setAccessStatus('Could not load');return}" +
   "var d=await r.json();accessState={admins:(d.access.admins||[]).slice(),organizers:JSON.parse(JSON.stringify(d.access.organizers||{}))};" +
-  "allColonies=d.colonies||[];accessOwners=d.owners||[];isOwner=!!d.isOwner;renderAccess()}" +
+  "allColonies=d.colonies||[];accessOwners=d.owners||[];isOwner=!!d.isOwner;renderAccess();" +
+  "if(q('community-url')){q('community-url').value=(d.community&&d.community.url)||'';q('community-label').value=(d.community&&d.community.label)||''}}" +
+  "async function saveCommunity(){var st=q('community-status');st.textContent='Saving…';" +
+  "var r=await fetch('/api/network/community',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({url:q('community-url').value,label:q('community-label').value})});" +
+  "var out=await r.json().catch(function(){return{}});if(!r.ok){st.textContent='Save failed: '+(out.detail||out.error||r.status);return}st.textContent='Saved \u2713';dirPeople=null}" +
   "function renderAccess(){renderAdmins();renderOrgs()}" +
   "function renderAdmins(){var box=q('admins-list');box.innerHTML='';" +
   "accessOwners.forEach(function(email){var row=elx('div','acc-row');var s=elx('span');s.style.fontWeight='600';s.textContent=email+' ';" +
