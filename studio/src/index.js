@@ -932,6 +932,7 @@ function editorPage(session, env) {
 
   const postEditor =
     `<div id="post-editor" style="display:none">` +
+    `<button type="button" class="back" onclick="cancelPost()">\u2039 All posts</button>` +
     `<h3 id="pe-title" style="color:#000;margin:0 0 12px"></h3>` +
     `<div class="grid">` +
     `<label class="fld"><span>Title</span><input id="p-title" type="text"/></label>` +
@@ -1003,7 +1004,11 @@ function editorPage(session, env) {
     `.picker-sep{border:0;border-top:2px solid rgba(28,28,28,.14);margin:0 0 22px}` +
     `.picker-head{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff4326;margin-bottom:9px}` +
     `.picker-count{font-size:11px;font-weight:600;color:#6b6b6b;text-transform:none;letter-spacing:0;margin-left:6px}` +
-    `#picker-results{margin-top:10px;display:grid;gap:6px;max-height:300px;overflow-y:scroll;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(28,28,28,.3) rgba(28,28,28,.08)}` +
+    `#picker-results{margin-top:10px;display:grid;gap:6px}` +
+    `.back{display:inline-block;background:none;border:0;padding:4px 0;margin:0 0 8px;font:inherit;font-size:14px;font-weight:700;color:#ff4326;cursor:pointer;width:auto}` +
+    `.back:hover{text-decoration:underline}` +
+    `input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:44px;text-align:left}` +
+    `input[type=date]::-webkit-date-and-time-value{text-align:left}` +
     `#picker-results::-webkit-scrollbar{width:10px}#picker-results::-webkit-scrollbar-track{background:rgba(28,28,28,.08);border-radius:6px}#picker-results::-webkit-scrollbar-thumb{background:rgba(28,28,28,.3);border-radius:6px}` +
     `.picker-item{width:100%;text-align:left;border:1px solid rgba(28,28,28,.15);background:#fff;border-radius:10px;` +
     `padding:9px 12px;cursor:pointer;font:inherit;color:#1c1c1c;display:flex;flex-direction:column;gap:2px;align-items:flex-start}` +
@@ -1018,7 +1023,7 @@ function editorPage(session, env) {
     `.posts-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}` +
     `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
     `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
-    `#post-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px;margin-top:14px}` +
+    `#post-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px}` +
     `.acc-sec{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}.acc-sec h3{color:#000;margin:0 0 12px;font-size:16px}` +
     `.h-sub{font-weight:400;color:#6b6b6b}` +
     `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
@@ -1076,7 +1081,7 @@ function editorPage(session, env) {
     `.wrap{padding:16px 14px 56px}` +
     `.tabs{overflow-x:auto;flex-wrap:nowrap;margin:2px -14px 16px;padding:0 14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}` +
     `.tab{flex:0 0 auto;padding:9px 15px}` +
-    `.picker{padding:12px}#picker-results{max-height:260px}` +
+    `.picker{padding:12px}` +
     `#form,#post-editor{padding:16px 14px;border-radius:14px}` +
     `.grid{grid-template-columns:minmax(0,1fr);gap:16px}` +
     `input,select,textarea{font-size:16px;padding:11px 12px}` +
@@ -1102,18 +1107,20 @@ function editorPage(session, env) {
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
-    `<div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}<span id="picker-count" class="picker-count"></span></div>` +
+    `<div id="colony-list"><div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}<span id="picker-count" class="picker-count"></span></div>` +
     `<input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off"/>` +
     `<div id="picker-countries" class="chips" style="margin-top:8px"></div>` +
-    `<div id="picker-results"><p style="opacity:.7;font-size:13px;padding:8px 2px">Loading colonies…</p></div></div>` +
-    `<hr class="picker-sep"/>` +
+    `<div id="picker-results"><p style="opacity:.7;font-size:13px;padding:8px 2px">Loading colonies…</p></div></div></div>` +
+    `<div id="colony-edit" style="display:none">` +
+    `<button type="button" class="back" onclick="closeColony()">\u2039 All colonies</button>` +
     `<h2 id="title" style="color:#000"></h2>` +
     `<div id="form"><div class="grid">${form}</div>` +
-    `<div class="actions"><button class="btn" onclick="save()">Save changes</button><span id="status"></span></div></div>` +
-    `</div>` +
+    `<div class="actions"><button class="btn" onclick="save()">Save changes</button>` +
+    `<button class="btn ghost" onclick="closeColony()">Cancel</button><span id="status"></span></div></div>` +
+    `</div></div>` +
     `<div id="panel-posts" style="display:none">` +
-    `<div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
-    `<div id="posts-list"></div>` + postEditor +
+    `<div id="posts-index"><div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
+    `<div id="posts-list"></div></div>` + postEditor +
     `</div>` + accessPanel +
     `</div>` +
     `<footer class="studio-foot"><p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>` +
@@ -1158,7 +1165,7 @@ const EDITOR_JS =
   "if(term){var hay=foldSearch(c.name+' '+(c.place||''));if(hay.indexOf(term)===-1)return false}return true});" +
   "var cnt=q('picker-count');if(cnt){var tot=pickerColonies.length;cnt.textContent=list.length+(list.length!==tot?(' of '+tot):'')+(list.length===1?' colony':' colonies')}" +
   "if(!list.length){var p=document.createElement('p');p.style.cssText='opacity:.7;font-size:13px;padding:6px 2px';p.textContent='No colonies match.';box.appendChild(p);return}" +
-  "list.slice(0,60).forEach(function(c){var b=document.createElement('button');b.type='button';b.className='picker-item'+(String(c.id)===String(currentId)?' on':'');" +
+  "list.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='picker-item'+(String(c.id)===String(currentId)?' on':'');" +
   "var n=document.createElement('span');n.className='pi-name';n.textContent=c.name;" +
   "var sub=document.createElement('span');sub.className='pi-sub';sub.textContent=[(c.place||''),c.country].filter(Boolean).join(' · ');" +
   "b.appendChild(n);b.appendChild(sub);b.onclick=function(){loadColony(c.id)};box.appendChild(b)})}" +
@@ -1172,7 +1179,14 @@ const EDITOR_JS =
   "setArtField(c.art_field||'');" +
   "currentPhotos=realList(c.photos);q('photo-file').value='';setPhotoStatus('');" +
   "currentId=id;renderPhotos();q('title').textContent=c.art_colony_name||('Colony '+id);" +
-  "renderPicker();q('form').style.display='block';setStatus('Loaded from '+data.file)}" +
+  "renderPicker();q('form').style.display='block';setStatus('');colonyDirty=false;" +
+  "q('colony-list').style.display='none';q('colony-edit').style.display='block';scrollTo(0,0)}" +
+  // Unsaved-changes guard (photos are saved immediately, so they don't count).
+  "var colonyDirty=false;var postDirty=false;" +
+  "function closeColony(){if(colonyDirty&&!confirm('Discard unsaved changes?'))return;colonyDirty=false;" +
+  "q('colony-edit').style.display='none';q('colony-list').style.display='block';renderPicker();scrollTo(0,0)}" +
+  "function markDirty(e){if(e.target&&e.target.type==='file')return;if(e.currentTarget.id==='form')colonyDirty=true;else postDirty=true}" +
+  "['form','post-editor'].forEach(function(id){q(id).addEventListener('input',markDirty);q(id).addEventListener('change',markDirty)});" +
   // --- photo grids (colony photos + post gallery) ---
   "function realList(l){return (Array.isArray(l)?l:[]).map(function(p){return String(p||'').trim()}).filter(function(p){return p&&p.indexOf('placehold.co')===-1})}" +
   "function photoSrc(p){if(localPrev[p])return localPrev[p];return /^https?:/.test(p)?p:RAW+p}" +
@@ -1242,7 +1256,8 @@ const EDITOR_JS =
   "document.querySelectorAll('#art-chips .chip.on').forEach(function(ch){out.push(ch.dataset.v)});" +
   "var o=q('f-art_field_other').value.trim();if(o){o.split(',').forEach(function(s){s=s.trim();if(s)out.push(s)})}" +
   "return out.join(', ')}" +
-  "document.addEventListener('click',function(e){var ch=e.target.closest('#art-chips .chip');if(ch)ch.classList.toggle('on')});" +
+  "document.addEventListener('click',function(e){var ch=e.target.closest('#art-chips .chip');if(ch){ch.classList.toggle('on');colonyDirty=true}" +
+  "if(e.target.closest('#form .ml-rm'))colonyDirty=true});" +
   "async function save(){if(!currentId)return;var body={};" +
   "FIELDS.forEach(function(f){body[f]=q('f-'+f).value});" +
   "MULTI.forEach(function(f){body[f]=getMulti(f)});" +
@@ -1252,7 +1267,7 @@ const EDITOR_JS =
   "var r=await fetch('/api/colony/'+currentId,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();" +
   "if(!r.ok){setStatus('Save failed: '+(out.detail||out.error));return}" +
-  "if(out.unchanged){setStatus('No changes to save');return}" +
+  "colonyDirty=false;if(out.unchanged){setStatus('No changes to save');return}" +
   "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
   // --- tabs + blog posts ---
   "function showTab(name){['colony','posts','access'].forEach(function(n){" +
@@ -1290,7 +1305,8 @@ const EDITOR_JS =
   "function initEditor(){if(bodyEditor)return;bodyEditor=new toastui.Editor({el:q('p-body'),height:(innerWidth<640?'380px':'460px'),initialEditType:'wysiwyg',previewStyle:'tab'," +
   "usageStatistics:false,autofocus:false,hideModeSwitch:true,placeholder:'Write your post here\u2026',initialValue:''," +
   "toolbarItems:[['heading','bold','italic'],['link','image'],['ul','ol','quote','hr']]," +
-  "hooks:{addImageBlobHook:function(blob,cb){queueBodyImage(blob,cb);return false}}})}" +
+  "hooks:{addImageBlobHook:function(blob,cb){queueBodyImage(blob,cb);return false}}});" +
+  "bodyEditor.on('change',function(){if(!bodyLoading)postDirty=true})}var bodyLoading=false;" +
   // Inline images: uploaded one at a time (parallel commits to the same branch conflict).
   "var bodyImgQueue=[];var bodyImgBusy=false;" +
   "function queueBodyImage(file,cb){bodyImgQueue.push({file:file,cb:cb});runBodyImages()}" +
@@ -1307,23 +1323,21 @@ const EDITOR_JS =
   "function unwrap(md){var L=String(md||'').split('\\n');var out=[];var BLK=/^\\s*([#>|!]|[-*+]\\s|\\d+[.)]\\s|```|---|___|\\*\\*\\*|<)/;" +
   "for(var i=0;i<L.length;i++){var cur=L[i],prev=out.length?out[out.length-1]:'';" +
   "if(out.length&&prev.trim()&&cur.trim()&&!BLK.test(cur)&&!/^\\s*([#|!]|```)/.test(prev)&&!/  $/.test(prev)&&!/\\\\$/.test(prev)){out[out.length-1]=prev+' '+cur.trim()}else{out.push(cur)}}return out.join('\\n')}" +
-  "function setBody(md){initEditor();bodyEditor.setMarkdown(unwrap(md),false);bodyEditor.changeMode('wysiwyg',true)}" +
+  "function setBody(md){initEditor();bodyLoading=true;bodyEditor.setMarkdown(unwrap(md),false);bodyLoading=false;bodyEditor.changeMode('wysiwyg',true)}" +
   "function newPost(){editingSlug=null;postCover='';savedCover='';q('pe-title').textContent='New post';" +
   "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
   "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
   "postColonies=(document.body.dataset.role!=='admin'?taggable.map(function(c){return String(c.id)}):[]);renderPostColonies();" +
   "setCoverPreview('');setPostStatus('');q('p-cover-file').value='';q('p-cover-status').textContent='';q('posts-status').textContent='';" +
   "postGallery=[];q('pg-status').textContent='';renderGallery();" +
-  "q('pe-delete').style.display='none';q('post-editor').style.display='block';setBody('');" +
-  "q('post-editor').scrollIntoView({behavior:'smooth'})}" +
+  "q('pe-delete').style.display='none';q('post-editor').style.display='block';setBody('');openPostEditor()}" +
   "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
   "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';savedCover=p.cover||'';" +
   "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
   "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');postColonies=(p.colonies||[]).map(String);renderPostColonies();" +
   "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
   "postGallery=realList(p.gallery);q('pg-status').textContent='';renderGallery();" +
-  "q('pe-delete').style.display='';q('post-editor').style.display='block';setBody(p.body||'');" +
-  "q('post-editor').scrollIntoView({behavior:'smooth'})}" +
+  "q('pe-delete').style.display='';q('post-editor').style.display='block';setBody(p.body||'');openPostEditor()}" +
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
   "q('p-cover-preview').src=URL.createObjectURL(f);q('p-cover-status').textContent='Optimising…';var blob=await optimizeImage(f);" +
   "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');fd.append('title',q('p-title').value||'');" +
@@ -1339,13 +1353,15 @@ const EDITOR_JS =
   "if(galleryBusy||bodyImgBusy){setPostStatus('Wait for the uploads to finish');return}" +
   "setPostStatus('Saving…');var r=await fetch('/api/post/'+slug,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();if(!r.ok){setPostStatus('Save failed: '+(out.detail||out.error));return}" +
-  "q('post-editor').style.display='none';editingSlug=null;" +
+  "postDirty=false;closePostEditor();" +
   "q('posts-status').textContent='Saved \\u2713 commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min';loadPosts()}" +
   "async function deletePost(slug){var s=slug||editingSlug;if(!s)return;if(!confirm('Delete this post?'))return;" +
   "var r=await fetch('/api/post/'+s,{method:'DELETE'});var out=await r.json();" +
   "if(!r.ok){alert('Delete failed: '+(out.detail||out.error));return}" +
-  "if(editingSlug===s){cancelPost()}q('posts-status').textContent='Post deleted \\u2713';loadPosts()}" +
-  "function cancelPost(){q('post-editor').style.display='none';editingSlug=null}" +
+  "if(editingSlug===s){postDirty=false;closePostEditor()}q('posts-status').textContent='Post deleted \\u2713';loadPosts()}" +
+  "function openPostEditor(){postDirty=false;q('posts-index').style.display='none';q('post-editor').style.display='block';scrollTo(0,0)}" +
+  "function closePostEditor(){q('post-editor').style.display='none';q('posts-index').style.display='block';editingSlug=null;scrollTo(0,0)}" +
+  "function cancelPost(){if(postDirty&&!confirm('Discard unsaved changes?'))return;postDirty=false;closePostEditor()}" +
   // --- access (admin only) ---
   "var accessState={admins:[],organizers:{}};var allColonies=[];var accessOwners=[];var isOwner=false;" +
   "function elx(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}" +
