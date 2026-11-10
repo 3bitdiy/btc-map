@@ -1024,6 +1024,12 @@ function editorPage(session, env) {
     `.picker-head{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#ff4326;margin-bottom:9px}` +
     `.picker-count{font-size:11px;font-weight:600;color:#6b6b6b;text-transform:none;letter-spacing:0;margin-left:6px}` +
     `#picker-results{margin-top:10px;display:grid;gap:6px}` +
+    `.search-wrap{position:relative}.search-wrap input{padding-left:40px;padding-right:42px}` +
+    `.search-ico{position:absolute;left:13px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:#8a8a8a;pointer-events:none}` +
+    `.search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:999px;` +
+    `background:rgba(28,28,28,.08);color:#1c1c1c;font:400 20px/1 system-ui,sans-serif;cursor:pointer;padding:0 0 2px}` +
+    `.search-clear:hover{background:#ff4326;color:#fff}.search-clear[hidden]{display:none}` +
+    `input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}` +
     `.back{display:inline-block;background:none;border:0;padding:4px 0;margin:0 0 8px;font:inherit;font-size:14px;font-weight:700;color:#ff4326;cursor:pointer;width:auto}` +
     `.back:hover{text-decoration:underline}` +
     `input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:44px;text-align:left}` +
@@ -1142,7 +1148,7 @@ function editorPage(session, env) {
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
     `<div id="colony-list"><div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}<span id="picker-count" class="picker-count"></span></div>` +
-    `<input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off"/>` +
+    `<div class="search-wrap"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="picker-search" aria-label="Clear search" hidden>\u00d7</button></div>` +
     `<div id="picker-countries" class="chips" style="margin-top:8px"></div>` +
     `<div id="picker-results"><p style="opacity:.7;font-size:13px;padding:8px 2px">Loading colonies…</p></div></div></div>` +
     `<div id="colony-edit" style="display:none">` +
@@ -1154,6 +1160,7 @@ function editorPage(session, env) {
     `</div></div>` +
     `<div id="panel-posts" style="display:none">` +
     `<div id="posts-index"><div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
+    `<div id="posts-search-row" hidden style="margin-bottom:12px">` + `<div class="search-wrap"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><input id="posts-search" type="search" placeholder="Search posts…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="posts-search" aria-label="Clear search" hidden>\u00d7</button></div>` + `</div>` +
     `<div id="posts-list"></div></div>` + postEditor +
     `</div>` + accessPanel +
     `</div>` +
@@ -1179,6 +1186,9 @@ const EDITOR_JS =
   "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var bodyEditor=null;var postColonies=[];" +
   "var MAXP=" + MAX_COLONY_PHOTOS + ";var MAXG=" + MAX_POST_GALLERY + ";var photoBusy=false;var postGallery=[];var galleryBusy=false;var localPrev={};" +
   "function q(id){return document.getElementById(id)}" +
+  "function syncClear(id){var b=document.querySelector('.search-clear[data-for=\\''+id+'\\']');if(b)b.hidden=!q(id).value}" +
+  "document.addEventListener('click',function(e){var b=e.target.closest('.search-clear');if(!b)return;var inp=q(b.dataset.for);inp.value='';" +
+  "inp.dispatchEvent(new Event('input',{bubbles:true}));inp.focus()});" +
   "function toggleAcct(e){e.stopPropagation();var m=q('acct-menu'),b=q('acct-btn');var open=m.hidden;m.hidden=!open;b.setAttribute('aria-expanded',String(open))}" +
   "document.addEventListener('pointerdown',function(e){var m=q('acct-menu');if(m&&!m.hidden&&!e.target.closest('.acct')){m.hidden=true;q('acct-btn').setAttribute('aria-expanded','false')}});" +
   "document.addEventListener('keydown',function(e){if(e.key==='Escape'){var m=q('acct-menu');if(m&&!m.hidden){m.hidden=true;q('acct-btn').setAttribute('aria-expanded','false');q('acct-btn').focus()}}});" +
@@ -1188,7 +1198,7 @@ const EDITOR_JS =
   "async function loadColonies(){" +
   "var r=await fetch('/api/colonies');if(!r.ok){setStatus('Could not load colony list');return}" +
   "var data=await r.json();pickerColonies=data.colonies||[];" +
-  "q('picker-search').addEventListener('input',function(e){pickerTerm=e.target.value;renderPicker()});" +
+  "q('picker-search').addEventListener('input',function(e){pickerTerm=e.target.value;syncClear('picker-search');renderPicker()});" +
   "renderCountryChips();renderPicker();" +
   "if(document.body.dataset.role!=='admin'&&pickerColonies.length===1){loadColony(pickerColonies[0].id)}}" +
   "function renderCountryChips(){var box=q('picker-countries');box.innerHTML='';" +
@@ -1221,7 +1231,10 @@ const EDITOR_JS =
   // Unsaved-changes guard (photos are saved immediately, so they don't count).
   "var colonyDirty=false;var postDirty=false;" +
   "function closeColony(){if(colonyDirty&&!confirm('Discard unsaved changes?'))return;colonyDirty=false;" +
-  "q('colony-edit').style.display='none';q('colony-list').style.display='block';renderPicker();scrollTo(0,0)}" +
+  "q('colony-edit').style.display='none';q('colony-list').style.display='block';renderPicker();" +
+  // Back to where you were: the colony you just edited, centred in the list.
+  "var on=document.querySelector('#picker-results .picker-item.on');if(on){on.scrollIntoView({block:'center'})}else{scrollTo(0,0)}}" +
+  "q('posts-search').addEventListener('input',function(e){postTerm=e.target.value;syncClear('posts-search');drawPosts()});" +
   "function markDirty(e){if(e.target&&e.target.type==='file')return;if(e.currentTarget.id==='form')colonyDirty=true;else postDirty=true}" +
   "['form','post-editor'].forEach(function(id){q(id).addEventListener('input',markDirty);q(id).addEventListener('change',markDirty)});" +
   // --- photo grids (colony photos + post gallery) ---
@@ -1315,8 +1328,13 @@ const EDITOR_JS =
   "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
   "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
   "var data=await r.json();taggable=data.taggable||[];renderPosts(data.posts||[])}" +
-  "function renderPosts(list){var box=q('posts-list');box.innerHTML='';" +
-  "if(!list.length){box.innerHTML='<p style=\"opacity:.7\">No posts yet.</p>';return}" +
+  // Post search shows up only once the list gets long.
+  "var allPosts=[];var postTerm='';" +
+  "function renderPosts(list){allPosts=list;var row=q('posts-search-row');row.hidden=list.length<=8;if(row.hidden){postTerm='';q('posts-search').value='';syncClear('posts-search')}drawPosts()}" +
+  "function drawPosts(){var box=q('posts-list');box.innerHTML='';var t=foldSearch(postTerm.trim());" +
+  "var list=t?allPosts.filter(function(p){return foldSearch(p.title).indexOf(t)!==-1}):allPosts;" +
+  "if(!allPosts.length){box.innerHTML='<p style=\"opacity:.7\">No posts yet.</p>';return}" +
+  "if(!list.length){box.innerHTML='<p style=\"opacity:.7\">No posts match.</p>';return}" +
   "list.forEach(function(p){var row=document.createElement('div');row.className='post-row';" +
   "var left=document.createElement('div');var t=document.createElement('div');t.style.fontWeight='700';t.style.color='#000';t.textContent=p.title+(p.draft?'  (draft)':'');" +
   "var meta=document.createElement('div');meta.className='meta';meta.textContent=p.date+' · '+(p.colonies&&p.colonies.length?('colonies '+p.colonies.join(', ')):'general');" +
