@@ -40,6 +40,9 @@ const MAX_COLONY_PHOTOS = 7; // main + 6 more
 const MAX_POST_GALLERY = 12;
 const IMAGE_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
+// Site logo mark (copied from index.html's #btc-logo symbol).
+const LOGO_SVG = `<svg class="bar-mark" viewBox="0 0 70 115" aria-hidden="true">${'<symbol id="btc-logo" viewBox="0 0 70 115" fill="none"> <path d="M24.7312 23.7012L46.4029 1.78394L58.641 14.2717C64.5051 20.1333 67.8196 28.0337 67.8196 36.189V113.409L24.7312 113.664V23.7012Z" fill="#fff"/> <path d="M46.4029 3.56793L57.8761 15.2911C63.4853 20.8979 66.5448 28.5435 66.5448 36.4439V112.135L26.006 112.39V24.211L46.4029 3.56793ZM46.4029 0L23.4564 23.1916V114.938L69.0944 114.684V36.4439C69.0944 27.7789 65.7799 19.6236 59.6608 13.5072L46.4029 0Z" fill="#1c1c1c"/> <path d="M0.254921 114.429V22.937L23.7113 0.255127H45.8929L23.2014 22.937V114.684L0.254921 114.429Z" fill="#1c1c1c"/> <path d="M45.1281 0.764557L22.9465 22.6819V22.9367V23.1916V114.429L0.764883 114.174V23.1916L23.7114 0.764557H45.1281ZM46.6579 0H23.4564L0 22.9367V114.684L23.4564 114.938V23.1916L46.6579 0Z" fill="#1c1c1c"/> <path d="M46.148 113.664V77.3802C46.148 72.8448 49.9724 69.0652 54.5617 69.0652H68.5846V113.664H46.148Z" fill="#fff"/> <path d="M67.3321 69.3087V112.917H46.3693V77.2827C46.3693 73.0465 49.7818 69.5579 53.9256 69.5579H67.3321M67.8196 68.8103H53.9256C49.2943 68.8103 45.638 72.5481 45.638 77.2827V113.664H67.8196V68.8103Z" fill="#1c1c1c"/> <path d="M67.3321 69.3087V112.917H46.3693V77.2827C46.3693 73.0465 49.7818 69.5579 53.9256 69.5579H67.3321M67.8196 68.8103H53.9256C49.2943 68.8103 45.638 72.5481 45.638 77.2827V113.664H67.8196V68.8103Z" stroke="#1c1c1c"/> <path d="M54.5617 106.019V69.5747H68.5845V113.919L54.5617 106.019Z" fill="#1c1c1c"/> <path d="M68.0746 70.0843V113.154L55.0716 105.764L54.8166 70.0843H68.0746ZM68.8395 69.0649H53.7968L54.0517 106.019L68.8395 114.684V69.0649Z" fill="#1c1c1c"/> <path d="M67.8196 56.0675H29.0137C28.7742 56.0675 28.7742 55.8127 28.7742 55.8127V24.7207H29.2532V55.5578H67.8196V56.0675Z" fill="#1c1c1c" stroke="#1c1c1c"/> <path d="M26.5159 24.7208L66.6114 54.4005L35.1846 17.0752L26.5159 24.7208Z" fill="#fff"/> <path d="M46.6579 35.9342C51.4454 35.9342 55.3265 32.0548 55.3265 27.2692C55.3265 22.4837 51.4454 18.6042 46.6579 18.6042C41.8703 18.6042 37.9892 22.4837 37.9892 27.2692C37.9892 32.0548 41.8703 35.9342 46.6579 35.9342Z" fill="#1c1c1c"/> <path d="M46.6579 18.8591C51.2472 18.8591 55.0716 22.6819 55.0716 27.2692C55.0716 31.8566 51.2472 35.6794 46.6579 35.6794C42.0686 35.6794 38.2442 31.8566 38.2442 27.2692C38.2442 22.6819 41.8136 18.8591 46.6579 18.8591ZM46.6579 18.6042C41.8136 18.6042 37.7342 22.427 37.7342 27.5241C37.7342 32.3663 41.5587 36.4439 46.6579 36.4439C51.5021 36.4439 55.5815 32.6211 55.5815 27.5241C55.3266 22.427 51.5021 18.6042 46.6579 18.6042Z" fill="#1c1c1c"/> </symbol>'.replace(/<\/?symbol[^>]*>/g, "")}</svg>`;
+
 // Blog posts: one markdown file per post (front-matter + body).
 const BLOG_DIR = "public/data/blog";
 const BLOG_IMG_DIR = "public/assets/images/blog";
@@ -993,9 +996,22 @@ function editorPage(session, env) {
     `.bar b{color:#000}.badge{background:#ff4326;color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}` +
     `.role{display:inline-block;border-radius:999px;padding:2px 9px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.5;vertical-align:middle}` +
     `.role.owner{background:#726a5d;color:#fff}.role.admin{background:#1c1c1c;color:#fff}.role.organizer{background:transparent;border:1px solid rgba(28,28,28,.3);color:#1c1c1c}` +
-    `.bar-brand{display:flex;align-items:center;gap:10px}.bar-logo{height:30px;width:auto;display:block}` +
-    `.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}` +
-    `.bar-site{font-weight:700;opacity:.7}.bar-site:hover{opacity:1;color:#ff4326}` +
+    `.bar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#1c1c1c;min-width:0}` +
+    `.bar-mark{width:20px;height:33px;flex:0 0 auto}` +
+    `.bar-name{font-weight:900;font-size:14px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}.bar-name em{font-weight:400;font-style:normal}` +
+    `.bar-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#ff4326;border:1.5px solid #ff4326;border-radius:999px;padding:2px 8px;line-height:1.4}` +
+    `.bar-right{display:flex;align-items:center;gap:16px;font-size:14px}` +
+    `.bar-site{font-weight:700;color:#1c1c1c;text-decoration:none;opacity:.75}.bar-site:hover{opacity:1;color:#ff4326}` +
+    `.acct{position:relative}` +
+    `.acct-btn{display:flex;align-items:center;gap:4px;background:none;border:0;padding:2px;cursor:pointer;color:#1c1c1c;font:inherit}` +
+    `.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;font-size:14px}` +
+    `.acct-btn:hover .avatar,.acct-btn[aria-expanded=true] .avatar{background:#ff4326}.acct-caret{font-size:11px;opacity:.6}` +
+    `.acct-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:50;min-width:240px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.14);padding:6px}` +
+    `.acct-menu[hidden]{display:none}` +
+    `.acct-who{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 12px 12px;border-bottom:1px solid rgba(28,28,28,.1);margin-bottom:4px}` +
+    `.acct-label{font-size:11px;opacity:.6;font-weight:600}.acct-email{font-weight:700;font-size:13.5px;word-break:break-all}` +
+    `.acct-item{display:block;padding:10px 12px;border-radius:9px;text-decoration:none;color:#1c1c1c;font-weight:600;font-size:14px}` +
+    `.acct-item:hover{background:#f3f1ea;color:#ff4326}.acct-site{display:none}` +
     `.studio-foot{border-top:1px solid rgba(28,28,28,.12);text-align:center;padding:30px 20px;font-size:13px;font-weight:600}` +
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
     `.wrap{max-width:760px;margin:0 auto;padding:24px 20px 80px}` +
@@ -1078,8 +1094,8 @@ function editorPage(session, env) {
     // Touch screens: editor tooltips stick after a tap and cover the menus.
     `@media (hover:none){#p-body .toastui-editor-tooltip{display:none!important}}` +
     `@media (max-width:640px){` +
-    `.bar{padding:10px 14px;gap:6px}.bar-logo{height:26px}.bar-brand{font-size:14px}` +
-    `.bar-right{font-size:12px;gap:6px 8px;width:100%}.bar-site{order:3;margin-left:auto}` +
+    `.bar{padding:10px 14px;flex-wrap:nowrap}.bar-name{font-size:12.5px}.bar-mark{width:18px;height:30px}` +
+    `.bar-right>.bar-site{display:none}.acct-site{display:block}` +
     `.wrap{padding:16px 14px 56px}` +
     `.tabs{overflow-x:auto;flex-wrap:nowrap;margin:2px -14px 16px;padding:0 14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}` +
     `.tab{flex:0 0 auto;padding:9px 15px}` +
@@ -1109,8 +1125,15 @@ function editorPage(session, env) {
     `<link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css"/>` +
     `<script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>` +
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
-    `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
-    `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="role ${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
+    `<header class="bar"><a class="bar-brand" href="/" aria-label="Studio home">${LOGO_SVG}` +
+    `<span class="bar-name">Beyond <em>the</em> Cities</span><span class="bar-tag">Studio</span></a>` +
+    `<div class="bar-right"><a class="bar-site" href="https://beyondthecities.org/" target="_blank" rel="noopener">View site \u2197</a>` +
+    `<div class="acct"><button type="button" id="acct-btn" class="acct-btn" aria-haspopup="true" aria-expanded="false" aria-label="Account" onclick="toggleAcct(event)">` +
+    `<span class="avatar">${escapeHtml((session.email || '?').charAt(0).toUpperCase())}</span><span class="acct-caret">\u25be</span></button>` +
+    `<div id="acct-menu" class="acct-menu" hidden><div class="acct-who"><span class="acct-label">Signed in as</span>` +
+    `<span class="acct-email">${escapeHtml(session.email)}</span><span class="role ${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span></div>` +
+    `<a class="acct-item acct-site" href="https://beyondthecities.org/" target="_blank" rel="noopener">View site \u2197</a>` +
+    `<a class="acct-item" href="/auth/logout">Log out</a></div></div></div></header>` +
     `<div class="wrap">` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
     `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
@@ -1153,6 +1176,9 @@ const EDITOR_JS =
   "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var bodyEditor=null;var postColonies=[];" +
   "var MAXP=" + MAX_COLONY_PHOTOS + ";var MAXG=" + MAX_POST_GALLERY + ";var photoBusy=false;var postGallery=[];var galleryBusy=false;var localPrev={};" +
   "function q(id){return document.getElementById(id)}" +
+  "function toggleAcct(e){e.stopPropagation();var m=q('acct-menu'),b=q('acct-btn');var open=m.hidden;m.hidden=!open;b.setAttribute('aria-expanded',String(open))}" +
+  "document.addEventListener('pointerdown',function(e){var m=q('acct-menu');if(m&&!m.hidden&&!e.target.closest('.acct')){m.hidden=true;q('acct-btn').setAttribute('aria-expanded','false')}});" +
+  "document.addEventListener('keydown',function(e){if(e.key==='Escape'){var m=q('acct-menu');if(m&&!m.hidden){m.hidden=true;q('acct-btn').setAttribute('aria-expanded','false');q('acct-btn').focus()}}});" +
   "function setStatus(t){q('status').textContent=t}" +
   "function setPhotoStatus(t){q('photo-status').textContent=t}" +
   "var pickerColonies=[];var pickerTerm='';var pickerCountry='';" +
