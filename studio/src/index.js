@@ -874,9 +874,10 @@ async function home(request, env) {
   const session = await getSession(request, env);
   if (!session) {
     return htmlPage(
-      "Beyond the Cities · Studio",
-      `<p>Sign in to manage your colony's page and its news.</p>
-       <p><a class="btn" href="/auth/google">Continue with Google</a></p>`,
+      "Sign in to Studio",
+      `<p class="lead">Manage your colony's page, photos and news on Beyond the Cities.</p>
+       <a class="btn-google" href="/auth/google"><span class="g">${GOOGLE_G}</span>Continue with Google</a>
+       <p class="note">Access is for invited colony organisers. Need an account? Contact the Beyond the Cities team.</p>`,
     );
   }
   return editorPage(session, env);
@@ -1465,28 +1466,47 @@ function page(status, title, message, origin) {
   return htmlPage(title, `<p>${message}</p>${back}`, status);
 }
 
+const GOOGLE_G = `<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+
+// Sign-in and error pages (no session).
 function htmlPage(title, inner, status = 200) {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${escapeHtml(title)}</title>
+<meta name="format-detection" content="telephone=no,email=no,address=no"/>
+<title>${escapeHtml(title)} · Beyond the Cities Studio</title>
 <link rel="icon" type="image/svg+xml" href="https://beyondthecities.org/favicon.svg"/>
 <link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>
 <style>
+  *{box-sizing:border-box}
   body{font-family:'Montserrat',system-ui,sans-serif;background:#f1f1ee;color:#1c1c1c;margin:0;
-       min-height:100vh;display:grid;place-items:center;padding:24px}
-  .brand{display:flex;align-items:center;gap:11px;margin-bottom:18px;font-weight:700;letter-spacing:.02em}
-  .brand img{height:40px;width:auto}
-  .brand b{color:#000}
-  .card{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:18px;
-        padding:32px 36px;max-width:440px;box-shadow:0 14px 40px rgba(28,28,28,.12)}
-  h1{font-size:20px;margin:0 0 12px;color:#000}
-  p{line-height:1.6;margin:0 0 12px}
+       min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px}
+  .wrap{width:100%;max-width:420px}
+  .brand{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px;text-decoration:none;color:#1c1c1c}
+  .brand .bar-mark{width:30px;height:49px}
+  .brand-row{display:flex;align-items:center;gap:10px}
+  .bar-name{font-weight:900;font-size:15px;letter-spacing:.05em;text-transform:uppercase}.bar-name em{font-weight:400;font-style:normal}
+  .bar-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#ff4326;border:1.5px solid #ff4326;border-radius:999px;padding:2px 8px;line-height:1.4}
+  .card{background:#fff;border:1px solid rgba(28,28,28,.12);border-radius:20px;padding:30px 28px;box-shadow:0 14px 40px rgba(28,28,28,.10)}
+  h1{font-size:23px;font-weight:800;margin:0 0 8px;color:#000;letter-spacing:-.01em}
+  p{line-height:1.6;margin:0 0 12px;font-size:15px}
+  .lead{color:#4a4a4a;margin-bottom:22px}
   a{color:#1c1c1c}
-  .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;
-       padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
-  .back-site{display:inline-block;margin-top:16px;font-size:13px;font-weight:600;opacity:.6;text-decoration:underline;text-underline-offset:2px}
-  .back-site:hover{opacity:1}
-</style></head><body><div><div class="brand"><img src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></div><div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div><div style="text-align:center"><a class="back-site" href="https://beyondthecities.org/">← Back to site</a></div></div></body></html>`;
+  .btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;background:#fff;color:#1c1c1c;text-decoration:none;
+       border:1.5px solid rgba(28,28,28,.25);padding:13px 18px;border-radius:999px;font-weight:700;font-size:15px;transition:border-color .15s,box-shadow .15s}
+  .btn-google:hover{border-color:#ff4326;box-shadow:0 4px 14px rgba(255,67,38,.15)}
+  .btn-google .g{display:grid;place-items:center}
+  .note{margin:18px 0 0;font-size:12.5px;color:#6b6b6b;line-height:1.5}
+  .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
+  .foot{text-align:center;margin-top:22px;font-size:12.5px;color:#6b6b6b}
+  .foot a{font-weight:700;color:#1c1c1c;text-decoration:none}.foot a:hover{color:#ff4326}
+  .foot p{font-size:12px;margin:10px 0 0}
+  a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important}
+  @media (max-width:480px){.card{padding:26px 20px;border-radius:18px}h1{font-size:21px}}
+</style></head><body><main class="wrap">
+<a class="brand" href="https://beyondthecities.org/" aria-label="Beyond the Cities">${LOGO_SVG}<span class="brand-row"><span class="bar-name">Beyond <em>the</em> Cities</span><span class="bar-tag">Studio</span></span></a>
+<div class="card"><h1>${escapeHtml(title)}</h1>${inner}</div>
+<div class="foot"><a href="https://beyondthecities.org/">\u2190 Back to site</a><p>A Goethe-Institut project \u00b7 2026\u20132028</p></div>
+</main></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
