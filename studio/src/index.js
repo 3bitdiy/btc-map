@@ -986,6 +986,7 @@ function editorPage(session, env) {
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"/>` +
+    `<meta name="format-detection" content="telephone=no,email=no,address=no"/>` +
     `<title>Studio · Beyond the Cities</title>` +
     `<link rel="icon" type="image/svg+xml" href="https://beyondthecities.org/favicon.svg"/>` +
     `<link rel="stylesheet" href="https://beyondthecities.org/fonts.css"/>` +
@@ -1005,12 +1006,13 @@ function editorPage(session, env) {
     `.acct{position:relative}` +
     `.acct-btn{display:flex;align-items:center;gap:4px;background:none;border:0;padding:2px;cursor:pointer;color:#1c1c1c;font:inherit}` +
     `.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;font-size:14px}` +
-    `.acct-btn:hover .avatar,.acct-btn[aria-expanded=true] .avatar{background:#ff4326}.acct-caret{font-size:11px;opacity:.6}` +
+    `.acct-btn:hover .avatar,.acct-btn[aria-expanded=true] .avatar{background:#ff4326}.acct-btn:focus-visible .avatar{outline:2px solid #ff4326;outline-offset:2px}` +
     `.acct-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:50;min-width:240px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.14);padding:6px}` +
     `.acct-menu[hidden]{display:none}` +
+    `a[x-apple-data-detectors]{color:inherit!important;text-decoration:none!important;font:inherit!important}` +
     `.acct-who{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 12px 12px;border-bottom:1px solid rgba(28,28,28,.1);margin-bottom:4px}` +
     `.acct-label{font-size:11px;opacity:.6;font-weight:600}.acct-email{font-weight:700;font-size:13.5px;word-break:break-all}` +
-    `.acct-item{display:block;padding:10px 12px;border-radius:9px;text-decoration:none;color:#1c1c1c;font-weight:600;font-size:14px}` +
+    `.acct-item,.acct-item:visited{display:block;padding:10px 12px;border-radius:9px;text-decoration:none!important;color:#1c1c1c;font-weight:600;font-size:14px}` +
     `.acct-item:hover{background:#f3f1ea;color:#ff4326}.acct-site{display:none}` +
     `.studio-foot{border-top:1px solid rgba(28,28,28,.12);text-align:center;padding:30px 20px;font-size:13px;font-weight:600}` +
     `.studio-foot__meta{opacity:.6;font-weight:500;margin-top:4px}` +
@@ -1129,7 +1131,7 @@ function editorPage(session, env) {
     `<span class="bar-name">Beyond <em>the</em> Cities</span><span class="bar-tag">Studio</span></a>` +
     `<div class="bar-right"><a class="bar-site" href="https://beyondthecities.org/" target="_blank" rel="noopener">View site \u2197</a>` +
     `<div class="acct"><button type="button" id="acct-btn" class="acct-btn" aria-haspopup="true" aria-expanded="false" aria-label="Account" onclick="toggleAcct(event)">` +
-    `<span class="avatar">${escapeHtml((session.email || '?').charAt(0).toUpperCase())}</span><span class="acct-caret">\u25be</span></button>` +
+    `<span class="avatar" aria-hidden="true">${escapeHtml((session.email || '?').charAt(0).toUpperCase())}</span></button>` +
     `<div id="acct-menu" class="acct-menu" hidden><div class="acct-who"><span class="acct-label">Signed in as</span>` +
     `<span class="acct-email">${escapeHtml(session.email)}</span><span class="role ${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span></div>` +
     `<a class="acct-item acct-site" href="https://beyondthecities.org/" target="_blank" rel="noopener">View site \u2197</a>` +
