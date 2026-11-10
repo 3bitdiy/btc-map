@@ -25,8 +25,15 @@
   //   npx wrangler kv namespace create ACCESS
   "kv_namespaces": [
     { "binding": "ACCESS", "id": "277fbe5444964a60a86e12b910a3e04f" }
+  ],
+
+  // Network database (organizer directory, notice board, newsletter log).
+  // Lives OUTSIDE the public repo on purpose. Schema: studio/schema.sql
+  //   npx wrangler d1 execute btc-network --remote --file studio/schema.sql --config studio/wrangler.jsonc
+  "d1_databases": [
+    { "binding": "NETWORK", "database_name": "btc-network", "database_id": "4f5f000b-5318-4391-9c3a-36dd1469f447" }
   ]
 
   // Secrets (set via `wrangler secret put`, never committed):
-  //   GITHUB_TOKEN, GOOGLE_CLIENT_SECRET, SESSION_SECRET
+  //   GITHUB_TOKEN, GOOGLE_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY (newsletter)
 }

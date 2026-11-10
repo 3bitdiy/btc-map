@@ -47,10 +47,17 @@ their email to `OWNER_EMAILS` in `wrangler.jsonc` and redeploy.
   `OWNER_EMAILS` (comma-separated).
 - KV: `ACCESS` (allowlist under key `access`; also holds `rl:*` rate-limit
   counters).
+- D1: `NETWORK` → database `btc-network` (organizer **Network**: profiles,
+  notice board, newsletter log). Schema in `schema.sql`; apply/upgrade with
+  `npx wrangler d1 execute btc-network --remote --file studio/schema.sql --config studio/wrangler.jsonc`
+  (statements are `IF NOT EXISTS`, so re-running is safe). This data is
+  deliberately **not** in the public repo — a profile row is created/refreshed
+  at every sign-in (Google display name, last login).
 
 Secrets (set with `wrangler secret put … --config studio/wrangler.jsonc`):
 `GITHUB_TOKEN` (fine-grained, contents:write), `GOOGLE_CLIENT_SECRET`,
-`SESSION_SECRET`.
+`SESSION_SECRET`, `RESEND_API_KEY` (monthly newsletter; optional until the
+newsletter ships).
 
 ## Deploy
 
@@ -73,6 +80,16 @@ Requires the `beyondthecities.org` zone to be on this Cloudflare account.
 3. The Worker derives the redirect URI from the request origin, so no code
    change is needed. Once verified, the workers.dev origin/redirect can be
    removed from Google (optional).
+
+## Network tab (organizer directory · notices · newsletter)
+
+Signed-in organizers see a **Network** tab with two sub-views:
+**Directory** (who the other organizers are, how to reach them) and
+**Notices** (open calls, partner searches, offers, questions). A monthly
+digest goes out by email. Built in phases before the Nov 2026 workshop;
+phase 0 (database + tab shell + profile row at sign-in) is live.
+
+`GET /api/network/me` returns the signed-in person's profile.
 
 ## Known follow-ups (deferred)
 

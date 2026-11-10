@@ -72,6 +72,7 @@ export default {
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
       if (pathname === "/auth/logout") return authLogout(origin);
       if (pathname === "/api/me") return apiMe(request, env);
+      if (pathname === "/api/network/me") return apiNetworkMe(request, env);
       if (pathname === "/api/colonies") return apiColonies(request, env);
 
       const photoMatch = pathname.match(/^\/api\/colony\/(\d+)\/photos?$/);
@@ -190,6 +191,8 @@ async function authCallback(request, env, origin) {
     exp: Date.now() + SESSION_TTL_MS,
   };
   const token = await signSession(env, session);
+  // Network: remember who signed in (display name for the directory).
+  await touchProfile(env, claims.email, claims.name);
 
   const headers = new Headers({ Location: `${origin}/` });
   headers.append("Set-Cookie", cookie(SESSION_COOKIE, token, { maxAge: SESSION_TTL_MS / 1000 }));
@@ -637,6 +640,69 @@ async function apiAccessPut(request, env) {
   return json({ ok: true });
 }
 
+// --- network: organizer directory / notices (D1) -----------------------------
+// Profiles, notices and the newsletter log live in the NETWORK D1 database
+// (studio/schema.sql) — never in the public repo. The KV allowlist still
+// decides who may sign in; D1 only stores what people choose to share.
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function profileKey(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+// Create or refresh the signed-in person's profile row. Best-effort: a D1
+// hiccup must never block sign-in.
+async function touchProfile(env, email, googleName) {
+  if (!env.NETWORK) return;
+  const now = nowIso();
+  try {
+    await env.NETWORK.prepare(
+      "INSERT INTO profiles (email, google_name, created_at, updated_at, last_login, unsub_token) " +
+        "VALUES (?1, ?2, ?3, ?3, ?3, ?4) " +
+        "ON CONFLICT(email) DO UPDATE SET google_name = ?2, last_login = ?3",
+    )
+      .bind(profileKey(email), String(googleName || "").slice(0, 120), now, randomToken())
+      .run();
+  } catch (err) {
+    console.error("profile upsert failed:", err && err.message || err);
+  }
+}
+
+// What the client sees of a profile row (no tokens).
+function profileView(row) {
+  return {
+    email: row.email,
+    name: row.name || row.google_name || "",
+    google_name: row.google_name || "",
+    phone: row.phone || "",
+    about: row.about || "",
+    languages: row.languages || "",
+    show_email: !!row.show_email,
+    visible: !!row.visible,
+    newsletter: !!row.newsletter,
+    updated_at: row.updated_at,
+    last_login: row.last_login,
+  };
+}
+
+async function apiNetworkMe(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (!env.NETWORK) return json({ error: "network_unavailable", detail: "The network database is not configured." }, 503);
+  const key = profileKey(session.email);
+  const q = env.NETWORK.prepare("SELECT * FROM profiles WHERE email = ?1").bind(key);
+  let row = await q.first();
+  if (!row) {
+    // Accounts that signed in before the network existed get a row on demand.
+    await touchProfile(env, key, session.name);
+    row = await q.first();
+  }
+  if (!row) return json({ error: "server_error", detail: "Could not load your profile." }, 500);
+  return json({ profile: profileView(row), role: session.role });
+}
+
 // --- front-matter parse / serialize (mirrors scripts/gen-blog.mjs) ------------
 function parseFrontMatter(raw) {
   const m = String(raw).match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -984,6 +1050,20 @@ function editorPage(session, env) {
       `<div class="actions"><button class="btn" onclick="saveAccess()">Save access</button><span id="access-status"></span></div></div>`
     : "";
 
+  // Network tab: Directory / Notices sub-views (phase 0 = shell; the lists
+  // arrive in the next phases).
+  const networkPanel =
+    `<div id="panel-network" style="display:none">` +
+    `<div class="net-head"><h2 style="color:#000;margin:0 0 4px">Network</h2>` +
+    `<p style="opacity:.75;font-size:13px;margin:0 0 14px">Other colony organizers across the Western Balkans — find each other, share calls and offers. Visible only to signed-in organizers.</p></div>` +
+    `<div class="subtabs" role="tablist"><button id="sub-directory" class="subtab on" role="tab" onclick="showSub('directory')">Directory</button>` +
+    `<button id="sub-notices" class="subtab" role="tab" onclick="showSub('notices')">Notices</button></div>` +
+    `<div id="subpanel-directory"><div class="net-card"><div class="picker-head">You</div><p id="net-me" class="net-me">Loading…</p>` +
+    `<p class="hint">Your profile is the card other organizers will see in the directory. Editing it comes with the next update.</p></div>` +
+    `<p class="pempty">The organizer directory is coming in the next update.</p></div>` +
+    `<div id="subpanel-notices" style="display:none"><p class="pempty">The notice board (open calls, partner searches, offers, questions) is coming in the next update.</p></div>` +
+    `</div>`;
+
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8"/>` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"/>` +
@@ -1049,6 +1129,11 @@ function editorPage(session, env) {
     `.post-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:12px 14px;margin-bottom:10px}` +
     `.post-row .meta{font-size:12px;opacity:.7;margin-top:2px}` +
     `#post-editor{background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px}` +
+    `.subtabs{display:flex;gap:4px;margin:0 0 16px;border-bottom:1.5px solid rgba(28,28,28,.15)}` +
+    `.subtab{background:none;border:0;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;padding:8px 12px;font:inherit;font-weight:700;font-size:13.5px;color:#1c1c1c;opacity:.6;cursor:pointer;width:auto}` +
+    `.subtab:hover{opacity:1}.subtab.on{opacity:1;border-bottom-color:#ff4326;color:#000}` +
+    `.net-card{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}` +
+    `.net-me{margin:0 0 8px;font-size:14px}.net-me b{color:#000}` +
     `.acc-sec{margin-bottom:16px;background:#f3f1ea;border:1px solid rgba(28,28,28,.12);border-radius:14px;padding:16px 18px}.acc-sec h3{color:#000;margin:0 0 12px;font-size:16px}` +
     `.h-sub{font-weight:400;color:#6b6b6b}` +
     `.acc-row{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:12px;padding:10px 14px;margin-bottom:8px}` +
@@ -1119,6 +1204,7 @@ function editorPage(session, env) {
     `.actions{flex-wrap:wrap;gap:8px}.actions .btn{flex:1 1 auto;padding:12px 18px}.actions span{flex-basis:100%}` +
     `.posts-head{gap:10px;flex-wrap:wrap}` +
     `.post-row{flex-direction:column;align-items:stretch}.post-row .btn{flex:1}` +
+    `.net-card{padding:14px 12px}.subtabs{overflow-x:auto;scrollbar-width:none}.subtab{flex:0 0 auto}` +
     `.acc-sec{padding:14px 12px}.acc-row{flex-wrap:wrap;padding:10px 12px}.acc-row span{overflow-wrap:anywhere}.acc-org-head{flex-wrap:wrap;gap:8px}.acc-add{flex-wrap:wrap}.acc-add .btn{width:100%}.acc-org .chip{max-width:100%;white-space:normal;text-align:left}` +
     `.chip{padding:7px 12px}` +
     `#p-body .toastui-editor-toolbar{overflow-x:auto}` +
@@ -1145,7 +1231,8 @@ function editorPage(session, env) {
     `<a class="acct-item" href="/auth/logout">Log out</a></div></div></div></header>` +
     `<div class="wrap">` +
     `<div class="tabs"><button id="tab-colony" class="tab on" onclick="showTab('colony')">Colony details</button>` +
-    `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` + accessTab + `</div>` +
+    `<button id="tab-posts" class="tab" onclick="showTab('posts')">Blog posts</button>` +
+    `<button id="tab-network" class="tab" onclick="showTab('network')">Network</button>` + accessTab + `</div>` +
     `<div id="panel-colony">` +
     `<div id="colony-list"><div class="picker"><div class="picker-head">${session.role === "organizer" ? "Colonies you can edit" : "Select a colony"}<span id="picker-count" class="picker-count"></span></div>` +
     `<div class="search-wrap"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><input id="picker-search" type="search" placeholder="Search colonies…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="picker-search" aria-label="Clear search" hidden>\u00d7</button></div>` +
@@ -1162,7 +1249,7 @@ function editorPage(session, env) {
     `<div id="posts-index"><div class="posts-head"><div><h2 style="color:#000;margin:0">Blog posts</h2><span id="posts-status" style="font-size:12px;opacity:.85"></span></div><button class="btn" onclick="newPost()">+ New post</button></div>` +
     `<div id="posts-search-row" hidden style="margin-bottom:12px">` + `<div class="search-wrap"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><input id="posts-search" type="search" placeholder="Search posts…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="posts-search" aria-label="Clear search" hidden>\u00d7</button></div>` + `</div>` +
     `<div id="posts-list"></div></div>` + postEditor +
-    `</div>` + accessPanel +
+    `</div>` + networkPanel + accessPanel +
     `</div>` +
     `<footer class="studio-foot"><p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>` +
     `<p class="studio-foot__meta">A Goethe-Institut project · 2026–2028</p></footer>` +
@@ -1320,10 +1407,21 @@ const EDITOR_JS =
   "colonyDirty=false;if(out.unchanged){setStatus('No changes to save');return}" +
   "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
   // --- tabs + blog posts ---
-  "function showTab(name){['colony','posts','access'].forEach(function(n){" +
+  "function showTab(name){['colony','posts','network','access'].forEach(function(n){" +
   "var p=q('panel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
   "var t=q('tab-'+n);if(t)t.classList.toggle('on',n===name)});" +
-  "if(name==='posts')loadPosts();if(name==='access')loadAccessPanel()}" +
+  "if(name==='posts')loadPosts();if(name==='network')loadNetwork();if(name==='access')loadAccessPanel()}" +
+  // --- network (directory / notices) ---
+  "var netSub='directory';var netMe=null;" +
+  "function showSub(name){netSub=name;['directory','notices'].forEach(function(n){" +
+  "var p=q('subpanel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
+  "var t=q('sub-'+n);if(t){t.classList.toggle('on',n===name);t.setAttribute('aria-selected',String(n===name))}})}" +
+  "async function loadNetwork(){var box=q('net-me');if(netMe){renderNetMe();return}" +
+  "var r=await fetch('/api/network/me');var out=await r.json().catch(function(){return{}});" +
+  "if(!r.ok){box.textContent='Could not load your profile: '+(out.detail||out.error||r.status);return}" +
+  "netMe=out.profile;renderNetMe()}" +
+  "function renderNetMe(){var box=q('net-me');box.innerHTML='';var b=document.createElement('b');b.textContent=netMe.name||netMe.email;box.appendChild(b);" +
+  "if(netMe.name){box.appendChild(document.createTextNode(' \u00b7 '+netMe.email))}}" +
   "function setPostStatus(t){q('p-status').textContent=t}" +
   "async function loadPosts(){var box=q('posts-list');box.innerHTML='<p style=\"opacity:.7\">Loading…</p>';" +
   "var r=await fetch('/api/posts');if(!r.ok){box.innerHTML='<p>Could not load posts</p>';return}" +
@@ -1468,6 +1566,8 @@ function health(env) {
       githubToken: Boolean(env.GITHUB_TOKEN),
       sessionSecret: Boolean(env.SESSION_SECRET),
       accessKv: Boolean(env.ACCESS),
+      networkDb: Boolean(env.NETWORK),
+      resendApiKey: Boolean(env.RESEND_API_KEY),
     },
   });
 }
