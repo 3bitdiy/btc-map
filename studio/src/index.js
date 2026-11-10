@@ -60,6 +60,11 @@ export default {
       }
 
       if (pathname === "/health") return health(env);
+      // Post bodies reference site-relative images (/assets/images/…). In the
+      // studio editor, send them to the repo copy so fresh uploads show at once.
+      if (request.method === "GET" && /^\/assets\/images\/[A-Za-z0-9._\/-]+$/.test(pathname) && !pathname.includes("..")) {
+        return Response.redirect(`https://raw.githubusercontent.com/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/public${pathname}`, 302);
+      }
       if (pathname === "/auth/google") return authStart(request, env, origin);
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
       if (pathname === "/auth/logout") return authLogout(origin);
@@ -938,8 +943,8 @@ function editorPage(session, env) {
     `<div id="p-colonies-chips" class="chips"></div>` +
     `<select id="p-colonies-add" style="margin-top:8px"><option value="">+ add colony…</option></select></div>` +
     `<div class="fld full"><span>Cover image</span><div class="photo"><img id="p-cover-preview" alt=""/>` +
-    `<div class="photo-ctl"><input type="file" id="p-cover-file" accept="image/png,image/jpeg,image/webp"/>` +
-    `<button type="button" class="btn ghost" onclick="uploadCover()">Upload cover</button>` +
+    `<div class="photo-ctl"><label class="btn ghost file-btn">Choose cover image` +
+    `<input type="file" id="p-cover-file" accept="image/png,image/jpeg,image/webp" onchange="uploadCover()"/></label>` +
     `<span id="p-cover-status" style="font-size:12px"></span></div></div></div>` +
     `<div class="fld full"><span>Gallery <b id="pg-count" class="pcount"></b></span>` +
     `<div id="pg-grid" class="pgrid"></div>` +
@@ -947,8 +952,8 @@ function editorPage(session, env) {
     `<input type="file" id="pg-file" multiple accept="image/png,image/jpeg,image/webp" onchange="addGallery(this.files)"/></label>` +
     `<span id="pg-status" class="pstatus"></span></div>` +
     `<span class="hint">Optional. Shown as thumbnails under the post; a click opens them full-screen. Up to ${MAX_POST_GALLERY}. ` +
-    `For a photo inside the text, use the image button in the editor below.</span></div>` +
-    `<label class="fld full"><span>Body (markdown)</span><textarea id="p-body" rows="12"></textarea></label>` +
+    `For a photo inside the text, use the image button in the editor below (or drag / paste it in).</span></div>` +
+    `<div class="fld full"><span>Text</span><div id="p-body"></div></div>` +
     `<label class="fld" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="p-draft" style="width:auto"/><span>Draft (kept off the blog)</span></label>` +
     `</div>` +
     `<div class="actions"><button class="btn" onclick="savePost()">Save post</button>` +
@@ -1023,7 +1028,7 @@ function editorPage(session, env) {
     `.btn{background:#ff4326;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-weight:700;cursor:pointer;white-space:nowrap}` +
     `.btn.ghost{background:#fff;border:1.5px solid rgba(28,28,28,.35);color:#1c1c1c}` +
     `#form{display:none;background:#fff;border:1px solid rgba(28,28,28,.15);border-radius:16px;padding:20px}` +
-    `.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}` +
+    `.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}` +
     `.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}` +
     `.fld.full{grid-column:1/-1}` +
     `.chips{display:flex;flex-wrap:wrap;gap:6px}` +
@@ -1056,11 +1061,40 @@ function editorPage(session, env) {
     `input[type=file]{border:0;padding:0;font-size:12px}` +
     `.fld span{opacity:.8}.actions{margin-top:18px;display:flex;gap:10px;align-items:center}` +
     `#status{font-size:13px;font-weight:600;opacity:.85}a{color:#1c1c1c}` +
-    `.EasyMDEContainer .CodeMirror{border-radius:10px;border:1px solid rgba(28,28,28,.3);color:#000}` +
-    `.editor-toolbar{border-radius:10px 10px 0 0;border-color:rgba(28,28,28,.3)}` +
+    `#p-body{font-weight:400}` +
+    `#p-body .toastui-editor-defaultUI{border-color:rgba(28,28,28,.3);border-radius:10px;font-family:inherit}` +
+    `#p-body .toastui-editor-defaultUI-toolbar{border-radius:10px 10px 0 0;background:#f7f7f5}` +
+    `#p-body .toastui-editor-contents{font-family:'Montserrat',system-ui,sans-serif;font-size:15px;color:#1c1c1c}` +
+    `#p-body .toastui-editor-contents p{font-size:15px;line-height:1.65}` +
+    `#p-body .toastui-editor-contents img{max-width:100%;border-radius:8px}` +
+    `#p-body .ProseMirror{font-family:'Montserrat',system-ui,sans-serif}` +
+    `#p-body .toastui-editor-mode-switch{border-radius:0 0 10px 10px}` +
+    // --- phones (organizers at the workshop) ---
+    `@media (max-width:640px){` +
+    `.bar{padding:10px 14px;gap:6px}.bar-logo{height:26px}.bar-brand{font-size:14px}` +
+    `.bar-right{font-size:12px;gap:6px 8px;width:100%}.bar-site{order:3;margin-left:auto}` +
+    `.wrap{padding:16px 14px 56px}` +
+    `.tabs{overflow-x:auto;flex-wrap:nowrap;margin:2px -14px 16px;padding:0 14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}` +
+    `.tab{flex:0 0 auto;padding:9px 15px}` +
+    `.picker{padding:12px}#picker-results{max-height:260px}` +
+    `#form,#post-editor{padding:16px 14px;border-radius:14px}` +
+    `.grid{grid-template-columns:minmax(0,1fr);gap:16px}` +
+    `input,select,textarea{font-size:16px;padding:11px 12px}` +
+    `.photo{flex-direction:column;gap:10px}#p-cover-preview{width:100%;height:auto;aspect-ratio:16/9}` +
+    `.pgrid{grid-template-columns:1fr 1fr;gap:8px}` +
+    `.pbtn{width:34px;height:34px;font-size:18px}.pbtn.star{height:28px}` +
+    `.file-btn{width:100%;text-align:center;padding:12px 20px}` +
+    `.actions{flex-wrap:wrap;gap:8px}.actions .btn{flex:1 1 auto;padding:12px 18px}.actions span{flex-basis:100%}` +
+    `.posts-head{gap:10px;flex-wrap:wrap}` +
+    `.post-row{flex-direction:column;align-items:stretch}.post-row .btn{flex:1}` +
+    `.acc-sec{padding:14px 12px}.acc-row{flex-wrap:wrap;padding:10px 12px}.acc-row span{overflow-wrap:anywhere}.acc-org-head{flex-wrap:wrap;gap:8px}.acc-add{flex-wrap:wrap}.acc-add .btn{width:100%}.acc-org .chip{max-width:100%;white-space:normal;text-align:left}` +
+    `.chip{padding:7px 12px}` +
+    `#p-body .toastui-editor-toolbar{overflow-x:auto}` +
+    `.studio-foot{padding:24px 16px;font-size:12px}` +
+    `}` +
     `</style>` +
-    `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css"/>` +
-    `<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>` +
+    `<link rel="stylesheet" href="https://uicdn.toast.com/editor/3.2.2/toastui-editor.min.css"/>` +
+    `<script src="https://uicdn.toast.com/editor/3.2.2/toastui-editor-all.min.js"></script>` +
     `</head><body data-role="${escapeHtml(session.role)}" data-raw="${escapeHtml(rawBase)}">` +
     `<div class="bar"><span class="bar-brand"><img class="bar-logo" src="https://beyondthecities.org/favicon.svg" alt=""/><span><b>Beyond the Cities</b> · Studio</span></span>` +
     `<span class="bar-right"><a class="bar-site" href="https://beyondthecities.org/">View site ↗</a><span class="role ${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span> ${escapeHtml(session.email)} · <a href="/auth/logout">Log out</a></span></div>` +
@@ -1101,7 +1135,7 @@ const EDITOR_JS =
   "function renderMulti(name,values){var box=q('ml-'+name);box.innerHTML='';var vals=(values&&values.length)?values:[''];vals.forEach(function(v){addMulti(name,v)})}" +
   "function getMulti(name){return [].slice.call(q('ml-'+name).querySelectorAll('input')).map(function(i){return i.value.trim()}).filter(Boolean).join(', ')}" +
   "var currentId=null;var currentPhotos=[];var RAW=document.body.dataset.raw;" +
-  "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var easyMDE=null;var postColonies=[];" +
+  "var editingSlug=null;var postCover='';var savedCover='';var taggable=[];var bodyEditor=null;var postColonies=[];" +
   "var MAXP=" + MAX_COLONY_PHOTOS + ";var MAXG=" + MAX_POST_GALLERY + ";var photoBusy=false;var postGallery=[];var galleryBusy=false;var localPrev={};" +
   "function q(id){return document.getElementById(id)}" +
   "function setStatus(t){q('status').textContent=t}" +
@@ -1251,38 +1285,45 @@ const EDITOR_JS =
   "sel.onchange=function(){if(sel.value)addPostColony(sel.value)}}" +
   "function addPostColony(id){if(postColonies.indexOf(String(id))===-1)postColonies.push(String(id));renderPostColonies()}" +
   "function removePostColony(id){postColonies=postColonies.filter(function(x){return x!==String(id)});renderPostColonies()}" +
-  "function initEditor(){if(easyMDE)return;easyMDE=new EasyMDE({element:q('p-body'),spellChecker:false,status:false,maxHeight:'420px',autofocus:false," +
-  "uploadImage:true,imageAccept:'image/png, image/jpeg, image/webp',imageMaxSize:30*1024*1024,imageUploadFunction:queueBodyImage," +
-  "toolbar:['bold','italic','|','heading-2','heading-3','|','unordered-list','ordered-list','quote','|','link',{name:'upload-image',action:EasyMDE.drawUploadedImage,className:'fa fa-image',title:'Insert image(s) — upload from your computer (you can also drag & drop or paste)'},'|','preview','guide']})}" +
-  // Inline images: uploaded one at a time (parallel commits to the same branch conflict), inserted on their own line.
+  // Word-like editor (Toast UI, WYSIWYG mode). Stored as markdown, so the blog
+  // generator and existing posts don't change; "Markdown" tab for those who want it.
+  "function initEditor(){if(bodyEditor)return;bodyEditor=new toastui.Editor({el:q('p-body'),height:(innerWidth<640?'380px':'460px'),initialEditType:'wysiwyg',previewStyle:'tab'," +
+  "usageStatistics:false,autofocus:false,hideModeSwitch:true,placeholder:'Write your post here\u2026',initialValue:''," +
+  "toolbarItems:[['heading','bold','italic'],['link','image'],['ul','ol','quote','hr']]," +
+  "hooks:{addImageBlobHook:function(blob,cb){queueBodyImage(blob,cb);return false}}})}" +
+  // Inline images: uploaded one at a time (parallel commits to the same branch conflict).
   "var bodyImgQueue=[];var bodyImgBusy=false;" +
-  "function queueBodyImage(file,onSuccess,onError){bodyImgQueue.push({file:file,onError:onError});runBodyImages()}" +
-  "async function runBodyImages(){if(bodyImgBusy)return;bodyImgBusy=true;" +
+  "function queueBodyImage(file,cb){bodyImgQueue.push({file:file,cb:cb});runBodyImages()}" +
+  "async function runBodyImages(){if(bodyImgBusy)return;bodyImgBusy=true;var ok=0;" +
   "while(bodyImgQueue.length){var job=bodyImgQueue.shift();var left=bodyImgQueue.length;" +
-  "setPostStatus('Uploading image'+(left?' ('+left+' more queued)':'')+'…');" +
+  "setPostStatus('Uploading image'+(left?' ('+left+' more queued)':'')+'\u2026');" +
   "try{var blob=await optimizeImage(job.file);var fd=new FormData();fd.append('file',blob,'image.webp');fd.append('kind','inline');fd.append('title',q('p-title').value||'');" +
   "var r=await fetch('/api/upload',{method:'POST',body:fd});var out=await r.json();" +
-  "if(!r.ok){setPostStatus('Image upload failed: '+(out.detail||out.error));job.onError('Upload failed: '+(out.detail||out.error));continue}" +
-  "var cm=easyMDE.codemirror;var cur=cm.getCursor();var pre=cur.ch>0?'\\n\\n':'';cm.replaceSelection(pre+'![]('+out.path+')\\n\\n');cm.focus();" +
-  "}catch(e){setPostStatus('Image upload failed');job.onError('Upload failed')}}" +
-  "bodyImgBusy=false;setPostStatus('Image(s) inserted \\u2713 — remember to Save post')}" +
-  "function getBody(){return easyMDE?easyMDE.value():q('p-body').value}" +
+  "if(!r.ok){setPostStatus('Image upload failed: '+(out.detail||out.error));continue}" +
+  "job.cb(out.path,'');ok++" +
+  "}catch(e){setPostStatus('Image upload failed \u2014 check your connection')}}" +
+  "bodyImgBusy=false;if(ok)setPostStatus('Image'+(ok>1?'s':'')+' inserted \u2713 \u2014 remember to Save post')}" +
+  "function getBody(){return bodyEditor?bodyEditor.getMarkdown():''}" +
+  "function unwrap(md){var L=String(md||'').split('\\n');var out=[];var BLK=/^\\s*([#>|!]|[-*+]\\s|\\d+[.)]\\s|```|---|___|\\*\\*\\*|<)/;" +
+  "for(var i=0;i<L.length;i++){var cur=L[i],prev=out.length?out[out.length-1]:'';" +
+  "if(out.length&&prev.trim()&&cur.trim()&&!BLK.test(cur)&&!/^\\s*([#|!]|```)/.test(prev)&&!/  $/.test(prev)&&!/\\\\$/.test(prev)){out[out.length-1]=prev+' '+cur.trim()}else{out.push(cur)}}return out.join('\\n')}" +
+  "function setBody(md){initEditor();bodyEditor.setMarkdown(unwrap(md),false);bodyEditor.changeMode('wysiwyg',true)}" +
   "function newPost(){editingSlug=null;postCover='';savedCover='';q('pe-title').textContent='New post';" +
   "['p-title','p-author','p-excerpt','p-tags'].forEach(function(id){q(id).value=''});" +
   "q('p-date').value=new Date().toISOString().slice(0,10);q('p-draft').checked=false;" +
   "postColonies=(document.body.dataset.role!=='admin'?taggable.map(function(c){return String(c.id)}):[]);renderPostColonies();" +
   "setCoverPreview('');setPostStatus('');q('p-cover-file').value='';q('p-cover-status').textContent='';q('posts-status').textContent='';" +
   "postGallery=[];q('pg-status').textContent='';renderGallery();" +
-  "q('pe-delete').style.display='none';q('post-editor').style.display='block';initEditor();easyMDE.value('');" +
-  "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
+  "q('pe-delete').style.display='none';q('post-editor').style.display='block';setBody('');" +
+  "q('post-editor').scrollIntoView({behavior:'smooth'})}" +
   "async function editPost(slug){setPostStatus('');var r=await fetch('/api/post/'+slug);var out=await r.json();" +
   "if(!r.ok){alert('Could not open: '+(out.error||r.status));return}var p=out.post;editingSlug=slug;postCover=p.cover||'';savedCover=p.cover||'';" +
   "q('pe-title').textContent='Edit post';q('p-title').value=p.title;q('p-date').value=p.date;q('p-author').value=p.author;" +
   "q('p-excerpt').value=p.excerpt;q('p-tags').value=(p.tags||[]).join(', ');postColonies=(p.colonies||[]).map(String);renderPostColonies();" +
   "q('p-draft').checked=!!p.draft;setCoverPreview(postCover);q('p-cover-file').value='';q('p-cover-status').textContent='';" +
   "postGallery=realList(p.gallery);q('pg-status').textContent='';renderGallery();" +
-  "q('pe-delete').style.display='';q('post-editor').style.display='block';initEditor();easyMDE.value(p.body||'');" +
-  "q('post-editor').scrollIntoView({behavior:'smooth'});setTimeout(function(){easyMDE.codemirror.refresh()},50)}" +
+  "q('pe-delete').style.display='';q('post-editor').style.display='block';setBody(p.body||'');" +
+  "q('post-editor').scrollIntoView({behavior:'smooth'})}" +
   "async function uploadCover(){var f=q('p-cover-file').files[0];if(!f){q('p-cover-status').textContent='Choose an image first';return}" +
   "q('p-cover-preview').src=URL.createObjectURL(f);q('p-cover-status').textContent='Optimising…';var blob=await optimizeImage(f);" +
   "q('p-cover-status').textContent='Uploading…';var fd=new FormData();fd.append('file',blob,'cover.webp');fd.append('title',q('p-title').value||'');" +
