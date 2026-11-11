@@ -58,7 +58,7 @@ export default {
       if (pathname.startsWith("/api/") && (request.method === "POST" || request.method === "PUT" || request.method === "DELETE")) {
         const s = await getSession(request, env);
         if (s && !(await rateOk(env, s.email))) {
-          return json({ error: "rate_limited", detail: "Too many changes — wait a minute." }, 429);
+          return json({ error: "rate_limited", detail: "Too many changes. Wait a minute." }, 429);
         }
       }
 
@@ -321,7 +321,7 @@ async function apiColonyPut(request, env, id) {
 
   const message = `edit: ${colony.art_colony_name || "colony " + id} (studio, ${session.email})`;
   const res = await ghPutFile(env, found.path, newText, found.sha, message);
-  if (res.status === 409) return json({ error: "conflict", detail: "This file changed since you loaded it — reload and retry." }, 409);
+  if (res.status === 409) return json({ error: "conflict", detail: "This file changed since you loaded it. Reload and retry." }, 409);
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
   return json({ ok: true, commit: res.commit, colony });
 }
@@ -350,7 +350,7 @@ async function apiColonyPhotoPost(request, env, id) {
   const colony = found.list[found.index];
   const existing = realPhotos(colony.photos);
   if (existing.length >= MAX_COLONY_PHOTOS) {
-    return json({ error: "too_many", detail: `Max ${MAX_COLONY_PHOTOS} photos — remove one first.` }, 409);
+    return json({ error: "too_many", detail: `Max ${MAX_COLONY_PHOTOS} photos. Remove one first.` }, 409);
   }
 
   // SEO/readable filename: colony-name slug + a short unique suffix.
@@ -404,7 +404,7 @@ async function apiColonyPhotosPut(request, env, id) {
 
   const next = [...new Set(realPhotos(body.photos))];
   if (next.some((p) => !existing.includes(p))) {
-    return json({ error: "unknown_photo", detail: "Photos changed since you loaded them — reload and retry." }, 409);
+    return json({ error: "unknown_photo", detail: "Photos changed since you loaded them. Reload and retry." }, 409);
   }
   if (next.join("\n") === existing.join("\n") && existing.length === (colony.photos || []).length) {
     return json({ ok: true, photos: existing, unchanged: true });
@@ -420,7 +420,7 @@ async function apiColonyPhotosPut(request, env, id) {
     env, found.path, JSON.stringify(found.data, null, 2) + "\n", found.sha,
     `edit: ${colony.art_colony_name || "colony " + id} ${what} (studio, ${session.email})`,
   );
-  if (res.status === 409) return json({ error: "conflict", detail: "This file changed since you loaded it — reload and retry." }, 409);
+  if (res.status === 409) return json({ error: "conflict", detail: "This file changed since you loaded it. Reload and retry." }, 409);
   if (!res.ok) return json({ error: "commit_failed", detail: res.detail }, 502);
   for (const p of removed) await deleteRepoImage(env, p, session.email);
   return json({ ok: true, photos: next, commit: res.commit });
@@ -971,7 +971,7 @@ async function apiNoticeCreate(request, env) {
     "SELECT COUNT(*) AS n FROM notices WHERE author_email = ?1 AND status = 'open' AND expires_at > ?2",
   ).bind(me, now).first();
   if (cnt && cnt.n >= MAX_OPEN_NOTICES) {
-    return json({ error: "too_many", detail: `You already have ${MAX_OPEN_NOTICES} open notices — close some first.` }, 400);
+    return json({ error: "too_many", detail: `You already have ${MAX_OPEN_NOTICES} open notices. Close some first.` }, 400);
   }
   await touchProfile(env, me, session.name);
   const res = await env.NETWORK.prepare(
@@ -1006,7 +1006,7 @@ async function apiNoticeUpdate(request, env, id) {
     if (!mine && !isAdmin) return json({ error: "forbidden" }, 403);
     const status = body.status === "closed" ? "closed" : "open";
     if (status === "open" && row.expires_at <= now) {
-      return json({ error: "expired", detail: "This notice has expired — edit it with a new deadline to repost it." }, 400);
+      return json({ error: "expired", detail: "This notice has expired. Edit it with a new deadline to repost it." }, 400);
     }
     await env.NETWORK.prepare("UPDATE notices SET status = ?2, updated_at = ?3 WHERE id = ?1").bind(row.id, status, now).run();
     return json({ ok: true, status });
@@ -1311,7 +1311,7 @@ function editorPage(session, env) {
     `<div class="photo-add"><label class="btn ghost file-btn">+ Add photos` +
     `<input type="file" id="photo-file" multiple accept="image/png,image/jpeg,image/webp" onchange="addPhotos(this.files)"/></label>` +
     `<span id="photo-status" class="pstatus"></span></div>` +
-    `<span class="hint">The first photo is the <b>main</b> one — shown on the map and colony cards. Up to ${MAX_COLONY_PHOTOS} photos; ` +
+    `<span class="hint">The first photo is the <b>main</b> one, shown on the map and colony cards. Up to ${MAX_COLONY_PHOTOS} photos; ` +
     `landscape (about 16:9), at least 1600 px wide. You can select several at once. Changes are saved immediately.</span></div>`;
 
   const form =
@@ -1390,7 +1390,7 @@ function editorPage(session, env) {
   const networkPanel =
     `<div id="panel-network" style="display:none">` +
     `<div class="net-head"><h2 style="color:#000;margin:0 0 4px">Network</h2>` +
-    `<p style="opacity:.75;font-size:13px;margin:0 0 14px">Other colony organizers across the Western Balkans — find each other, share calls and offers. Visible only to signed-in organizers.</p></div>` +
+    `<p style="opacity:.75;font-size:13px;margin:0 0 14px">Other colony organizers across the Western Balkans: find each other, share calls and offers. Visible only to signed-in organizers.</p></div>` +
     `<div class="subtabs" role="tablist"><button id="sub-directory" class="subtab on" role="tab" onclick="showSub('directory')">Directory</button>` +
     `<button id="sub-notices" class="subtab" role="tab" onclick="showSub('notices')">Notices</button></div>` +
     `<div id="subpanel-directory">` +
@@ -1400,7 +1400,7 @@ function editorPage(session, env) {
     `<div id="me-edit" style="display:none"><div class="grid">` +
     `<label class="fld"><span>Name</span><input id="me-name" type="text" maxlength="${PROFILE_LIMITS.name}"/></label>` +
     `<label class="fld"><span>Phone (WhatsApp / Viber, with country code)</span><input id="me-phone" type="tel" placeholder="+381 6x xxx xxxx" maxlength="${PROFILE_LIMITS.phone}"/></label>` +
-    `<label class="fld full"><span>About you — what you do, what you're looking for</span><textarea id="me-about" rows="3" maxlength="${PROFILE_LIMITS.about}"></textarea></label>` +
+    `<label class="fld full"><span>About you: what you do, what you're looking for</span><textarea id="me-about" rows="3" maxlength="${PROFILE_LIMITS.about}"></textarea></label>` +
     `<label class="fld full"><span>Languages (comma-separated)</span><input id="me-languages" type="text" placeholder="Serbian, English, German" maxlength="${PROFILE_LIMITS.languages}"/></label>` +
     `<label class="fld chk"><input type="checkbox" id="me-show_email"/><span>Show my email to other organizers</span></label>` +
     `<label class="fld chk"><input type="checkbox" id="me-visible"/><span>List me in the directory</span></label>` +
@@ -1410,7 +1410,7 @@ function editorPage(session, env) {
     `<div id="community-card" class="net-card community" hidden><div class="picker-head">Group chat</div>` +
     `<p class="net-me">Quick questions and day-to-day chat happen in the organizers' group.</p>` +
     `<div class="actions" style="margin-top:10px"><a id="community-link" class="btn" target="_blank" rel="noopener">Open group ↗</a></div>` +
-    `<p id="community-admin" class="hint" hidden>No group link yet — set it in the Access tab.</p></div>` +
+    `<p id="community-admin" class="hint" hidden>No group link yet. Set it in the Access tab.</p></div>` +
     `<p id="dir-admin-note" class="hint" style="margin:0 0 10px" hidden></p>` +
     `<div class="search-wrap" style="margin-bottom:14px"><svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M20 20l-4.2-4.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>` +
     `<input id="dir-search" type="search" placeholder="Search people, colonies, cities…" autocomplete="off" enterkeyhint="search"/><button type="button" class="search-clear" data-for="dir-search" aria-label="Clear search" hidden>×</button></div>` +
@@ -1648,7 +1648,7 @@ function editorPage(session, env) {
     `<div id="posts-list"></div></div>` + postEditor +
     `</div>` + networkPanel + accessPanel +
     `</div>` +
-    `<footer class="studio-foot"><p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>` +
+    `<footer class="studio-foot"><p>Beyond the Cities · Artists' Residencies of the Western Balkans</p>` +
     `<p class="studio-foot__meta">A Goethe-Institut project · 2026–2028</p></footer>` +
     `<script>` + EDITOR_JS + `</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
@@ -1802,7 +1802,7 @@ const EDITOR_JS =
   "var out=await r.json();" +
   "if(!r.ok){setStatus('Save failed: '+(out.detail||out.error));return}" +
   "colonyDirty=false;if(out.unchanged){setStatus('No changes to save');return}" +
-  "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min')}" +
+  "setStatus('Saved \\u2713  commit '+String(out.commit||'').slice(0,7)+' · live in ~1–2 min')}" +
   // --- tabs + blog posts ---
   "function showTab(name){['colony','posts','network','access'].forEach(function(n){" +
   "var p=q('panel-'+n);if(p)p.style.display=(n===name?'block':'none');" +
@@ -1821,7 +1821,7 @@ const EDITOR_JS =
   "function renderNetMe(){var box=q('net-me');box.innerHTML='';var b=document.createElement('b');b.textContent=netMe.name||netMe.email;box.appendChild(b);" +
   "if(netMe.name)box.appendChild(document.createTextNode(' \\u00b7 '+netMe.email));" +
   "var parts=[];if(netMe.phone)parts.push(netMe.phone);if(netMe.languages)parts.push(netMe.languages);if(netMe.about)parts.push(netMe.about);" +
-  "var sum=q('me-summary');sum.textContent=parts.length?parts.join('\\n'):'Your profile is empty — add a phone, languages and a line about yourself so other organizers can reach you.';" +
+  "var sum=q('me-summary');sum.textContent=parts.length?parts.join('\\n'):'Your profile is empty. Add a phone, languages and a line about yourself so other organizers can reach you.';" +
   "var flags=[];if(!netMe.visible)flags.push('hidden from the directory');if(!netMe.show_email)flags.push('email hidden');if(!netMe.newsletter)flags.push('no digest');" +
   "if(flags.length)sum.textContent+='\\n('+flags.join(', ')+')'}" +
   "function editProfile(){q('me-name').value=netMe.name||'';q('me-phone').value=netMe.phone||'';q('me-about').value=netMe.about||'';q('me-languages').value=netMe.languages||'';" +
@@ -2008,7 +2008,7 @@ const EDITOR_JS =
   "setPostStatus('Saving…');var r=await fetch('/api/post/'+slug,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});" +
   "var out=await r.json();if(!r.ok){setPostStatus('Save failed: '+(out.detail||out.error));return}" +
   "postDirty=false;closePostEditor();" +
-  "q('posts-status').textContent='Saved \\u2713 commit '+String(out.commit||'').slice(0,7)+' — live in ~1–2 min';loadPosts()}" +
+  "q('posts-status').textContent='Saved \\u2713 commit '+String(out.commit||'').slice(0,7)+' · live in ~1–2 min';loadPosts()}" +
   "async function deletePost(slug){var s=slug||editingSlug;if(!s)return;if(!confirm('Delete this post?'))return;" +
   "var r=await fetch('/api/post/'+s,{method:'DELETE'});var out=await r.json();" +
   "if(!r.ok){alert('Delete failed: '+(out.detail||out.error));return}" +

@@ -23,7 +23,7 @@ collections:
     label_singular: Country file
     description: >-
       Each entry is one country's list of colonies. Open a country, then edit
-      the Colonies list. "Art field" is free text — prefer the canonical
+      the Colonies list. "Art field" is free text; prefer the canonical
       disciplines: Painting, Sculpture, Visual arts, Graphic arts, Photography,
       Film & video, Multimedia, Literature, Calligraphy, Applied arts,
       Crafts & pottery, Street art, Folk & naive art, Performance, Dance,
@@ -36,7 +36,7 @@ collections:
           - label: Colonies
             name: colonies
             widget: list
-            summary: "{{fields.art_colony_name}} — {{fields.city}}"
+            summary: "{{fields.art_colony_name}} · {{fields.city}}"
             fields:
               - label: ID
                 name: id

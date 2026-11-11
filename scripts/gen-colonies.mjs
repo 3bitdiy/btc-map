@@ -93,7 +93,7 @@ const photoBlock = (c) => {
         ? `<ul class="col-thumbs">${more
             .map(
               (p, i) =>
-                `<li><a href="${esc(p)}" data-lightbox="colony" aria-label="Open photo ${i + 2} of ${photos.length}"><img src="${esc(p)}" alt="${name} — photo ${i + 2}" loading="lazy" /></a></li>`,
+                `<li><a href="${esc(p)}" data-lightbox="colony" aria-label="Open photo ${i + 2} of ${photos.length}"><img src="${esc(p)}" alt="${name}, photo ${i + 2}" loading="lazy" /></a></li>`,
             )
             .join("")}</ul>`
         : ""
@@ -132,7 +132,7 @@ const nav = (active) => `
 
 const footer = () => `
   <footer class="col-foot">
-    <p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>
+    <p>Beyond the Cities · Artists' Residencies of the Western Balkans</p>
     <p class="col-foot__meta">A Goethe-Institut project · 2026–2028</p>
     <p><a class="col-foot__login" href="https://studio.beyondthecities.org/">Organizer login</a></p>
   </footer>`;
@@ -265,7 +265,7 @@ writeFileSync(
   resolve(OUT, "index.html"),
   page(
     "colonies-dir",
-    "Colonies — Beyond the Cities",
+    "Colonies · Beyond the Cities",
     `Directory of ${colonies.length} artist colonies across the Western Balkans.`,
     `${SITE}/colonies/`,
     dirInner,
@@ -275,13 +275,13 @@ writeFileSync(
 
 for (const c of colonies) {
   const desc =
-    `${c.art_colony_name} — artist colony in ${shortPlace(c) || c.country}. ` +
+    `${c.art_colony_name}, an artist colony in ${shortPlace(c) || c.country}. ` +
     `${disciplines(c).join(", ")}`.slice(0, 155);
   writeFileSync(
     resolve(OUT, `${c._slug}.html`),
     page(
       "colony-page",
-      `${c.art_colony_name} — Beyond the Cities`,
+      `${c.art_colony_name} · Beyond the Cities`,
       desc,
       `${SITE}/colonies/${c._slug}.html`,
       colonyInner(c),

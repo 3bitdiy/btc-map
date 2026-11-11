@@ -135,7 +135,7 @@ const nav = (active) => `
 
 const footer = () => `
   <footer class="col-foot">
-    <p>Beyond the Cities — Artists' Residencies of the Western Balkans</p>
+    <p>Beyond the Cities · Artists' Residencies of the Western Balkans</p>
     <p class="col-foot__meta">A Goethe-Institut project · 2026–2028</p>
     <p><a class="col-foot__login" href="https://studio.beyondthecities.org/">Organizer login</a></p>
   </footer>`;
@@ -181,7 +181,7 @@ const listInner = `
     ${
       posts.length
         ? `<section class="post-grid">${posts.map(postCard).join("")}</section>`
-        : `<p class="blog-empty">No posts yet — check back soon.</p>`
+        : `<p class="blog-empty">No posts yet. Check back soon.</p>`
     }
   </main>`;
 
@@ -203,7 +203,7 @@ const postInner = (p) => `
       <ul class="post-gallery">${p.gallery
         .map(
           (g, i) =>
-            `<li><a href="${esc(g)}" data-lightbox="post" aria-label="Open photo ${i + 1} of ${p.gallery.length}"><img src="${esc(g)}" alt="${esc(p.title)} — photo ${i + 1}" loading="lazy" /></a></li>`,
+            `<li><a href="${esc(g)}" data-lightbox="post" aria-label="Open photo ${i + 1} of ${p.gallery.length}"><img src="${esc(g)}" alt="${esc(p.title)}, photo ${i + 1}" loading="lazy" /></a></li>`,
         )
         .join("")}</ul>
     </section>`
@@ -220,7 +220,7 @@ writeFileSync(
   resolve(OUT, "index.html"),
   page(
     "blog-index",
-    "Blog — Beyond the Cities",
+    "Blog · Beyond the Cities",
     "News and stories from the artist colonies of the Western Balkans.",
     `${SITE}/blog/`,
     listInner,
@@ -232,7 +232,7 @@ for (const p of posts) {
     resolve(OUT, `${p.slug}.html`),
     page(
       "blog-post",
-      `${p.title} — Beyond the Cities`,
+      `${p.title} · Beyond the Cities`,
       p.excerpt || p.title,
       `${SITE}/blog/${p.slug}.html`,
       postInner(p),
