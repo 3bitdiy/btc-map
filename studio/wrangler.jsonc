@@ -9,6 +9,9 @@
   "workers_dev": true,
   "observability": { "enabled": true },
 
+  // UI assets are imported as plain text and inlined into the page response.
+  "rules": [{ "type": "Text", "globs": ["**/*.css", "**/*.svg", "**/*.client.js"], "fallthrough": true }],
+
   // Non-secret config. GOOGLE_CLIENT_ID is not sensitive (it's exposed in the
   // browser redirect anyway), so it lives here rather than as a secret.
   "vars": {
