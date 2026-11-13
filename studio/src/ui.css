@@ -61,7 +61,7 @@ a.me .go{margin-left:auto;color:var(--mute)}
 
 /* main column */
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
-.phead{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:16px max(24px,env(safe-area-inset-right,0px)) 14px 24px;display:flex;align-items:center;gap:14px}
+.phead{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--line);padding:16px max(24px,env(safe-area-inset-right,0px)) 14px 24px;display:flex;align-items:center;gap:14px}
 .phead .ico{width:38px;height:38px;border-radius:11px;background:var(--paper);border:1px solid var(--line);display:grid;place-items:center;color:var(--accent);flex:0 0 auto}
 .phead h1{margin:0;font-size:20px;font-weight:900;color:var(--black);line-height:1.2;text-wrap:balance;overflow-wrap:anywhere}
 .phead p{margin:2px 0 0;font-size:12.5px;color:var(--mute)}
@@ -215,7 +215,7 @@ select.chip{appearance:none;-webkit-appearance:none;padding:5px 12px;min-height:
 .multi .r input{flex:1}
 .multi .r .btn{flex:0 0 auto}
 .fld .btn.quiet.sm{align-self:flex-start}
-.savebar{position:sticky;bottom:0;z-index:5;margin-top:4px;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 -8px 30px rgba(0,0,0,.08)}
+.savebar{position:sticky;bottom:0;z-index:40;margin-top:4px;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 -8px 30px rgba(0,0,0,.08)}
 .savebar .st{flex:1;font-size:12.5px;font-weight:600;color:var(--mute);display:flex;align-items:center;gap:8px;min-width:0}
 .savebar .st .d{width:8px;height:8px;border-radius:999px;background:var(--line-strong);flex:0 0 auto}
 .savebar .st span:last-child{overflow-wrap:anywhere}
@@ -292,7 +292,7 @@ select.chip{appearance:none;-webkit-appearance:none;padding:5px 12px;min-height:
 .acc-row>.role{margin-left:auto}
 
 /* tab bar (phones) */
-.tabbar{display:none;flex:0 0 auto;background:var(--paper);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));justify-content:space-around;z-index:6}
+.tabbar{display:none;flex:0 0 auto;background:var(--paper);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));justify-content:space-around;z-index:60}
 .tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border-radius:12px;text-decoration:none;font-size:10.5px;font-weight:700;color:var(--mute);min-width:52px;position:relative}
 .tabbar a svg{width:22px;height:22px}
 .tabbar a.on{color:var(--ink)}
@@ -302,7 +302,7 @@ select.chip{appearance:none;-webkit-appearance:none;padding:5px 12px;min-height:
 .tabbar a.on .avatar{background:var(--accent)}
 
 /* toast */
-.toast{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;border-radius:999px;padding:10px 16px 10px 12px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;box-shadow:0 12px 32px rgba(0,0,0,.2);transition:opacity .2s,transform .2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
+.toast{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;border-radius:999px;padding:10px 16px 10px 12px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;box-shadow:0 12px 32px rgba(0,0,0,.2);transition:opacity .2s,transform .2s;pointer-events:none;z-index:100;max-width:calc(100% - 32px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast svg{color:#6fd39a}
 .toast.err svg{color:#ff8a75}
