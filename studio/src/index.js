@@ -836,6 +836,8 @@ async function apiNetworkDirectory(request, env) {
     const visible = row ? !!row.visible : true;
     const filled = profileFilled(row);
     if (!isAdmin && email !== me && !visible) continue;
+    // Invited but never signed in: only admins see them ("Invited, not signed in yet").
+    if (!isAdmin && email !== me && !row) continue;
     const showEmail = isAdmin || email === me || !row || !!row.show_email;
     people.push({
       email: showEmail ? email : "",
