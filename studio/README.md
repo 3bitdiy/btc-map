@@ -10,7 +10,8 @@ Live: **https://btc-studio.stevan-266.workers.dev** (custom domain
 
 ## What it does
 
-- **Google sign-in** → role resolved from an allowlist in KV.
+- **Sign-in with Google, or with any email address** (one-time link + 6-digit
+  code sent via Resend) → role resolved from an allowlist in KV.
 - **Owner** (`OWNER_EMAILS`): always admin, unremovable, and the only role that
   can edit the admin list.
 - **Admin**: edit any colony, any blog post, and manage organizers.
@@ -22,7 +23,8 @@ Live: **https://btc-studio.stevan-266.workers.dev** (custom domain
 ## Roles & access — how to add an organizer
 
 1. Sign in as an owner/admin → **Access** tab.
-2. Under **Organizers**, type their Google email → **Add organizer**.
+2. Under **Organizers**, type their email (Gmail or any other provider) →
+   **Add organizer**.
 3. Use **+ add colony…** to assign one or more colonies (chips show the names).
 4. **Save access**. They can sign in immediately; changes take effect on their
    next sign-in (sessions last 12h).
@@ -32,7 +34,8 @@ their email to `OWNER_EMAILS` in `wrangler.jsonc` and redeploy.
 
 ## How organizers use it
 
-1. Go to the studio URL → **Continue with Google**.
+1. Go to the studio URL → **Continue with Google**, or type their email →
+   **Email me a sign-in link** and open the link (or type the 6-digit code).
 2. **Colony details** — their colony loads automatically (or pick it); edit
    fields, choose art fields from the list, upload a main photo → **Save**.
 3. **Blog posts** — **+ New post**, write with the toolbar editor (bold, H2/H3,
@@ -52,12 +55,26 @@ their email to `OWNER_EMAILS` in `wrangler.jsonc` and redeploy.
   `npx wrangler d1 execute btc-network --remote --file studio/schema.sql --config studio/wrangler.jsonc`
   (statements are `IF NOT EXISTS`, so re-running is safe). This data is
   deliberately **not** in the public repo — a profile row is created/refreshed
-  at every sign-in (Google display name, last login).
+  at every sign-in (Google display name if any, last login).
 
 Secrets (set with `wrangler secret put … --config studio/wrangler.jsonc`):
 `GITHUB_TOKEN` (fine-grained, contents:write), `GOOGLE_CLIENT_SECRET`,
-`SESSION_SECRET`, `RESEND_API_KEY` (monthly newsletter; optional until the
-newsletter ships).
+`SESSION_SECRET`, `RESEND_API_KEY` (email sign-in + monthly newsletter; until
+it is set, the sign-in page shows only the Google button).
+
+### Email sign-in
+
+- `POST /auth/email` → if the address is on the allowlist, stores a hashed
+  one-time token + code in D1 `login_tokens` and mails a link and a 6-digit code
+  (valid 15 min, once). The page looks the same for unknown addresses.
+- `GET /auth/email/link?t=…` shows a **Sign in** button (mail scanners prefetch
+  links, so the token is only spent on the POST); `POST /auth/email/code` takes
+  the code (5 wrong tries per email). A sign-in burns all other open links.
+- Limits: 5 emails per address and 20 per IP per hour. Cross-site POSTs refused.
+- Sender: vars `MAIL_FROM` / `MAIL_REPLY_TO`; domain `beyondthecities.org`
+  verified in Resend (EU region).
+- Local dev: without `RESEND_API_KEY` the link and code are printed to the
+  `wrangler dev` console.
 
 ## Deploy
 

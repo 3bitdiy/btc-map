@@ -76,6 +76,9 @@ export default {
       if (pathname === "/auth/google") return authStart(request, env, origin);
       if (pathname === "/auth/callback") return authCallback(request, env, origin);
       if (pathname === "/auth/logout") return authLogout(origin);
+      if (pathname === "/auth/email") return authEmailRequest(request, env, origin);
+      if (pathname === "/auth/email/link") return authEmailLink(request, env, origin);
+      if (pathname === "/auth/email/code") return authEmailCode(request, env, origin);
       if (pathname === "/api/me") return apiMe(request, env);
       if (pathname === "/api/network/me") {
         if (request.method === "GET") return apiNetworkMe(request, env);
@@ -193,33 +196,263 @@ async function authCallback(request, env, origin) {
     return page(403, "Sign-in failed", "Your Google account did not return a verified email.");
   }
 
+  return startSession(env, origin, claims.email, claims.name || "", [cookie(STATE_COOKIE, "", { maxAge: 0 })]);
+}
+
+// Shared by Google and email sign-in: the address is verified by now; check the
+// allowlist, sign the session cookie and refresh the profile row.
+async function startSession(env, origin, email, googleName, extraCookies = []) {
   const access = await loadAccess(env);
-  const resolved = resolveRole(access, claims.email, ownerEmails(env));
+  const resolved = resolveRole(access, email, ownerEmails(env));
   if (!resolved) {
     return page(
       403,
       "Access is invite-only",
-      `Signed in as <b>${escapeHtml(claims.email)}</b>, but this account isn't on the access list yet. Ask the project team to add you.`,
+      `Signed in as <b>${escapeHtml(email)}</b>, but this address isn't on the access list yet. Ask the project team to add you.`,
       origin,
     );
   }
 
+  // Network: remember who signed in (display name for the directory).
+  await touchProfile(env, email, googleName);
+  let name = googleName;
+  if (!name && env.NETWORK) {
+    try {
+      const row = await env.NETWORK.prepare("SELECT name, google_name FROM profiles WHERE email = ?1").bind(profileKey(email)).first();
+      if (row) name = row.name || row.google_name || "";
+    } catch { /* name is cosmetic */ }
+  }
+
   const session = {
-    email: claims.email,
-    name: claims.name || "",
+    email,
+    name: name || "",
     role: resolved.role,
     owner: !!resolved.owner,
     colonies: resolved.colonies,
     exp: Date.now() + SESSION_TTL_MS,
   };
   const token = await signSession(env, session);
-  // Network: remember who signed in (display name for the directory).
-  await touchProfile(env, claims.email, claims.name);
 
   const headers = new Headers({ Location: `${origin}/` });
   headers.append("Set-Cookie", cookie(SESSION_COOKIE, token, { maxAge: SESSION_TTL_MS / 1000 }));
-  headers.append("Set-Cookie", cookie(STATE_COOKIE, "", { maxAge: 0 }));
+  for (const c of extraCookies) headers.append("Set-Cookie", c);
   return new Response(null, { status: 302, headers });
+}
+
+// --- auth: email link / code ---------------------------------------------------
+// For organizers without a Google account: type any address, get a one-time
+// link (and a 6-digit code for when mail is read on another device). Only
+// hashes are stored (D1 `login_tokens`, strongly consistent, so a link opened
+// a second after it was sent still works). The link page asks for a click
+// before signing in, because mail scanners prefetch links and would otherwise
+// burn the one-time token.
+const LOGIN_TTL_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 5; // wrong codes per link
+const LOGIN_PER_EMAIL_HOUR = 5;
+const LOGIN_PER_IP_HOUR = 20;
+const EMAIL_RE = /^[^\s@<>()",;]{1,64}@[^\s@<>()",;]+\.[^\s@<>()",;]{2,}$/;
+
+function isDevOrigin(origin) {
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
+// Cross-site form posts are refused (login CSRF). Browsers send Origin on POST.
+function sameOrigin(request, origin) {
+  const o = request.headers.get("Origin");
+  return !o || o === origin;
+}
+
+async function sha256Hex(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function sixDigitCode() {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+  return String(n).padStart(6, "0");
+}
+
+async function authEmailRequest(request, env, origin) {
+  if (request.method !== "POST") return Response.redirect(`${origin}/`, 302);
+  if (!sameOrigin(request, origin)) return page(403, "Sign-in failed", "This request did not come from the Studio sign-in page.");
+  if (!mailEnabled(env, origin)) return page(503, "Email sign-in unavailable", "Email sign-in is not set up yet. Please use Google, or contact the project team.");
+  const form = await request.formData();
+  const email = profileKey(form.get("email"));
+  if (!EMAIL_RE.test(email) || email.length > 254) {
+    return signInPage({ email, error: "That doesn't look like an email address. Please check it and try again." }, 400);
+  }
+
+  const now = Date.now();
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  const db = env.NETWORK;
+  await db.prepare("DELETE FROM login_tokens WHERE created_at < ?1").bind(now - 24 * 3600 * 1000).run();
+  const hourAgo = now - 3600 * 1000;
+  const perEmail = await db.prepare("SELECT COUNT(*) AS n FROM login_tokens WHERE email = ?1 AND created_at > ?2").bind(email, hourAgo).first();
+  const perIp = ip ? await db.prepare("SELECT COUNT(*) AS n FROM login_tokens WHERE ip = ?1 AND created_at > ?2").bind(ip, hourAgo).first() : { n: 0 };
+  if ((perEmail && perEmail.n >= LOGIN_PER_EMAIL_HOUR) || (perIp && perIp.n >= LOGIN_PER_IP_HOUR)) {
+    return signInPage({ email, error: "Too many sign-in emails were requested. Please wait an hour, or use the code from an email you already received." }, 429);
+  }
+
+  // Only addresses on the allowlist get mail; the page looks the same either
+  // way, so it can't be used to probe who has access.
+  const access = await loadAccess(env);
+  if (resolveRole(access, email, ownerEmails(env))) {
+    const token = randomToken();
+    const id = await sha256Hex(token);
+    const code = sixDigitCode();
+    const codeHash = await hmac(env.SESSION_SECRET, `${id}:${code}`);
+    await db.prepare(
+      "INSERT INTO login_tokens (id, email, code_hash, ip, created_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+    ).bind(id, email, codeHash, ip, now, now + LOGIN_TTL_MS).run();
+
+    const link = `${origin}/auth/email/link?t=${encodeURIComponent(token)}`;
+    const sent = await sendMail(env, {
+      to: email,
+      subject: `Your Studio sign-in code: ${code}`,
+      html: loginMailHtml(link, code),
+      text: loginMailText(link, code),
+    });
+    if (!sent.ok) {
+      if (isDevOrigin(origin)) {
+        console.log(`[dev] sign-in for ${email}: code ${code} · ${link}`);
+      } else {
+        console.error("login mail failed:", sent.detail);
+        await db.prepare("DELETE FROM login_tokens WHERE id = ?1").bind(id).run();
+        return signInPage({ email, error: "We couldn't send the email right now. Please try again in a few minutes, or use Google." }, 502);
+      }
+    }
+  } else {
+    // Same work as a real request, so the response time doesn't give it away.
+    await db.prepare(
+      "INSERT INTO login_tokens (id, email, code_hash, ip, created_at, expires_at, used_at) VALUES (?1, ?2, '', ?3, ?4, ?4, ?4)",
+    ).bind(await sha256Hex(randomToken()), email, ip, now).run();
+  }
+  return codePage(email);
+}
+
+// GET: show a confirm button (mail scanners only GET). POST: sign in.
+async function authEmailLink(request, env, origin) {
+  if (!env.NETWORK) return page(503, "Email sign-in unavailable", "Email sign-in is not set up yet.");
+  const now = Date.now();
+  if (request.method === "GET") {
+    const token = new URL(request.url).searchParams.get("t") || "";
+    const row = token
+      ? await env.NETWORK.prepare("SELECT email FROM login_tokens WHERE id = ?1 AND used_at IS NULL AND expires_at > ?2").bind(await sha256Hex(token), now).first()
+      : null;
+    if (!row) return expiredPage();
+    return htmlPage(
+      "Sign in to Studio",
+      `<p class="lead">Continue as <b>${escapeHtml(row.email)}</b>.</p>
+       <form method="post" action="/auth/email/link"><input type="hidden" name="t" value="${escapeHtml(token)}"/>
+       <button class="btn-main" type="submit">Sign in</button></form>
+       <p class="note">Not you? Just close this page.</p>`,
+    );
+  }
+  if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (!sameOrigin(request, origin)) return page(403, "Sign-in failed", "This request did not come from the Studio sign-in page.");
+  const form = await request.formData();
+  const token = String(form.get("t") || "");
+  if (!token) return expiredPage();
+  const row = await env.NETWORK.prepare(
+    "UPDATE login_tokens SET used_at = ?2 WHERE id = ?1 AND used_at IS NULL AND expires_at > ?2 AND code_hash <> '' RETURNING email",
+  ).bind(await sha256Hex(token), now).first();
+  if (!row) return expiredPage();
+  return finishEmailLogin(env, origin, row.email, now);
+}
+
+async function authEmailCode(request, env, origin) {
+  if (request.method !== "POST") return Response.redirect(`${origin}/`, 302);
+  if (!sameOrigin(request, origin)) return page(403, "Sign-in failed", "This request did not come from the Studio sign-in page.");
+  if (!env.NETWORK) return page(503, "Email sign-in unavailable", "Email sign-in is not set up yet.");
+  const form = await request.formData();
+  const email = profileKey(form.get("email"));
+  const code = String(form.get("code") || "").replace(/\D/g, "");
+  const now = Date.now();
+  const row = await env.NETWORK.prepare(
+    "SELECT id, code_hash, attempts FROM login_tokens WHERE email = ?1 AND used_at IS NULL AND expires_at > ?2 AND code_hash <> '' ORDER BY created_at DESC LIMIT 1",
+  ).bind(email, now).first();
+  if (!row) return codePage(email, "This code has expired or was already used. Request a new email below.", 400);
+  if (row.attempts >= LOGIN_MAX_ATTEMPTS) return codePage(email, "Too many wrong codes. Request a new email below.", 429);
+  const expected = await hmac(env.SESSION_SECRET, `${row.id}:${code}`);
+  if (code.length !== 6 || !timingSafeEqual(expected, row.code_hash)) {
+    await env.NETWORK.prepare("UPDATE login_tokens SET attempts = attempts + 1 WHERE id = ?1").bind(row.id).run();
+    const left = LOGIN_MAX_ATTEMPTS - row.attempts - 1;
+    return codePage(email, left > 0 ? `That code is not right. ${left} ${left === 1 ? "try" : "tries"} left.` : "Too many wrong codes. Request a new email below.", 400);
+  }
+  const used = await env.NETWORK.prepare("UPDATE login_tokens SET used_at = ?2 WHERE id = ?1 AND used_at IS NULL RETURNING email").bind(row.id, now).first();
+  if (!used) return codePage(email, "This code was already used. Request a new email below.", 400);
+  return finishEmailLogin(env, origin, used.email, now);
+}
+
+async function finishEmailLogin(env, origin, email, now) {
+  // One sign-in burns every other open link for this address.
+  await env.NETWORK.prepare("UPDATE login_tokens SET used_at = ?2 WHERE email = ?1 AND used_at IS NULL").bind(email, now).run();
+  return startSession(env, origin, email, "");
+}
+
+function codePage(email, error = "", status = 200) {
+  return htmlPage(
+    "Check your email",
+    `<p class="lead">If <b>${escapeHtml(email)}</b> has access to the Studio, we just sent it a sign-in link and a 6-digit code. Open the link, or type the code here.</p>
+     ${error ? `<p class="err" role="alert">${escapeHtml(error)}</p>` : ""}
+     <form method="post" action="/auth/email/code" class="stack">
+       <input type="hidden" name="email" value="${escapeHtml(email)}"/>
+       <label class="lbl" for="code">Sign-in code</label>
+       <input class="field code" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123456" required autofocus/>
+       <button class="btn-main" type="submit">Sign in</button>
+     </form>
+     <form method="post" action="/auth/email" class="resend"><input type="hidden" name="email" value="${escapeHtml(email)}"/><button type="submit" class="linkish">Send a new email</button> · <a href="/">Use another address</a></form>
+     <p class="note">The code is valid for 15 minutes. Nothing arrived? Check your spam folder. If it's still missing, this address may not be on the access list yet: ask the project team to add it.</p>`,
+    status,
+  );
+}
+
+function expiredPage() {
+  return htmlPage(
+    "Link expired",
+    `<p>This sign-in link has expired or was already used. Links work once and for 15 minutes.</p>
+     <a class="btn" href="/">Back to sign-in</a>`,
+    400,
+  );
+}
+
+function loginMailHtml(link, code) {
+  return `<!doctype html><html><body style="margin:0;padding:24px 12px;background:#f1f1ee;font-family:Montserrat,Arial,sans-serif;color:#1c1c1c">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background:#fff;border-radius:16px;border:1px solid #e0e0dc">
+<tr><td style="padding:28px 28px 8px;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase">Beyond <span style="font-weight:400">the</span> Cities <span style="color:#ff4326">Studio</span></td></tr>
+<tr><td style="padding:8px 28px 0;font-size:15px;line-height:1.6">
+<p style="margin:0 0 18px">Use this button to sign in to the Studio:</p>
+<p style="margin:0 0 22px"><a href="${link}" style="display:inline-block;background:#ff4326;color:#fff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:999px">Sign in to Studio</a></p>
+<p style="margin:0 0 6px">Or type this code on the sign-in page:</p>
+<p style="margin:0 0 22px;font-size:30px;font-weight:800;letter-spacing:.18em">${code}</p>
+<p style="margin:0 0 24px;color:#6b6b6b;font-size:13px">The link and the code work once and expire in 15 minutes. If you didn't ask to sign in, you can ignore this email.</p>
+</td></tr></table>
+<p style="font-size:12px;color:#6b6b6b;margin:14px 0 0">Beyond the Cities · a Goethe-Institut project</p>
+</td></tr></table></body></html>`;
+}
+
+function loginMailText(link, code) {
+  return `Sign in to the Beyond the Cities Studio:\n${link}\n\nOr type this code on the sign-in page: ${code}\n\nThe link and the code work once and expire in 15 minutes. If you didn't ask to sign in, you can ignore this email.\n`;
+}
+
+// --- mail (Resend HTTP API) ----------------------------------------------------
+async function sendMail(env, { to, subject, html, text }) {
+  if (!env.RESEND_API_KEY) return { ok: false, detail: "RESEND_API_KEY not set" };
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      from: env.MAIL_FROM || "Beyond the Cities Studio <studio@beyondthecities.org>",
+      to: [to],
+      reply_to: env.MAIL_REPLY_TO || undefined,
+      subject,
+      html,
+      text,
+    }),
+  });
+  if (!res.ok) return { ok: false, detail: `${res.status} ${await res.text()}` };
+  return { ok: true };
 }
 
 // --- auth: logout ------------------------------------------------------------
@@ -688,7 +921,7 @@ async function touchProfile(env, email, googleName) {
     await env.NETWORK.prepare(
       "INSERT INTO profiles (email, google_name, created_at, updated_at, last_login, unsub_token) " +
         "VALUES (?1, ?2, ?3, ?3, ?3, ?4) " +
-        "ON CONFLICT(email) DO UPDATE SET google_name = ?2, last_login = ?3",
+        "ON CONFLICT(email) DO UPDATE SET google_name = CASE WHEN ?2 <> '' THEN ?2 ELSE google_name END, last_login = ?3",
     )
       .bind(profileKey(email), String(googleName || "").slice(0, 120), now, randomToken())
       .run();
@@ -1282,15 +1515,34 @@ function resolveRole(access, email, owners) {
 // --- home / editor -----------------------------------------------------------
 async function home(request, env) {
   const session = await getSession(request, env);
-  if (!session) {
-    return htmlPage(
-      "Sign in to Studio",
-      `<p class="lead">Manage your colony's page, photos and news on Beyond the Cities.</p>
-       <a class="btn-google" href="/auth/google"><span class="g">${GOOGLE_G}</span>Continue with Google</a>
-       <p class="note">Access is for invited colony organisers. Need an account? Contact the Beyond the Cities team.</p>`,
-    );
-  }
+  if (!session) return signInPage({ mail: mailEnabled(env, new URL(request.url).origin) });
   return editorPage(session, env);
+}
+
+// Email sign-in shows once mail can actually go out (always in local dev,
+// where the link is printed to the console instead).
+function mailEnabled(env, origin) {
+  return Boolean(env.NETWORK) && (Boolean(env.RESEND_API_KEY) || isDevOrigin(origin));
+}
+
+function signInPage({ email = "", error = "", mail = true } = {}, status = 200) {
+  const emailForm = mail
+    ? `<div class="or"><span>or sign in with any email</span></div>
+     ${error ? `<p class="err" role="alert">${escapeHtml(error)}</p>` : ""}
+     <form method="post" action="/auth/email" class="stack">
+       <label class="lbl" for="email">Your email address</label>
+       <input class="field" id="email" name="email" type="email" autocomplete="email" inputmode="email" value="${escapeHtml(email)}" placeholder="name@example.com" required/>
+       <button class="btn-main" type="submit">Email me a sign-in link</button>
+     </form>`
+    : "";
+  return htmlPage(
+    "Sign in to Studio",
+    `<p class="lead">Manage your colony's page, photos and news on Beyond the Cities.</p>
+     <a class="btn-google" href="/auth/google"><span class="g">${GOOGLE_G}</span>Continue with Google</a>
+     ${emailForm}
+     <p class="note">Access is for invited colony organisers. Use the address the project team invited. Need an account? Contact the Beyond the Cities team.</p>`,
+    status,
+  );
 }
 
 // Signed-in Studio shell. Markup: page.js; styles: ui.css; behaviour: ui.client.js
@@ -1380,6 +1632,19 @@ function htmlPage(title, inner, status = 200) {
   .btn-google:hover{border-color:#ff4326;box-shadow:0 4px 14px rgba(255,67,38,.15)}
   .btn-google .g{display:grid;place-items:center}
   .note{margin:18px 0 0;font-size:12.5px;color:#6b6b6b;line-height:1.5}
+  .or{display:flex;align-items:center;gap:12px;margin:22px 0 16px;font-size:12.5px;color:#6b6b6b}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:rgba(28,28,28,.14)}
+  .stack{display:flex;flex-direction:column;gap:8px;margin:0}
+  .lbl{font-size:13px;font-weight:700}
+  .field{font:inherit;font-size:16px;width:100%;padding:12px 16px;border:1.5px solid rgba(28,28,28,.25);border-radius:12px;background:#fff;color:#1c1c1c}
+  .field:focus{outline:none;border-color:#ff4326;box-shadow:0 0 0 3px rgba(255,67,38,.15)}
+  .field.code{font-size:24px;font-weight:800;letter-spacing:.25em;text-align:center}
+  .field.code::placeholder{color:#cfcfca;font-weight:600}
+  .btn-main{font:inherit;font-weight:700;font-size:15px;width:100%;margin-top:6px;background:#ff4326;color:#fff;border:0;border-radius:999px;padding:13px 18px;cursor:pointer}
+  .btn-main:hover{background:#e63a1f}
+  .err{background:#fff1ee;border:1px solid rgba(255,67,38,.35);color:#a32411;border-radius:12px;padding:10px 14px;font-size:14px}
+  .resend{margin:16px 0 0;font-size:13.5px;color:#6b6b6b}
+  .linkish{font:inherit;background:none;border:0;padding:0;color:#1c1c1c;text-decoration:underline;cursor:pointer}
   .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}
   .foot{text-align:center;margin-top:22px;font-size:12.5px;color:#6b6b6b}
   .foot a{font-weight:700;color:#1c1c1c;text-decoration:none}.foot a:hover{color:#ff4326}

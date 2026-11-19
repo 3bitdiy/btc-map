@@ -295,12 +295,12 @@ export function renderStudio({ session, env, css, js, icons, logo, disciplines, 
   <div class="content">
     <div class="card">
       ${cardH("users", "Organizers", `<span id="orgs-count"></span>`)}
-      <div class="card-b" style="padding:12px 18px;border-bottom:1px solid var(--line)"><div class="toolbar"><input type="email" id="org-email" placeholder="Google email of the new organizer…"/><button type="button" class="btn ghost sm" id="add-org">${i("plus", true)}Add organizer</button></div></div>
+      <div class="card-b" style="padding:12px 18px;border-bottom:1px solid var(--line)"><div class="toolbar"><input type="email" id="org-email" placeholder="Email of the new organizer (any provider)…"/><button type="button" class="btn ghost sm" id="add-org">${i("plus", true)}Add organizer</button></div></div>
       <div class="rows" id="orgs-list"></div>
     </div>
     <div class="card">
       ${cardH("key", "Admins", "Edit everything and manage organizers")}
-      <div class="card-b" id="add-admin-row" style="padding:12px 18px;border-bottom:1px solid var(--line)" hidden><div class="toolbar"><input type="email" id="admin-email" placeholder="Google email of the new admin…"/><button type="button" class="btn ghost sm" id="add-admin">${i("plus", true)}Add admin</button></div></div>
+      <div class="card-b" id="add-admin-row" style="padding:12px 18px;border-bottom:1px solid var(--line)" hidden><div class="toolbar"><input type="email" id="admin-email" placeholder="Email of the new admin (any provider)…"/><button type="button" class="btn ghost sm" id="add-admin">${i("plus", true)}Add admin</button></div></div>
       <div class="rows" id="admins-list"></div>
     </div>
     <div class="card">
@@ -339,7 +339,7 @@ export function renderStudio({ session, env, css, js, icons, logo, disciplines, 
       </div>
       <div class="col">
         <div class="card">
-          ${cardH("key", "Account", "You sign in with Google")}
+          ${cardH("key", "Account", "Sign in with Google or an emailed link")}
           <div class="card-b stack" style="gap:12px">
             <div class="me" style="padding:0">${meBlock()}</div>
             <p class="hint" id="acct-hint"></p>

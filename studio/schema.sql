@@ -51,3 +51,19 @@ CREATE TABLE IF NOT EXISTS newsletter_log (
   recipients   INTEGER NOT NULL DEFAULT 0,
   summary      TEXT NOT NULL DEFAULT ''         -- what was included (counts), for the Access tab
 );
+
+-- Email sign-in (link or 6-digit code), for organizers without a Google account.
+-- One row per "email me a sign-in link" request; rows older than a day are
+-- pruned on the next request. Tokens and codes are stored only as hashes.
+CREATE TABLE IF NOT EXISTS login_tokens (
+  id           TEXT PRIMARY KEY,                -- SHA-256 (hex) of the link token
+  email        TEXT NOT NULL,                   -- lower-cased address it was sent to
+  code_hash    TEXT NOT NULL,                   -- HMAC(SESSION_SECRET, id:code)
+  ip           TEXT NOT NULL DEFAULT '',        -- requester IP (rate limit only)
+  created_at   INTEGER NOT NULL,                -- epoch ms
+  expires_at   INTEGER NOT NULL,                -- epoch ms (created + 15 min)
+  used_at      INTEGER,                         -- epoch ms, set once on sign-in
+  attempts     INTEGER NOT NULL DEFAULT 0       -- wrong code entries
+);
+CREATE INDEX IF NOT EXISTS login_tokens_email_idx ON login_tokens (email, created_at);
+CREATE INDEX IF NOT EXISTS login_tokens_ip_idx    ON login_tokens (ip, created_at);

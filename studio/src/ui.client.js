@@ -734,7 +734,7 @@
       invited.forEach(function (p) {
         var row = el('div', 'row'); var av = el('span', 'avatar', '?'); av.style.background = 'var(--cream)'; av.style.color = 'var(--mute)'; row.appendChild(av);
         var tt = el('div', 't'); tt.appendChild(el('b', null, p.email)); tt.appendChild(el('span', null, p.colonies.length ? p.colonies.map(function (c) { return c.name; }).join(', ') : (p.role === 'admin' ? 'admin' : 'no colony assigned'))); row.appendChild(tt);
-        var acts = el('div', 'acts'); acts.appendChild(link('btn quiet sm', 'mailto:' + p.email + '?subject=' + encodeURIComponent('Beyond the Cities Studio: your invitation') + '&body=' + encodeURIComponent('Hi,\n\nyou can sign in to the Beyond the Cities Studio with this Google account at ' + location.origin + '/ to edit your colony page and join the organizers\' network.\n\n'), 'send', 'Remind by email')); row.appendChild(acts);
+        var acts = el('div', 'acts'); acts.appendChild(link('btn quiet sm', 'mailto:' + p.email + '?subject=' + encodeURIComponent('Beyond the Cities Studio: your invitation') + '&body=' + encodeURIComponent('Hi,\n\nyou can sign in to the Beyond the Cities Studio at ' + location.origin + '/ with this email address (Continue with Google, or type the address and we email you a sign-in link) to edit your colony page and join the organizers\' network.\n\n'), 'send', 'Remind by email')); row.appendChild(acts);
         card.appendChild(row);
       });
       box.appendChild(card);

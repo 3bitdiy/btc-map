@@ -21,7 +21,10 @@
     "GOOGLE_CLIENT_ID": "594753096509-ca5djbvm7kqqeo3ms1nq3iruf3daihd8.apps.googleusercontent.com",
     // Protected owner(s): always admin, cannot be removed via the UI, and the
     // only role allowed to manage the admin list. Comma-separated emails.
-    "OWNER_EMAILS": "stevankojic.com@gmail.com"
+    "OWNER_EMAILS": "stevankojic.com@gmail.com",
+    // Email sign-in and the newsletter (sent via Resend; domain verified there).
+    "MAIL_FROM": "Beyond the Cities Studio <studio@beyondthecities.org>",
+    "MAIL_REPLY_TO": "beyondthecitiesadm@gmail.com"
   },
 
   // Allowlist store (who can edit which colony). Filled in by A0.4:
