@@ -8,7 +8,9 @@
 // fallbacks, a hidden preheader line for the inbox preview.
 
 const SITE = "https://beyondthecities.org";
-const LOGO_PNG = `${SITE}/assets/images/email/btc-logo.png`; // 105×172, shown at 30×49
+// Logo on its own white rounded tile (opaque), so it stays visible when a
+// mail app switches the message to a dark theme. 168×216, shown at 56×72.
+const LOGO_PNG = `${SITE}/assets/images/email/btc-logo-tile.png`;
 
 // Brand palette (matches studio/src/ui.css and the public site).
 const C = {
@@ -76,7 +78,7 @@ export function mailLayout({ title = "", preheader = "", body = "" }) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px">
     <tr><td align="center" style="padding:0 0 18px">
       <a href="${SITE}/" target="_blank" rel="noopener" style="text-decoration:none;color:${C.ink}">
-        <img src="${LOGO_PNG}" width="30" height="49" alt="" style="display:block;margin:0 auto 10px;border:0"/>
+        <img src="${LOGO_PNG}" width="56" height="72" alt="Beyond the Cities" style="display:block;margin:0 auto 10px;border:0"/>
         <span style="font-family:${FONT};font-size:14px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:${C.ink}">Beyond <span style="font-weight:400">the</span> Cities</span>
       </a>
     </td></tr>
@@ -206,7 +208,7 @@ export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
     preheader: "You can now update your colony's page and join the organizers' network.",
     body:
       p(esc(hi)) +
-      p(`for the workshop on 20 November: you now have access to the <b>Beyond the Cities Studio</b>, the organizers' area of beyondthecities.org.${colLine ? " " + colLine : ""}`) +
+      p(`you now have access to the <b>Beyond the Cities Studio</b>, the organizers' area of beyondthecities.org.${colLine ? " " + colLine : ""}`) +
       p("In the Studio you can:", "margin-bottom:8px") +
       bullets([
         "update your colony's page (details, contacts, photos)",
@@ -226,7 +228,7 @@ export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
     body:
 `${hi}
 
-for the workshop on 20 November: you now have access to the Beyond the Cities Studio, the organizers' area of beyondthecities.org.
+you now have access to the Beyond the Cities Studio, the organizers' area of beyondthecities.org.
 
 ${colText}In the Studio you can:
 - update your colony's page (details, contacts, photos)
