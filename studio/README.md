@@ -75,6 +75,25 @@ it is set, the sign-in page shows only the Google button).
   verified in Resend (EU region).
 - Local dev: without `RESEND_API_KEY` the link and code are printed to the
   `wrangler dev` console.
+- An address that is not on the allowlist gets a plain "has no Studio access"
+  message (organizer emails are public on the site anyway).
+
+### Emails (branded template)
+
+All outgoing mail is built in `src/mail.js`: `mailLayout()` (logo, brand
+colours, footer) + `textLayout()` for the plain-text twin, and blocks
+`p / button / steps / bullets / small / link`. The logo is a PNG on the public
+site (`public/assets/images/email/btc-logo.png`), since mail clients drop SVG.
+New messages (e.g. the newsletter) should be added there as a function that
+returns `{ subject, html, text }`.
+
+**Invitations** (admins): Network → Directory → "Invited, not signed in yet".
+*Preview the email* opens the exact HTML (`/api/network/invite/preview?email=…`,
+`&format=text` for the plain version); *Send invitation* / *Send again* per
+person, or one button for everyone not invited yet. `POST /api/network/invite`
+`{emails}` sends via the Resend batch API (max 50 per request; free tier is
+100 mails/day), skips `@demo.beyondthecities.org`, and records the date in KV
+`invites`.
 
 ## Deploy
 

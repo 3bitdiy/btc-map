@@ -7,6 +7,7 @@ import UI_CSS from "./ui.css";
 import UI_JS from "./ui.client.js";
 import ICONS from "./icons.svg";
 import { renderStudio } from "./page.js";
+import { loginMail, inviteMail, sendMail, sendMailBatch } from "./mail.js";
 
 const SESSION_COOKIE = "btc_session";
 const STATE_COOKIE = "btc_oauth_state";
@@ -87,6 +88,8 @@ export default {
       }
       if (pathname === "/api/network/directory") return apiNetworkDirectory(request, env);
       if (pathname === "/api/network/community" && request.method === "PUT") return apiNetworkCommunityPut(request, env);
+      if (pathname === "/api/network/invite/preview") return apiInvitePreview(request, env);
+      if (pathname === "/api/network/invite" && request.method === "POST") return apiInviteSend(request, env);
       if (pathname === "/api/network/notices") {
         if (request.method === "GET") return apiNoticesList(request, env);
         if (request.method === "POST") return apiNoticeCreate(request, env);
@@ -293,8 +296,7 @@ async function authEmailRequest(request, env, origin) {
     return signInPage({ email, error: "Too many sign-in emails were requested. Please wait an hour, or use the code from an email you already received." }, 429);
   }
 
-  // Only addresses on the allowlist get mail; the page looks the same either
-  // way, so it can't be used to probe who has access.
+  // Only addresses on the allowlist get mail.
   const access = await loadAccess(env);
   if (resolveRole(access, email, ownerEmails(env))) {
     const token = randomToken();
@@ -306,12 +308,7 @@ async function authEmailRequest(request, env, origin) {
     ).bind(id, email, codeHash, ip, now, now + LOGIN_TTL_MS).run();
 
     const link = `${origin}/auth/email/link?t=${encodeURIComponent(token)}`;
-    const sent = await sendMail(env, {
-      to: email,
-      subject: `Your Studio sign-in code: ${code}`,
-      html: loginMailHtml(link, code),
-      text: loginMailText(link, code),
-    });
+    const sent = await sendMail(env, { to: email, ...loginMail({ link, code }) });
     if (!sent.ok) {
       if (isDevOrigin(origin)) {
         console.log(`[dev] sign-in for ${email}: code ${code} · ${link}`);
@@ -321,13 +318,18 @@ async function authEmailRequest(request, env, origin) {
         return signInPage({ email, error: "We couldn't send the email right now. Please try again in a few minutes, or use Google." }, 502);
       }
     }
-  } else {
-    // Same work as a real request, so the response time doesn't give it away.
-    await db.prepare(
-      "INSERT INTO login_tokens (id, email, code_hash, ip, created_at, expires_at, used_at) VALUES (?1, ?2, '', ?3, ?4, ?4, ?4)",
-    ).bind(await sha256Hex(randomToken()), email, ip, now).run();
+    return codePage(email);
   }
-  return codePage(email);
+  // Not on the allowlist: say so plainly (organizer emails are public on the
+  // site anyway, and a silent page left people waiting for mail that never
+  // came). The row still counts toward the per-IP limit, so probing stays slow.
+  await db.prepare(
+    "INSERT INTO login_tokens (id, email, code_hash, ip, created_at, expires_at, used_at) VALUES (?1, ?2, '', ?3, ?4, ?4, ?4)",
+  ).bind(await sha256Hex(randomToken()), email, ip, now).run();
+  return signInPage({
+    email,
+    errorHtml: `<b>${escapeHtml(email)}</b> has no Studio access. Check the address for a typo, or use the one the project team invited. Need access? Write to <a href="mailto:${escapeHtml(env.MAIL_REPLY_TO || "beyondthecitiesadm@gmail.com")}">${escapeHtml(env.MAIL_REPLY_TO || "beyondthecitiesadm@gmail.com")}</a>.`,
+  });
 }
 
 // GET: show a confirm button (mail scanners only GET). POST: sign in.
@@ -393,7 +395,7 @@ async function finishEmailLogin(env, origin, email, now) {
 function codePage(email, error = "", status = 200) {
   return htmlPage(
     "Check your email",
-    `<p class="lead">If <b>${escapeHtml(email)}</b> has access to the Studio, we just sent it a sign-in link and a 6-digit code. Open the link, or type the code here.</p>
+    `<p class="lead">We sent a sign-in link and a 6-digit code to <b>${escapeHtml(email)}</b>. Open the link, or type the code here.</p>
      ${error ? `<p class="err" role="alert">${escapeHtml(error)}</p>` : ""}
      <form method="post" action="/auth/email/code" class="stack">
        <input type="hidden" name="email" value="${escapeHtml(email)}"/>
@@ -402,7 +404,7 @@ function codePage(email, error = "", status = 200) {
        <button class="btn-main" type="submit">Sign in</button>
      </form>
      <form method="post" action="/auth/email" class="resend"><input type="hidden" name="email" value="${escapeHtml(email)}"/><button type="submit" class="linkish">Send a new email</button> · <a href="/">Use another address</a></form>
-     <p class="note">The code is valid for 15 minutes. Nothing arrived? Check your spam folder. If it's still missing, this address may not be on the access list yet: ask the project team to add it.</p>`,
+     <p class="note">The code is valid for 15 minutes. Nothing arrived after a minute or two? Check your spam folder, then use "Send a new email".</p>`,
     status,
   );
 }
@@ -416,44 +418,6 @@ function expiredPage() {
   );
 }
 
-function loginMailHtml(link, code) {
-  return `<!doctype html><html><body style="margin:0;padding:24px 12px;background:#f1f1ee;font-family:Montserrat,Arial,sans-serif;color:#1c1c1c">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background:#fff;border-radius:16px;border:1px solid #e0e0dc">
-<tr><td style="padding:28px 28px 8px;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase">Beyond <span style="font-weight:400">the</span> Cities <span style="color:#ff4326">Studio</span></td></tr>
-<tr><td style="padding:8px 28px 0;font-size:15px;line-height:1.6">
-<p style="margin:0 0 18px">Use this button to sign in to the Studio:</p>
-<p style="margin:0 0 22px"><a href="${link}" style="display:inline-block;background:#ff4326;color:#fff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:999px">Sign in to Studio</a></p>
-<p style="margin:0 0 6px">Or type this code on the sign-in page:</p>
-<p style="margin:0 0 22px;font-size:30px;font-weight:800;letter-spacing:.18em">${code}</p>
-<p style="margin:0 0 24px;color:#6b6b6b;font-size:13px">The link and the code work once and expire in 15 minutes. If you didn't ask to sign in, you can ignore this email.</p>
-</td></tr></table>
-<p style="font-size:12px;color:#6b6b6b;margin:14px 0 0">Beyond the Cities · a Goethe-Institut project</p>
-</td></tr></table></body></html>`;
-}
-
-function loginMailText(link, code) {
-  return `Sign in to the Beyond the Cities Studio:\n${link}\n\nOr type this code on the sign-in page: ${code}\n\nThe link and the code work once and expire in 15 minutes. If you didn't ask to sign in, you can ignore this email.\n`;
-}
-
-// --- mail (Resend HTTP API) ----------------------------------------------------
-async function sendMail(env, { to, subject, html, text }) {
-  if (!env.RESEND_API_KEY) return { ok: false, detail: "RESEND_API_KEY not set" };
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      from: env.MAIL_FROM || "Beyond the Cities Studio <studio@beyondthecities.org>",
-      to: [to],
-      reply_to: env.MAIL_REPLY_TO || undefined,
-      subject,
-      html,
-      text,
-    }),
-  });
-  if (!res.ok) return { ok: false, detail: `${res.status} ${await res.text()}` };
-  return { ok: true };
-}
 
 // --- auth: logout ------------------------------------------------------------
 function authLogout(origin) {
@@ -1031,6 +995,82 @@ async function apiNetworkCommunityPut(request, env) {
 // Everyone with a studio account, joined with their profile, for the directory.
 // Organizers only see what people chose to share; admins also see who has not
 // filled in a profile or never signed in.
+// --- network: invitation emails (admin) -------------------------------------
+// Branded "you have access" mail (studio/src/mail.js) for people on the
+// allowlist. Sent only when an admin presses the button; KV `invites` keeps
+// {email: last sent ISO} so the directory can show "Invited 19 Nov".
+const DEMO_EMAIL_RE = /@demo\.beyondthecities\.org$/i;
+const INVITE_MAX = 50; // per request (Resend free tier: 100 mails/day)
+
+async function loadInvites(env) {
+  try { return JSON.parse((await env.ACCESS.get("invites")) || "{}") || {}; } catch { return {}; }
+}
+
+// The invitation for one allowlisted address, or null if it isn't on the list.
+async function buildInvite(env, email, access, colonies) {
+  const key = profileKey(email);
+  const resolved = resolveRole(access, key, ownerEmails(env));
+  if (!resolved) return null;
+  const ids = resolved.colonies === "all" ? [] : resolved.colonies;
+  const names = ids.map((id) => (colonies.find((c) => c.id === id) || {}).name).filter(Boolean);
+  let name = "";
+  if (env.NETWORK) {
+    try {
+      const row = await env.NETWORK.prepare("SELECT name, google_name FROM profiles WHERE email = ?1").bind(key).first();
+      if (row) name = row.name || row.google_name || "";
+    } catch { /* cosmetic */ }
+  }
+  return { to: key, ...inviteMail({ email: key, name, colonies: names, studioUrl: (env.STUDIO_URL || "https://studio.beyondthecities.org").replace(/\/+$/, "") }) };
+}
+
+// GET ?email=…[&format=text] → the exact email that would be sent (no sending).
+async function apiInvitePreview(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+  const url = new URL(request.url);
+  const [access, colonies] = await Promise.all([loadAccess(env), listAllColonies(env)]);
+  const m = await buildInvite(env, url.searchParams.get("email") || session.email, access, colonies);
+  if (!m) return json({ error: "not_on_access_list" }, 404);
+  if (url.searchParams.get("format") === "text") {
+    return new Response(`Subject: ${m.subject}\n\n${m.text}`, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+  }
+  return new Response(m.html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+}
+
+// POST { emails: [...] } → sends one invitation per address (batch).
+async function apiInviteSend(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+  if (!env.RESEND_API_KEY) return json({ error: "mail_unavailable", detail: "RESEND_API_KEY is not set." }, 503);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400); }
+  const emails = [...new Set((Array.isArray(body.emails) ? body.emails : []).map(profileKey).filter(Boolean))];
+  if (!emails.length) return json({ error: "no_recipients" }, 400);
+  if (emails.length > INVITE_MAX) return json({ error: "too_many", detail: `At most ${INVITE_MAX} invitations at a time.` }, 400);
+
+  const [access, colonies] = await Promise.all([loadAccess(env), listAllColonies(env)]);
+  const messages = [], skipped = [];
+  for (const e of emails) {
+    if (DEMO_EMAIL_RE.test(e)) { skipped.push({ email: e, reason: "demo account" }); continue; }
+    const m = await buildInvite(env, e, access, colonies);
+    if (!m) { skipped.push({ email: e, reason: "not on the access list" }); continue; }
+    messages.push(m);
+  }
+  if (!messages.length) return json({ sent: 0, skipped });
+  const res = await sendMailBatch(env, messages);
+  if (!res.ok) {
+    console.error("invite batch failed:", res.detail);
+    return json({ error: "send_failed", detail: "The mail service refused the request. Nothing was sent." }, 502);
+  }
+  const invites = await loadInvites(env);
+  const now = nowIso();
+  for (const m of messages) invites[m.to] = now;
+  await env.ACCESS.put("invites", JSON.stringify(invites));
+  return json({ sent: messages.length, skipped, invited_at: now });
+}
+
 async function apiNetworkDirectory(request, env) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
@@ -1038,7 +1078,7 @@ async function apiNetworkDirectory(request, env) {
   const isAdmin = session.role === "admin";
   const me = profileKey(session.email);
 
-  const [access, colonies, community] = await Promise.all([loadAccess(env), listAllColonies(env), loadCommunity(env)]);
+  const [access, colonies, community, invites] = await Promise.all([loadAccess(env), listAllColonies(env), loadCommunity(env), isAdmin ? loadInvites(env) : {}]);
   const byId = new Map(colonies.map((c) => [c.id, c]));
   const owners = ownerEmails(env);
 
@@ -1088,6 +1128,7 @@ async function apiNetworkDirectory(request, env) {
       filled: isAdmin ? filled : undefined,
       signed_in: isAdmin ? !!row : undefined,
       last_login: isAdmin && row ? row.last_login : undefined,
+      invited_at: isAdmin ? invites[email] || null : undefined,
     });
   }
   people.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
@@ -1525,10 +1566,10 @@ function mailEnabled(env, origin) {
   return Boolean(env.NETWORK) && (Boolean(env.RESEND_API_KEY) || isDevOrigin(origin));
 }
 
-function signInPage({ email = "", error = "", mail = true } = {}, status = 200) {
+function signInPage({ email = "", error = "", errorHtml = "", mail = true } = {}, status = 200) {
   const emailForm = mail
     ? `<div class="or"><span>or sign in with any email</span></div>
-     ${error ? `<p class="err" role="alert">${escapeHtml(error)}</p>` : ""}
+     ${error || errorHtml ? `<p class="err" role="alert">${errorHtml || escapeHtml(error)}</p>` : ""}
      <form method="post" action="/auth/email" class="stack">
        <label class="lbl" for="email">Your email address</label>
        <input class="field" id="email" name="email" type="email" autocomplete="email" inputmode="email" value="${escapeHtml(email)}" placeholder="name@example.com" required/>
@@ -1643,6 +1684,7 @@ function htmlPage(title, inner, status = 200) {
   .btn-main{font:inherit;font-weight:700;font-size:15px;width:100%;margin-top:6px;background:#ff4326;color:#fff;border:0;border-radius:999px;padding:13px 18px;cursor:pointer}
   .btn-main:hover{background:#e63a1f}
   .err{background:#fff1ee;border:1px solid rgba(255,67,38,.35);color:#a32411;border-radius:12px;padding:10px 14px;font-size:14px}
+  .err a{color:#a32411;font-weight:700}
   .resend{margin:16px 0 0;font-size:13.5px;color:#6b6b6b}
   .linkish{font:inherit;background:none;border:0;padding:0;color:#1c1c1c;text-decoration:underline;cursor:pointer}
   .btn{display:inline-block;background:#ff4326;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;margin-top:6px}

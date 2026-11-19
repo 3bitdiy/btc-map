@@ -730,15 +730,42 @@
     });
     if (invited.length) {
       var h2 = el('div', 'group', 'Invited, not signed in yet'); h2.appendChild(el('small', null, plural(invited.length, 'person', 'people') + ' · only admins see this')); box.appendChild(h2);
+      var fresh = invited.filter(function (p) { return !p.invited_at && !isDemo(p.email); });
+      var bar = el('div', 'acts'); bar.style.margin = '-6px 0 2px';
+      var all = btn(fresh.length ? 'sm' : 'ghost sm', 'send', fresh.length ? 'Send invitation to ' + plural(fresh.length, 'person', 'people') + ' not invited yet' : 'Everyone here has been invited');
+      all.disabled = !fresh.length;
+      all.onclick = function () { sendInvites(fresh.map(function (p) { return p.email; }), all); };
+      bar.appendChild(all);
+      if (invited[0]) bar.appendChild(link('btn quiet sm', '/api/network/invite/preview?email=' + encodeURIComponent(invited[0].email), 'eye', 'Preview the email', true));
+      box.appendChild(bar);
       var card = el('div', 'card rows');
       invited.forEach(function (p) {
         var row = el('div', 'row'); var av = el('span', 'avatar', '?'); av.style.background = 'var(--cream)'; av.style.color = 'var(--mute)'; row.appendChild(av);
-        var tt = el('div', 't'); tt.appendChild(el('b', null, p.email)); tt.appendChild(el('span', null, p.colonies.length ? p.colonies.map(function (c) { return c.name; }).join(', ') : (p.role === 'admin' ? 'admin' : 'no colony assigned'))); row.appendChild(tt);
-        var acts = el('div', 'acts'); acts.appendChild(link('btn quiet sm', 'mailto:' + p.email + '?subject=' + encodeURIComponent('Beyond the Cities Studio: your invitation') + '&body=' + encodeURIComponent('Hi,\n\nyou can sign in to the Beyond the Cities Studio at ' + location.origin + '/ with this email address (Continue with Google, or type the address and we email you a sign-in link) to edit your colony page and join the organizers\' network.\n\n'), 'send', 'Remind by email')); row.appendChild(acts);
+        var tt = el('div', 't'); tt.appendChild(el('b', null, p.email));
+        var sub = p.colonies.length ? p.colonies.map(function (c) { return c.name; }).join(', ') : (p.role === 'admin' ? 'admin' : 'no colony assigned');
+        if (p.invited_at) sub += ' · invited ' + fmtDate(p.invited_at);
+        tt.appendChild(el('span', null, sub)); row.appendChild(tt);
+        var acts = el('div', 'acts');
+        var pv = link('btn quiet sm', '/api/network/invite/preview?email=' + encodeURIComponent(p.email), 'eye', null, true); pv.title = 'Preview the email'; pv.setAttribute('aria-label', 'Preview the email'); acts.appendChild(pv);
+        if (!isDemo(p.email)) { var one = btn('ghost sm', 'send', p.invited_at ? 'Send again' : 'Send invitation'); one.onclick = function () { sendInvites([p.email], one); }; acts.appendChild(one); }
+        row.appendChild(acts);
         card.appendChild(row);
       });
       box.appendChild(card);
     }
+  }
+  function isDemo(e) { return /@demo\.beyondthecities\.org$/i.test(e || ''); }
+  async function sendInvites(emails, button) {
+    if (!emails.length) return;
+    var msg = emails.length === 1 ? 'Send the Studio invitation email to ' + emails[0] + '?' : 'Send the Studio invitation email to ' + plural(emails.length, 'person', 'people') + '?\n\n' + emails.join('\n');
+    if (!confirm(msg)) return;
+    button.disabled = true;
+    try {
+      var out = await api('/api/network/invite', jsonReq('POST', { emails: emails }));
+      toast(out.sent ? 'Invitation sent to ' + plural(out.sent, 'person', 'people') + (out.skipped && out.skipped.length ? ' · ' + out.skipped.length + ' skipped' : '') : 'Nothing sent' + (out.skipped && out.skipped[0] ? ': ' + out.skipped[0].reason : ''));
+      dirPeople.forEach(function (p) { if (out.invited_at && emails.indexOf(p.email) !== -1 && !(out.skipped || []).some(function (x) { return x.email === p.email; })) p.invited_at = out.invited_at; });
+      renderDirectory();
+    } catch (e) { button.disabled = false; fail('Could not send', e); }
   }
   async function loadNetwork() {
     if (dirPeople) renderDirectory(); else clear(q('dir-list')).appendChild(el('p', 'empty', 'Loading…'));
