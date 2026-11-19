@@ -210,6 +210,7 @@ export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
       p(`<b>How to sign in</b> at ${link(studioUrl + "/", studioHost)}`, "margin-bottom:12px") +
       signInSteps(email) +
       button(studioUrl + "/", "Open the Studio") +
+      p("<b>Tell us what you think.</b> The Studio is new and we're building it for you. If something is unclear, doesn't work or is missing, just reply to this email.") +
       small(`Please always sign in with <b style="color:${C.ink}">${esc(email)}</b>: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.`) +
       p("Best,<br/>The Beyond the Cities team", "margin-top:8px"),
   });
@@ -230,6 +231,8 @@ HOW TO SIGN IN
 Go to ${studioUrl}/ and then:
 
 ${signInStepsText(email)}
+
+Tell us what you think. The Studio is new and we're building it for you. If something is unclear, doesn't work or is missing, just reply to this email.
 
 Please always sign in with ${email}: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.
 
