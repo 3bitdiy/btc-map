@@ -1051,6 +1051,16 @@ async function apiInviteSend(request, env) {
   if (emails.length > INVITE_MAX) return json({ error: "too_many", detail: `At most ${INVITE_MAX} invitations at a time.` }, 400);
 
   const [access, colonies] = await Promise.all([loadAccess(env), listAllColonies(env)]);
+
+  // { test: true }: the invitation for emails[0], sent to the admin only, not recorded.
+  if (body.test) {
+    const m = await buildInvite(env, emails[0], access, colonies);
+    if (!m) return json({ error: "not_on_access_list" }, 404);
+    const res = await sendMail(env, { ...m, to: profileKey(session.email), subject: `[Test] ${m.subject}` });
+    if (!res.ok) { console.error("invite test failed:", res.detail); return json({ error: "send_failed", detail: "The mail service refused the request." }, 502); }
+    return json({ sent: 1, test: true, to: profileKey(session.email) });
+  }
+
   const messages = [], skipped = [];
   for (const e of emails) {
     if (DEMO_EMAIL_RE.test(e)) { skipped.push({ email: e, reason: "demo account" }); continue; }

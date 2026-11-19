@@ -736,7 +736,17 @@
       all.disabled = !fresh.length;
       all.onclick = function () { sendInvites(fresh.map(function (p) { return p.email; }), all); };
       bar.appendChild(all);
-      if (invited[0]) bar.appendChild(link('btn quiet sm', '/api/network/invite/preview?email=' + encodeURIComponent(invited[0].email), 'eye', 'Preview the email', true));
+      if (invited[0]) {
+        bar.appendChild(link('btn quiet sm', '/api/network/invite/preview?email=' + encodeURIComponent(invited[0].email), 'eye', 'Preview the email', true));
+        var tst = btn('quiet sm', 'mail', 'Send a test to me'); tst.title = 'Sends the invitation for ' + invited[0].email + ' to your own address only';
+        tst.onclick = async function () {
+          tst.disabled = true;
+          try { var o = await api('/api/network/invite', jsonReq('POST', { emails: [invited[0].email], test: true })); toast('Test sent to ' + o.to); }
+          catch (e) { fail('Could not send', e); }
+          tst.disabled = false;
+        };
+        bar.appendChild(tst);
+      }
       box.appendChild(bar);
       var card = el('div', 'card rows');
       invited.forEach(function (p) {
