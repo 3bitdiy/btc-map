@@ -751,18 +751,26 @@
       var card = el('div', 'card rows');
       invited.forEach(function (p) {
         var row = el('div', 'row'); var av = el('span', 'avatar', '?'); av.style.background = 'var(--cream)'; av.style.color = 'var(--mute)'; row.appendChild(av);
-        var tt = el('div', 't'); tt.appendChild(el('b', null, p.email));
+        var tt = el('div', 't'); tt.appendChild(el('b', null, p.invite_name ? p.invite_name + ' · ' + p.email : p.email));
         var sub = p.colonies.length ? p.colonies.map(function (c) { return c.name; }).join(', ') : (p.role === 'admin' ? 'admin' : 'no colony assigned');
         if (p.invited_at) sub += ' · invited ' + fmtDate(p.invited_at);
         tt.appendChild(el('span', null, sub)); row.appendChild(tt);
         var acts = el('div', 'acts');
         var pv = link('btn quiet sm', '/api/network/invite/preview?email=' + encodeURIComponent(p.email), 'eye', null, true); pv.title = 'Preview the email'; pv.setAttribute('aria-label', 'Preview the email'); acts.appendChild(pv);
+        var nb = btn('quiet sm', 'edit', p.invite_name ? null : 'Add name', p.invite_name ? 'Edit name (used to greet them in the email)' : 'Name used to greet them in the email');
+        nb.onclick = function () { editInviteName(p); }; acts.appendChild(nb);
         if (!isDemo(p.email)) { var one = btn('ghost sm', 'send', p.invited_at ? 'Send again' : 'Send invitation'); one.onclick = function () { sendInvites([p.email], one); }; acts.appendChild(one); }
         row.appendChild(acts);
         card.appendChild(row);
       });
       box.appendChild(card);
     }
+  }
+  async function editInviteName(p) {
+    var v = prompt('Name for ' + p.email + '\n(the invitation greets them with the first name; leave empty for "Hi,")', p.invite_name || '');
+    if (v === null) return;
+    try { var o = await api('/api/network/invite/name', jsonReq('PUT', { email: p.email, name: v })); p.invite_name = o.name; renderDirectory(); toast(o.name ? 'Name saved' : 'Name removed'); }
+    catch (e) { fail('Could not save', e); }
   }
   function isDemo(e) { return /@demo\.beyondthecities\.org$/i.test(e || ''); }
   async function sendInvites(emails, button) {

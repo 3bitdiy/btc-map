@@ -117,6 +117,12 @@ export function loginMail({ link: url, code }) {
   return { subject: `Your Studio sign-in code: ${code}`, html, text };
 }
 
+// First name for the greeting, skipping titles like "prof." or "dr".
+function firstName(name) {
+  const parts = String(name || "").trim().split(/\s+/).filter((w) => !/^(prof|dr|mr|mrs|ms|doc|mag|ing|msc|ma|phd)\.?$/i.test(w));
+  return parts[0] || "";
+}
+
 // Sign-in steps shared by both invitations.
 function signInSteps(email) {
   return steps([
@@ -135,7 +141,7 @@ export function adminInviteMail({ email, name = "", studioUrl }) {
   // No profile yet: take the first name from a "first.last@" address.
   const local = String(email).split("@")[0];
   const guess = /^[a-z]{2,}\.[a-z]{2,}$/i.test(local) ? local.split(".")[0] : "";
-  const first = name ? name.split(/\s+/)[0] : guess ? guess.charAt(0).toUpperCase() + guess.slice(1).toLowerCase() : "";
+  const first = name ? firstName(name) : guess ? guess.charAt(0).toUpperCase() + guess.slice(1).toLowerCase() : "";
   const hi = first ? `Hi ${first},` : "Hi,";
   const studioHost = studioUrl.replace(/^https?:\/\//, "");
   const can = [
@@ -188,7 +194,7 @@ The Beyond the Cities team`,
 
 // Invitation for a new organizer. colonies: names of their colonies (may be empty).
 export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
-  const hi = name ? `Hi ${name.split(/\s+/)[0]},` : "Hi,";
+  const hi = firstName(name) ? `Hi ${firstName(name)},` : "Hi,";
   const colLine = colonies.length
     ? `You are registered as the organizer of <b>${colonies.map(esc).join("</b>, <b>")}</b>.`
     : "";

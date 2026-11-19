@@ -90,6 +90,7 @@ export default {
       if (pathname === "/api/network/community" && request.method === "PUT") return apiNetworkCommunityPut(request, env);
       if (pathname === "/api/network/invite/preview") return apiInvitePreview(request, env);
       if (pathname === "/api/network/invite" && request.method === "POST") return apiInviteSend(request, env);
+      if (pathname === "/api/network/invite/name" && request.method === "PUT") return apiInviteNamePut(request, env);
       if (pathname === "/api/network/notices") {
         if (request.method === "GET") return apiNoticesList(request, env);
         if (request.method === "POST") return apiNoticeCreate(request, env);
@@ -1002,6 +1003,27 @@ async function apiNetworkCommunityPut(request, env) {
 const DEMO_EMAIL_RE = /@demo\.beyondthecities\.org$/i;
 const INVITE_MAX = 50; // per request (Resend free tier: 100 mails/day)
 
+// Names for people who haven't signed in yet (KV `names`, {email: name}),
+// typed by an admin in the directory so invitations can greet them by name.
+async function loadNames(env) {
+  try { return JSON.parse((await env.ACCESS.get("names")) || "{}") || {}; } catch { return {}; }
+}
+
+async function apiInviteNamePut(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ error: "unauthenticated" }, 401);
+  if (session.role !== "admin") return json({ error: "forbidden" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400); }
+  const email = profileKey(body.email);
+  const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!email) return json({ error: "bad_email" }, 400);
+  const names = await loadNames(env);
+  if (name) names[email] = name; else delete names[email];
+  await env.ACCESS.put("names", JSON.stringify(names));
+  return json({ ok: true, email, name });
+}
+
 async function loadInvites(env) {
   try { return JSON.parse((await env.ACCESS.get("invites")) || "{}") || {}; } catch { return {}; }
 }
@@ -1020,6 +1042,7 @@ async function buildInvite(env, email, access, colonies) {
       if (row) name = row.name || row.google_name || "";
     } catch { /* cosmetic */ }
   }
+  if (!name) name = (await loadNames(env))[key] || "";
   const studioUrl = (env.STUDIO_URL || "https://studio.beyondthecities.org").replace(/\/+$/, "");
   // Admins without colonies (project partners) get the review/feedback version.
   if (resolved.role === "admin" && !names.length) return { to: key, ...adminInviteMail({ email: key, name, studioUrl }) };
@@ -1091,7 +1114,7 @@ async function apiNetworkDirectory(request, env) {
   const isAdmin = session.role === "admin";
   const me = profileKey(session.email);
 
-  const [access, colonies, community, invites] = await Promise.all([loadAccess(env), listAllColonies(env), loadCommunity(env), isAdmin ? loadInvites(env) : {}]);
+  const [access, colonies, community, invites, inviteNames] = await Promise.all([loadAccess(env), listAllColonies(env), loadCommunity(env), isAdmin ? loadInvites(env) : {}, isAdmin ? loadNames(env) : {}]);
   const byId = new Map(colonies.map((c) => [c.id, c]));
   const owners = ownerEmails(env);
 
@@ -1142,6 +1165,7 @@ async function apiNetworkDirectory(request, env) {
       signed_in: isAdmin ? !!row : undefined,
       last_login: isAdmin && row ? row.last_login : undefined,
       invited_at: isAdmin ? invites[email] || null : undefined,
+      invite_name: isAdmin && !row ? inviteNames[email] || "" : undefined,
     });
   }
   people.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
