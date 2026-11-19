@@ -311,6 +311,15 @@ export function renderStudio({ session, env, css, js, icons, logo, disciplines, 
       </div>
       <div class="card-f"><button type="button" class="btn ghost sm" id="save-community">${i("save", true)}Save group link</button></div>
     </div>
+    <div class="card">
+      ${cardH("mail", "Monthly newsletter", "Sent on the 1st of each month to everyone with Studio access")}
+      <div class="card-b" id="nl-body"><p class="hint">Loading…</p></div>
+      <div class="card-f" style="flex-wrap:wrap">
+        <label class="toggle" style="margin-right:auto"><input type="checkbox" id="nl-enabled"/>Send automatically</label>
+        <a class="btn quiet sm" href="/api/network/newsletter/preview" target="_blank" rel="noopener">${i("eye", true)}Preview</a>
+        <button type="button" class="btn ghost sm" id="nl-test">${i("mail", true)}Send a test to me</button>
+      </div>
+    </div>
   </div>
 </section>`;
 

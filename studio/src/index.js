@@ -7,7 +7,7 @@ import UI_CSS from "./ui.css";
 import UI_JS from "./ui.client.js";
 import ICONS from "./icons.svg";
 import { renderStudio } from "./page.js";
-import { loginMail, inviteMail, adminInviteMail, sendMail, sendMailBatch } from "./mail.js";
+import { loginMail, inviteMail, adminInviteMail, newsletterMail, sendMail, sendMailBatch } from "./mail.js";
 
 const SESSION_COOKIE = "btc_session";
 const STATE_COOKIE = "btc_oauth_state";
@@ -91,6 +91,14 @@ export default {
       if (pathname === "/api/network/invite/preview") return apiInvitePreview(request, env);
       if (pathname === "/api/network/invite" && request.method === "POST") return apiInviteSend(request, env);
       if (pathname === "/api/network/invite/name" && request.method === "PUT") return apiInviteNamePut(request, env);
+      if (pathname === "/newsletter/unsubscribe") return newsletterUnsubscribe(request, env);
+      if (pathname === "/api/network/newsletter") {
+        if (request.method === "GET") return apiNewsletterGet(request, env);
+        if (request.method === "PUT") return apiNewsletterPut(request, env);
+        return json({ error: "method_not_allowed" }, 405);
+      }
+      if (pathname === "/api/network/newsletter/preview") return apiNewsletterPreview(request, env);
+      if (pathname === "/api/network/newsletter/test" && request.method === "POST") return apiNewsletterTest(request, env);
       if (pathname === "/api/network/notices") {
         if (request.method === "GET") return apiNoticesList(request, env);
         if (request.method === "POST") return apiNoticeCreate(request, env);
@@ -140,6 +148,16 @@ export default {
     } catch (err) {
       return json({ error: "server_error", detail: String(err && err.message || err) }, 500);
     }
+  },
+
+  // Cron (wrangler.jsonc "triggers"): the monthly newsletter on the 1st.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      runMonthlyNewsletter(env).then(
+        (r) => console.log("newsletter:", JSON.stringify(r)),
+        (err) => console.error("newsletter failed:", err && err.message || err),
+      ),
+    );
   },
 };
 
@@ -1140,13 +1158,14 @@ async function apiNetworkDirectory(request, env) {
   const people = [];
   for (const [email, acc] of accounts) {
     const row = rows.get(email);
+    const signedIn = !!(row && row.last_login);
     const cols = [...new Set(acc.ids)].map((id) => byId.get(id)).filter(Boolean);
     const countries = [...new Set(cols.map((c) => c.country).filter(Boolean))];
     const visible = row ? !!row.visible : true;
     const filled = profileFilled(row);
     if (!isAdmin && email !== me && !visible) continue;
     // Invited but never signed in: only admins see them ("Invited, not signed in yet").
-    if (!isAdmin && email !== me && !row) continue;
+    if (!isAdmin && email !== me && !signedIn) continue;
     const showEmail = isAdmin || email === me || !row || !!row.show_email;
     people.push({
       email: showEmail ? email : "",
@@ -1162,14 +1181,270 @@ async function apiNetworkDirectory(request, env) {
       // admin-only hints
       visible: isAdmin ? visible : undefined,
       filled: isAdmin ? filled : undefined,
-      signed_in: isAdmin ? !!row : undefined,
+      signed_in: isAdmin ? signedIn : undefined,
       last_login: isAdmin && row ? row.last_login : undefined,
       invited_at: isAdmin ? invites[email] || null : undefined,
-      invite_name: isAdmin && !row ? inviteNames[email] || "" : undefined,
+      invite_name: isAdmin && !signedIn ? inviteNames[email] || "" : undefined,
     });
   }
   people.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
   return json({ people, community, isAdmin });
+}
+
+// --- network: monthly newsletter ---------------------------------------------
+// A digest on the 1st of each month (cron, see `scheduled` above): new notices,
+// notice deadlines coming up, new blog posts and new colonies since the last
+// one. Skipped when nothing is new. Off until an admin switches it on in the
+// Access tab (KV `newsletter` {enabled}). KV `newsletter_state` remembers which
+// posts and colonies the last issue already covered; D1 `newsletter_log` keeps
+// one row per send (monthly | skipped | test).
+const SITE_URL = "https://beyondthecities.org";
+const NEWSLETTER_FALLBACK_DAYS = 31; // window for the very first issue
+const NEWSLETTER_DEADLINE_DAYS = 30; // "Deadlines coming up" horizon
+const NEWSLETTER_BATCH = 100; // Resend batch limit
+
+function studioBase(env) {
+  return (env.STUDIO_URL || "https://studio.beyondthecities.org").replace(/\/+$/, "");
+}
+async function loadNewsletterConfig(env) {
+  try { return { enabled: false, ...JSON.parse((await env.ACCESS.get("newsletter")) || "{}") }; } catch { return { enabled: false }; }
+}
+async function loadNewsletterState(env) {
+  try { return JSON.parse((await env.ACCESS.get("newsletter_state")) || "null"); } catch { return null; }
+}
+async function unsubToken(env, email) {
+  return (await hmac(env.SESSION_SECRET, "unsub:" + profileKey(email))).slice(0, 32);
+}
+async function unsubUrl(env, email) {
+  return `${studioBase(env)}/newsletter/unsubscribe?e=${encodeURIComponent(profileKey(email))}&t=${await unsubToken(env, email)}`;
+}
+
+// The month an issue covers: the month of the day before (the 1 Dec issue is
+// "November 2026", and so is a preview made on 19 Nov).
+function digestMonth(now = new Date()) {
+  const d = new Date(now.getTime() - 864e5);
+  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+function nextFirstOfMonth(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 8)).toISOString();
+}
+
+// Everything new since the last issue. `includeDemo` only for previews/tests:
+// a real issue never shows the fictional workshop notices.
+async function buildDigest(env, { includeDemo = false } = {}) {
+  const now = new Date();
+  const nowS = now.toISOString();
+  const last = await env.NETWORK.prepare("SELECT sent_at FROM newsletter_log WHERE kind IN ('monthly','skipped') ORDER BY sent_at DESC LIMIT 1").first();
+  const since = last ? last.sent_at : new Date(now.getTime() - NEWSLETTER_FALLBACK_DAYS * 864e5).toISOString();
+  const horizon = new Date(now.getTime() + NEWSLETTER_DEADLINE_DAYS * 864e5).toISOString().slice(0, 10);
+
+  const [open, colonies, blog, state] = await Promise.all([
+    env.NETWORK.prepare("SELECT * FROM notices WHERE status = 'open' AND expires_at > ?1 ORDER BY created_at ASC").bind(nowS).all(),
+    listAllColonies(env),
+    fetch(`${SITE_URL}/data/blog-index.json`, { cf: { cacheTtl: 0 } }).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    loadNewsletterState(env),
+  ]);
+  const byId = new Map(colonies.map((c) => [c.id, c]));
+  const rows = (open.results || []).filter((r) => includeDemo || !DEMO_EMAIL_RE.test(r.author_email));
+  const emails = [...new Set(rows.map((r) => r.author_email))];
+  const authors = new Map();
+  if (emails.length) {
+    const res = await env.NETWORK.prepare("SELECT email, name, google_name FROM profiles WHERE email IN (" + emails.map((_, i) => "?" + (i + 1)).join(",") + ")").bind(...emails).all();
+    for (const r of res.results || []) authors.set(r.email, r.name || r.google_name || "");
+  }
+  const view = (r) => ({ id: r.id, type: r.type, title: r.title, body: r.body, deadline: r.deadline, colony: byId.get(r.colony_id) || null, author_name: authors.get(r.author_email) || "" });
+  const notices = rows.filter((r) => r.created_at > since).map(view);
+  const deadlines = rows
+    .filter((r) => r.created_at <= since && r.deadline && r.deadline <= horizon)
+    .sort((a, b) => (a.deadline < b.deadline ? -1 : 1))
+    .map(view);
+
+  const postsAll = Array.isArray(blog) ? blog : [];
+  const seenPosts = state && Array.isArray(state.posts) ? new Set(state.posts) : null;
+  const posts = postsAll
+    .filter((p) => p && p.slug && (seenPosts ? !seenPosts.has(p.slug) : String(p.date || "") >= since.slice(0, 10)))
+    .map((p) => ({ slug: p.slug, title: p.title || p.slug, date: p.date || "", excerpt: p.excerpt || "" }));
+
+  // No snapshot yet: today's colonies become the baseline (nothing counts as new).
+  const seenCols = state && Array.isArray(state.colonies) ? new Set(state.colonies) : null;
+  const newCols = seenCols ? colonies.filter((c) => !seenCols.has(c.id)) : [];
+
+  const nextState = { colonies: colonies.map((c) => c.id), posts: postsAll.map((p) => p && p.slug).filter(Boolean), at: nowS };
+  if (!state) await env.ACCESS.put("newsletter_state", JSON.stringify({ ...nextState, posts: postsAll.map((p) => p.slug).filter((s) => !posts.some((x) => x.slug === s)) }));
+
+  return {
+    month: digestMonth(now),
+    since,
+    notices,
+    deadlines,
+    posts,
+    colonies: newCols,
+    empty: !notices.length && !posts.length && !newCols.length,
+    nextState,
+  };
+}
+
+// Who gets the issue: everyone on the access list who has signed in or been
+// invited, minus demo accounts and anyone who unsubscribed.
+async function newsletterRecipients(env) {
+  const [access, invites, names] = await Promise.all([loadAccess(env), loadInvites(env), loadNames(env)]);
+  const all = new Set([...ownerEmails(env), ...(access.admins || []), ...Object.keys(access.organizers || {})].map(profileKey).filter(Boolean));
+  const keys = [...all];
+  const rows = new Map();
+  if (keys.length) {
+    const res = await env.NETWORK.prepare("SELECT email, name, google_name, newsletter, last_login FROM profiles WHERE email IN (" + keys.map((_, i) => "?" + (i + 1)).join(",") + ")").bind(...keys).all();
+    for (const r of res.results || []) rows.set(r.email, r);
+  }
+  const out = [];
+  let unsubscribed = 0, notInvited = 0;
+  for (const email of keys) {
+    if (DEMO_EMAIL_RE.test(email)) continue;
+    const row = rows.get(email);
+    if (row && !row.newsletter) { unsubscribed++; continue; }
+    if (!(row && row.last_login) && !invites[email]) { notInvited++; continue; }
+    out.push({ email, name: (row && (row.name || row.google_name)) || names[email] || "" });
+  }
+  return { recipients: out, unsubscribed, notInvited };
+}
+
+async function newsletterFor(env, digest, r, community) {
+  return { to: r.email, ...newsletterMail({ digest, name: r.name, studioUrl: studioBase(env), unsubUrl: await unsubUrl(env, r.email), community }) };
+}
+
+function digestSummary(d) {
+  return [`${d.notices.length} notices`, `${d.deadlines.length} deadlines`, `${d.posts.length} posts`, `${d.colonies.length} colonies`].join(", ");
+}
+
+// The cron job. Runs at most once per calendar month (a second cron run on the
+// same day is a retry and stops here if the first one went through).
+async function runMonthlyNewsletter(env, { force = false } = {}) {
+  if (!env.NETWORK || !env.RESEND_API_KEY) return { skipped: "not configured" };
+  const cfg = await loadNewsletterConfig(env);
+  if (!cfg.enabled && !force) return { skipped: "disabled" };
+  const month = nowIso().slice(0, 7);
+  const done = await env.NETWORK.prepare("SELECT id FROM newsletter_log WHERE kind IN ('monthly','skipped') AND substr(sent_at, 1, 7) = ?1").bind(month).first();
+  if (done && !force) return { skipped: "already ran this month" };
+
+  const digest = await buildDigest(env);
+  if (digest.empty) {
+    await env.NETWORK.prepare("INSERT INTO newsletter_log (sent_at, kind, recipients, summary) VALUES (?1, 'skipped', 0, ?2)").bind(nowIso(), "Nothing new").run();
+    return { skipped: "nothing new" };
+  }
+  const [{ recipients }, community] = await Promise.all([newsletterRecipients(env), loadCommunity(env)]);
+  const messages = [];
+  for (const r of recipients) messages.push(await newsletterFor(env, digest, r, community));
+  let sent = 0;
+  for (let i = 0; i < messages.length; i += NEWSLETTER_BATCH) {
+    const chunk = messages.slice(i, i + NEWSLETTER_BATCH);
+    const res = await sendMailBatch(env, chunk);
+    if (!res.ok) {
+      console.error("newsletter batch failed:", res.detail);
+      if (!sent) return { error: "send_failed" }; // nothing logged → the retry cron tries again
+      break;
+    }
+    sent += chunk.length;
+  }
+  await env.NETWORK.prepare("INSERT INTO newsletter_log (sent_at, kind, recipients, summary) VALUES (?1, 'monthly', ?2, ?3)").bind(nowIso(), sent, digestSummary(digest)).run();
+  await env.ACCESS.put("newsletter_state", JSON.stringify(digest.nextState));
+  return { sent, of: messages.length };
+}
+
+async function requireAdmin(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return { res: json({ error: "unauthenticated" }, 401) };
+  if (session.role !== "admin") return { res: json({ error: "forbidden" }, 403) };
+  if (!env.NETWORK) return { res: json({ error: "network_unavailable" }, 503) };
+  return { session };
+}
+
+// Status for the Access tab.
+async function apiNewsletterGet(request, env) {
+  const { session, res } = await requireAdmin(request, env);
+  if (res) return res;
+  const [cfg, digest, rec, log] = await Promise.all([
+    loadNewsletterConfig(env),
+    buildDigest(env),
+    newsletterRecipients(env),
+    env.NETWORK.prepare("SELECT sent_at, kind, recipients, summary FROM newsletter_log ORDER BY sent_at DESC LIMIT 6").all(),
+  ]);
+  return json({
+    enabled: !!cfg.enabled,
+    mail: Boolean(env.RESEND_API_KEY),
+    next_send: nextFirstOfMonth(),
+    recipients: rec.recipients.length,
+    unsubscribed: rec.unsubscribed,
+    not_invited: rec.notInvited,
+    upcoming: { month: digest.month, since: digest.since, notices: digest.notices.length, deadlines: digest.deadlines.length, posts: digest.posts.length, colonies: digest.colonies.length, empty: digest.empty },
+    log: log.results || [],
+    me: profileKey(session.email),
+  });
+}
+
+async function apiNewsletterPut(request, env) {
+  const { res } = await requireAdmin(request, env);
+  if (res) return res;
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400); }
+  const cfg = { ...(await loadNewsletterConfig(env)), enabled: !!body.enabled };
+  await env.ACCESS.put("newsletter", JSON.stringify(cfg));
+  return json({ ok: true, enabled: cfg.enabled });
+}
+
+// The next issue as the admin would get it (demo notices included so the
+// layout can be checked before there is real content).
+async function adminCopy(env, session) {
+  const me = profileKey(session.email);
+  const [digest, community, row] = await Promise.all([
+    buildDigest(env, { includeDemo: true }),
+    loadCommunity(env),
+    env.NETWORK.prepare("SELECT name, google_name FROM profiles WHERE email = ?1").bind(me).first(),
+  ]);
+  return newsletterFor(env, digest, { email: me, name: row ? row.name || row.google_name || "" : "" }, community);
+}
+
+async function apiNewsletterPreview(request, env) {
+  const { session, res } = await requireAdmin(request, env);
+  if (res) return res;
+  const m = await adminCopy(env, session);
+  if (new URL(request.url).searchParams.get("format") === "text") {
+    return new Response(`Subject: ${m.subject}\n\n${m.text}`, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+  }
+  return new Response(m.html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+}
+
+async function apiNewsletterTest(request, env) {
+  const { session, res } = await requireAdmin(request, env);
+  if (res) return res;
+  if (!env.RESEND_API_KEY) return json({ error: "mail_unavailable", detail: "RESEND_API_KEY is not set." }, 503);
+  const m = await adminCopy(env, session);
+  const out = await sendMail(env, { ...m, subject: `[Test] ${m.subject}` });
+  if (!out.ok) { console.error("newsletter test failed:", out.detail); return json({ error: "send_failed", detail: "The mail service refused the request." }, 502); }
+  await env.NETWORK.prepare("INSERT INTO newsletter_log (sent_at, kind, recipients, summary) VALUES (?1, 'test', 1, ?2)").bind(nowIso(), "Test to " + m.to).run();
+  return json({ sent: 1, to: m.to });
+}
+
+// The link in every issue. GET shows a confirm button (so mail scanners that
+// open links don't unsubscribe anyone); POST (that button, or the one-click
+// List-Unsubscribe from Gmail/Apple Mail) does it.
+async function newsletterUnsubscribe(request, env) {
+  const url = new URL(request.url);
+  const email = profileKey(url.searchParams.get("e"));
+  const t = url.searchParams.get("t") || "";
+  const valid = email && env.SESSION_SECRET && timingSafeEqual(t, await unsubToken(env, email));
+  if (!valid || !env.NETWORK) return htmlPage("Unsubscribe", `<p class="lead">This unsubscribe link is not valid.</p><p class="note">Sign in to the Studio and turn the newsletter off under My profile.</p>`, 400);
+  if (request.method === "POST") {
+    const now = nowIso();
+    await env.NETWORK.prepare(
+      "INSERT INTO profiles (email, created_at, updated_at, newsletter, unsub_token) VALUES (?1, ?2, ?2, 0, '') ON CONFLICT(email) DO UPDATE SET newsletter = 0",
+    ).bind(email, now).run();
+    return htmlPage("Unsubscribed", `<p class="lead">Done. <b>${escapeHtml(email)}</b> will no longer get the monthly newsletter.</p><p class="note">Changed your mind? Turn it back on under My profile in the <a href="${studioBase(env)}/">Studio</a>.</p>`);
+  }
+  return htmlPage(
+    "Unsubscribe",
+    `<p class="lead">Stop the monthly Beyond the Cities newsletter for <b>${escapeHtml(email)}</b>?</p>
+     <form method="post" class="stack"><button class="btn-main" type="submit">Unsubscribe</button></form>
+     <p class="note">You keep your Studio access. You can turn the newsletter back on under My profile.</p>`,
+  );
 }
 
 // --- network: notice board ---------------------------------------------------

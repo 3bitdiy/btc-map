@@ -284,7 +284,7 @@
       if (term && foldSearch(c.name + ' ' + (c.place || '')).indexOf(term) === -1) return false;
       return true;
     });
-    q('colony-count').textContent = plural(colonies.length, 'colony', 'colonies') + (IS_ADMIN ? ' in Serbia, Bosnia and Herzegovina and North Macedonia.' : ' you can edit.');
+    q('colony-count').textContent = plural(colonies.length, 'colony', 'colonies') + (IS_ADMIN ? ' in Bosnia and Herzegovina, North Macedonia and Serbia.' : ' you can edit.');
     q('picker-shown').textContent = list.length !== colonies.length ? 'Showing ' + list.length + ' of ' + colonies.length : '';
     if (!list.length) { box.appendChild(el('p', 'empty', 'No colonies match.')); return; }
     list.forEach(function (c) {
@@ -920,6 +920,54 @@
       if (!dirPeople) fetchDirectory().then(renderAccess).catch(function () {});
       renderAccess();
     } catch (e) { fail('Could not load access', e); }
+    loadNewsletter();
+  }
+  // ---- newsletter (admins) -------------------------------------------------
+  var NL_KIND = { monthly: 'Sent', skipped: 'Skipped', test: 'Test' };
+  async function loadNewsletter() {
+    var box = q('nl-body'); if (!box) return;
+    try { renderNewsletter(await api('/api/network/newsletter')); }
+    catch (e) { clear(box).appendChild(el('p', 'hint', 'Could not load the newsletter status.')); }
+  }
+  function renderNewsletter(d) {
+    var box = clear(q('nl-body'));
+    q('nl-enabled').checked = !!d.enabled;
+    var u = d.upcoming || {};
+    var parts = [];
+    if (u.notices) parts.push(plural(u.notices, 'new notice'));
+    if (u.deadlines) parts.push(plural(u.deadlines, 'deadline'));
+    if (u.posts) parts.push(plural(u.posts, 'new post'));
+    if (u.colonies) parts.push(plural(u.colonies, 'new colony', 'new colonies'));
+    var next = el('p', null);
+    next.appendChild(el('b', null, d.enabled ? 'Next issue: ' + fmtDate(d.next_send) : 'Automatic sending is off'));
+    next.appendChild(document.createTextNode(d.enabled
+      ? ' · ' + (u.empty ? 'nothing new so far, it will be skipped unless something is posted' : 'so far: ' + parts.join(', '))
+      : ' · switch it on below and the newsletter goes out on the 1st of each month'));
+    box.appendChild(next);
+    var who = plural(d.recipients, 'recipient') + ' (signed in or invited)';
+    if (d.unsubscribed) who += ' · ' + d.unsubscribed + ' unsubscribed';
+    if (d.not_invited) who += ' · ' + plural(d.not_invited, 'person', 'people') + ' not invited yet, left out';
+    box.appendChild(el('p', 'hint', who + '. Demo accounts and demo notices are never included. Preview and test show demo notices so you can check the layout.'));
+    if (!d.mail) box.appendChild(el('p', 'hint', 'Mail is not configured (RESEND_API_KEY missing).'));
+    if ((d.log || []).length) {
+      var ul = el('ul', 'check'); ul.style.marginTop = '10px';
+      d.log.forEach(function (r) { var li = el('li'); li.appendChild(el('span', null, fmtDate(r.sent_at) + ' · ' + (NL_KIND[r.kind] || r.kind) + (r.kind === 'monthly' ? ' to ' + plural(r.recipients, 'person', 'people') : '') + (r.summary ? ' · ' + r.summary : ''))); ul.appendChild(li); });
+      box.appendChild(ul);
+    }
+  }
+  if (IS_ADMIN && q('nl-enabled')) {
+    q('nl-enabled').addEventListener('change', async function () {
+      var on = q('nl-enabled').checked;
+      if (on && !confirm('Send the newsletter automatically on the 1st of each month to everyone who has signed in or been invited?')) { q('nl-enabled').checked = false; return; }
+      try { await api('/api/network/newsletter', jsonReq('PUT', { enabled: on })); toast(on ? 'Newsletter switched on' : 'Newsletter switched off'); loadNewsletter(); }
+      catch (e) { q('nl-enabled').checked = !on; fail('Save failed', e); }
+    });
+    q('nl-test').addEventListener('click', async function () {
+      var b = q('nl-test'); b.disabled = true;
+      try { var o = await api('/api/network/newsletter/test', jsonReq('POST', {})); toast('Test sent to ' + o.to); loadNewsletter(); }
+      catch (e) { fail('Test failed', e); }
+      b.disabled = false;
+    });
   }
   function personInfo(email) { return (dirPeople || []).filter(function (p) { return (p.email || '').toLowerCase() === email.toLowerCase(); })[0]; }
   function whoBlock(email) {

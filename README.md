@@ -1,6 +1,6 @@
 # Beyond the Cities — Interactive Map & Colony Platform
 
-Interactive map of artist colonies in Serbia, Bosnia and Herzegovina, and North Macedonia, with a communication platform for colony managers.
+Interactive map of artist colonies in Bosnia and Herzegovina, North Macedonia and Serbia, with a communication platform for colony managers.
 Built for the Goethe-Institut Belgrade as part of the _Beyond the Cities_ project (2026–2028).
 
 **Live (kanonski):** <https://beyondthecities.org/>

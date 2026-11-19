@@ -122,7 +122,7 @@ Requires the `beyondthecities.org` zone to be on this Cloudflare account.
 Signed-in organizers see a **Network** tab with two sub-views:
 **Directory** (who the other organizers are, how to reach them) and
 **Notices** (open calls, partner searches, offers, questions). A monthly
-digest goes out by email (phase 3, not built yet).
+newsletter goes out by email (see below).
 
 **Directory** — everyone with a studio account, grouped by the country of
 their colonies; each person edits their own profile (name, phone, about,
@@ -148,6 +148,37 @@ API (all require a session): `GET/PUT /api/network/me`,
 `GET/POST /api/network/notices`, `PUT /api/network/notice/:id`
 (`{status}` alone closes/reopens; a full body edits + reposts),
 `DELETE /api/network/notice/:id`.
+
+## Monthly newsletter
+
+A cron trigger (`wrangler.jsonc` → `triggers.crons`, 1st of the month 08:00
+UTC, retry 14:00) sends one digest per month: notices posted since the last
+issue, notice deadlines in the next 30 days, new blog posts (from the live
+`/data/blog-index.json`) and new colonies. Nothing new → no mail (logged as
+"skipped").
+
+- **Off by default.** An admin switches it on in Access → Monthly newsletter
+  (KV `newsletter` `{enabled}`); the same card has Preview, Send a test to
+  me and the send log (D1 `newsletter_log`).
+- **Recipients:** everyone on the access list who has signed in or been
+  invited; never demo accounts (`@demo.beyondthecities.org`), never people who
+  unsubscribed (`profiles.newsletter = 0`). Demo notices are left out of real
+  issues but shown in previews/tests.
+- **What counts as new:** KV `newsletter_state` holds the post slugs and
+  colony ids the last issue covered (the first call stores today's colonies
+  as the baseline); notices use `created_at` after the last issue.
+- **Unsubscribe:** every issue links `/newsletter/unsubscribe?e=…&t=…`
+  (`t` = HMAC of the address with `SESSION_SECRET`) and sends
+  `List-Unsubscribe` + one-click headers. GET asks to confirm, POST
+  unsubscribes (creates a profile row with `last_login` NULL if the person
+  never signed in, so the directory still counts them as not signed in).
+  Turning it back on: My profile → "Send me the monthly network digest".
+- Test the cron locally: `wrangler dev … --test-scheduled`, then
+  `curl "localhost:8799/__scheduled?cron=0+8+1+*+*"`.
+
+API (admin): `GET/PUT /api/network/newsletter`,
+`GET /api/network/newsletter/preview[?format=text]`,
+`POST /api/network/newsletter/test`.
 
 ## Known follow-ups (deferred)
 

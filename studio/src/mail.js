@@ -88,7 +88,7 @@ export function mailLayout({ title = "", preheader = "", body = "" }) {
     </td></tr>
     <tr><td align="center" style="padding:18px 8px 0;font-family:${FONT};font-size:12px;line-height:1.6;color:${C.mute}">
       Beyond the Cities &middot; a Goethe-Institut project &middot; <a href="${SITE}/" target="_blank" rel="noopener" style="color:${C.mute}">beyondthecities.org</a><br/>
-      Artist colonies of Serbia, Bosnia and Herzegovina and North Macedonia
+      Artist colonies of Bosnia and Herzegovina, North Macedonia and Serbia
     </td></tr>
   </table>
 </td></tr></table>
@@ -250,6 +250,103 @@ The Beyond the Cities team`,
   return { subject: "Your access to the Beyond the Cities Studio", html, text };
 }
 
+// --- monthly newsletter -------------------------------------------------------
+const NOTICE_LABEL = { open_call: "Open call", partners: "Looking for partners", offering: "Offering", question: "Question", other: "Notice" };
+// Same colours as the notice-type pills in the Studio (ui.css .pill.t-*).
+const PILL = {
+  open_call: [C.accent, "#ffffff"],
+  partners: ["#726a5d", "#ffffff"],
+  offering: ["#2f6f4f", "#ffffff"],
+  question: ["#1c5f9c", "#ffffff"],
+  other: [C.mute, "#ffffff"],
+  blog: [C.ink, "#ffffff"],
+  colony: [C.cream, C.ink],
+  deadline: ["#fdeede", "#9a3b00"],
+};
+function pill(label, kind) {
+  const [bg, fg] = PILL[kind] || PILL.other;
+  return `<span style="display:inline-block;padding:3px 10px;border-radius:999px;background:${bg};color:${fg};font-family:${FONT};font-size:11px;line-height:16px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin:0 6px 6px 0${kind === "colony" ? `;border:1px solid ${C.line}` : ""}">${esc(label)}</span>`;
+}
+
+function fmtDay(iso) {
+  const d = new Date(String(iso).length === 10 ? iso + "T12:00:00Z" : iso);
+  return isNaN(d) ? String(iso) : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+}
+function clip(s, n) {
+  const t = String(s || "").replace(/\s+/g, " ").trim();
+  return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : t;
+}
+function h2(text) {
+  return `<h2 style="margin:26px 0 12px;padding-top:18px;border-top:1px solid ${C.line};font-family:${FONT};font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${C.accent}">${esc(text)}</h2>`;
+}
+function item({ pills = [], title, href, meta = "", body = "" }) {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr><td style="font-family:${FONT};color:${C.ink}">
+${pills.length ? `<div style="margin:0 0 2px">${pills.map(([l, k]) => pill(l, k)).join("")}</div>` : ""}
+<a href="${esc(href)}" target="_blank" rel="noopener" style="font-size:16px;line-height:1.4;font-weight:700;color:#000;text-decoration:none">${esc(title)}</a>
+${meta ? `<div style="font-size:13px;line-height:1.5;color:${C.mute};margin-top:2px">${esc(meta)}</div>` : ""}
+${body ? `<div style="font-size:14px;line-height:1.55;color:${C.ink};margin-top:5px">${esc(body)}</div>` : ""}
+</td></tr></table>`;
+}
+function colonyMeta(c) {
+  return c ? [c.name, c.city, c.country].filter(Boolean).join(", ") : "";
+}
+
+// digest: { month, notices, deadlines, posts, colonies } (see buildDigest in
+// index.js). Each recipient gets their own copy because of the unsubscribe link.
+export function newsletterMail({ digest, name = "", studioUrl, unsubUrl, community = null }) {
+  const { month, notices = [], deadlines = [], posts = [], colonies = [] } = digest;
+  const first = firstName(name);
+  const hi = first ? `Hi ${first},` : "Hi,";
+  const board = studioUrl + "/#notices";
+  const counts = [
+    notices.length && `${notices.length} new ${notices.length === 1 ? "notice" : "notices"}`,
+    posts.length && `${posts.length} new ${posts.length === 1 ? "post" : "posts"}`,
+    colonies.length && `${colonies.length} new ${colonies.length === 1 ? "colony" : "colonies"}`,
+  ].filter(Boolean);
+  const summary = counts.length ? counts.join(", ") : "a quiet month";
+
+  const noticeItem = (n) => ({
+    pills: [[NOTICE_LABEL[n.type] || "Notice", PILL[n.type] ? n.type : "other"], ...(n.deadline ? [["Deadline " + fmtDay(n.deadline), "deadline"]] : [])],
+    title: n.title,
+    href: board,
+    meta: n.colony ? colonyMeta(n.colony) : n.author_name,
+    body: clip(n.body, 200),
+  });
+  const postItem = (p) => ({ pills: [["Blog", "blog"]], title: p.title, href: `${SITE}/blog/${p.slug}.html`, meta: p.date ? fmtDay(p.date) : "", body: clip(p.excerpt, 200) });
+  const colonyItem = (c) => ({ pills: [["New colony", "colony"]], title: c.name, href: `${SITE}/map.html?colony=${encodeURIComponent(c.id)}`, meta: [c.city, c.country].filter(Boolean).join(", ") });
+
+  let html = p(esc(hi)) + p(`here is what happened in the Beyond the Cities network in ${esc(month)}: ${esc(summary)}.`);
+  let text = `${hi}\n\nhere is what happened in the Beyond the Cities network in ${month}: ${summary}.\n`;
+  const section = (heading, list, toItem) => {
+    if (!list.length) return;
+    html += h2(heading) + list.map((x) => item(toItem(x))).join("");
+    text += `\n${heading.toUpperCase()}\n` + list.map((x) => {
+      const it = toItem(x);
+      return `\n${it.pills.length ? it.pills.map(([l]) => "[" + l + "] ").join("") : ""}${it.title}${it.meta ? "\n" + it.meta : ""}${it.body ? "\n" + it.body : ""}\n${it.href}`;
+    }).join("\n") + "\n";
+  };
+  section("New on the notice board", notices, noticeItem);
+  section("Deadlines coming up", deadlines, noticeItem);
+  section("New on the blog", posts, postItem);
+  section("New colonies on the map", colonies, colonyItem);
+
+  html += `<div style="height:8px"></div>` + p("Have an open call, looking for partners or a question for other organizers? Post it on the notice board and it goes into next month's newsletter.") + button(board, "Open the notice board");
+  text += `\nHave an open call, looking for partners or a question for other organizers? Post it on the notice board and it goes into next month's newsletter:\n${board}\n`;
+  if (community && community.url) {
+    html += small(`Talk to other organizers directly in the ${link(community.url, community.label || "group chat")}.`);
+    text += `\nTalk to other organizers directly in the ${community.label || "group chat"}: ${community.url}\n`;
+  }
+  html += small(`You get this once a month because you have a Beyond the Cities Studio account. ${link(unsubUrl, "Unsubscribe")} or change it any time under My profile in the Studio.`);
+  text += `\n--\nYou get this once a month because you have a Beyond the Cities Studio account.\nUnsubscribe: ${unsubUrl}\n`;
+
+  return {
+    subject: `${month} in the Beyond the Cities network`,
+    html: mailLayout({ title: `News from the network · ${month}`, preheader: `${summary[0].toUpperCase()}${summary.slice(1)}. From the notice board, the blog and the map.`, body: html }),
+    text: textLayout({ title: `News from the network · ${month}`, body: text }),
+    headers: { "List-Unsubscribe": `<${unsubUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+  };
+}
+
 // --- sending (Resend) ---------------------------------------------------------
 function envelope(env, m) {
   return {
@@ -259,6 +356,7 @@ function envelope(env, m) {
     subject: m.subject,
     html: m.html,
     text: m.text,
+    headers: m.headers || undefined,
   };
 }
 

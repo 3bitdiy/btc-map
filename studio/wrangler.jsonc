@@ -9,6 +9,10 @@
   "workers_dev": true,
   "observability": { "enabled": true },
 
+  // Monthly newsletter: 1st of the month 08:00 UTC, retry at 14:00 the same day
+  // (the job runs once per month, the second trigger is a no-op after a send).
+  "triggers": { "crons": ["0 8,14 1 * *"] },
+
   // UI assets are imported as plain text and inlined into the page response.
   "rules": [{ "type": "Text", "globs": ["**/*.css", "**/*.svg", "**/*.client.js"], "fallthrough": true }],
 
