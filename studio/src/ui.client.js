@@ -81,8 +81,8 @@
   }
 
   // ---- router --------------------------------------------------------------
-  var VIEWS = ['home', 'colony', 'colony-edit', 'posts', 'post-edit', 'network', 'notices', 'notice-edit', 'access', 'profile'];
-  var NAV_OF = { home: 'home', colony: 'colony', 'colony-edit': 'colony', posts: 'posts', 'post-edit': 'posts', network: 'network', notices: 'network', 'notice-edit': 'network', access: 'access', profile: 'profile' };
+  var VIEWS = ['home', 'colony', 'colony-edit', 'posts', 'post-edit', 'post-view', 'network', 'notices', 'notice-edit', 'access', 'profile'];
+  var NAV_OF = { home: 'home', colony: 'colony', 'colony-edit': 'colony', posts: 'posts', 'post-edit': 'posts', 'post-view': 'posts', network: 'network', notices: 'network', 'notice-edit': 'network', access: 'access', profile: 'profile' };
   var main = q('main'), curHash = '', ignoreHash = false, current = '';
 
   function anyDirty() { return colonyDirty || postDirty || noticeDirty || profileDirty; }
@@ -96,6 +96,7 @@
   }
   function open(view, arg) {
     if (view === 'post') view = arg ? 'post-edit' : 'posts';
+    if (view === 'example') view = arg ? 'post-view' : 'posts';
     if (view === 'notice') view = arg ? 'notice-edit' : 'notices';
     if (view === 'colony' && arg) view = 'colony-edit';
     if (view === 'colony' && colonies.length === 1) { view = 'colony-edit'; arg = colonies[0].id; }
@@ -117,6 +118,7 @@
     else if (view === 'colony-edit') loadColony(arg);
     else if (view === 'posts') loadPosts();
     else if (view === 'post-edit') (arg === 'new' ? newPost() : editPost(arg));
+    else if (view === 'post-view') viewExample(arg);
     else if (view === 'network') loadNetwork();
     else if (view === 'notices') loadNotices();
     else if (view === 'notice-edit') (arg === 'new' ? newNotice() : editNotice(arg));
@@ -481,7 +483,7 @@
 
   // ---- blog posts ----------------------------------------------------------
   async function fetchPosts() {
-    try { var d = await api('/api/posts'); posts = d.posts || []; taggable = d.taggable || []; } catch (e) { if (!posts) posts = []; fail('Could not load posts', e); }
+    try { var d = await api('/api/posts'); posts = d.posts || []; examplePosts = d.examples || []; taggable = d.taggable || []; } catch (e) { if (!posts) posts = []; fail('Could not load posts', e); }
     return posts;
   }
   async function loadPosts() {
@@ -489,6 +491,7 @@
     await fetchPosts(); if (current === 'posts') drawPosts();
   }
   function drawPosts() {
+    drawExamples();
     var box = clear(q('posts-list')); var fb = clear(q('posts-filters'));
     var live = posts.filter(function (p) { return !p.draft; }).length, drafts = posts.length - live;
     [['all', 'All', posts.length], ['live', 'Live', live], ['draft', 'Drafts', drafts]].forEach(function (f) {
@@ -507,10 +510,45 @@
       var tt = el('div', 't'); tt.appendChild(el('b', null, p.title));
       var where = p.colonies && p.colonies.length ? p.colonies.map(taggableName).join(', ') : 'general post';
       tt.appendChild(el('span', null, [fmtDate(p.date), p.author, where].filter(Boolean).join(' · '))); row.appendChild(tt);
-      var acts = el('div', 'acts'); acts.appendChild(el('span', 'pill ' + (p.draft ? 'draft' : 'ok'), p.draft ? 'Draft' : 'Live'));
+      var acts = el('div', 'acts'); if (p.example) acts.appendChild(el('span', 'pill t-question', 'Example')); acts.appendChild(el('span', 'pill ' + (p.draft ? 'draft' : 'ok'), p.draft ? 'Draft' : 'Live'));
       if (!p.draft) { var v = link('btn quiet sm', blogUrl(p.slug), 'ext', 'View', true); v.title = 'View on the blog'; acts.appendChild(v); }
       acts.appendChild(svg('right')).classList.add('chev'); row.appendChild(acts); box.appendChild(row);
     });
+  }
+  // Example posts (read only for organizers; see EXAMPLE_POSTS in index.js).
+  var examplePosts = [];
+  function drawExamples() {
+    var card = q('examples-card'), box = clear(q('examples-list'));
+    card.hidden = !examplePosts.length;
+    examplePosts.forEach(function (p) {
+      var row = el('div', 'row link'); row.dataset.href = '#example/' + p.slug; row.tabIndex = 0;
+      if (p.cover) { var im = el('img', 'thumb'); im.src = photoSrc(p.cover); im.alt = ''; im.loading = 'lazy'; row.appendChild(im); }
+      else { var ph = el('span', 'thumb ph'); ph.appendChild(svg('image')); row.appendChild(ph); }
+      var tt = el('div', 't'); tt.appendChild(el('b', null, p.title));
+      tt.appendChild(el('span', null, [p.author, (p.colony_names || []).join(', ') || 'general post'].filter(Boolean).join(' · '))); row.appendChild(tt);
+      var acts = el('div', 'acts'); acts.appendChild(el('span', 'pill t-question', 'Example'));
+      acts.appendChild(svg('right')).classList.add('chev'); row.appendChild(acts); box.appendChild(row);
+    });
+  }
+  var exampleViewer = null;
+  async function viewExample(slug) {
+    q('pv-title').textContent = 'Loading…'; q('pv-sub').textContent = ''; var box = clear(q('pv-body'));
+    try {
+      var out = await api('/api/post/' + slug); if (current !== 'post-view') return;
+      var p = out.post;
+      q('pv-title').textContent = p.title || 'Untitled post';
+      q('pv-sub').textContent = [fmtDate(p.date), p.author].filter(Boolean).join(' · ');
+      var note = el('div', 'pv-note'); note.appendChild(svg('star', true));
+      note.appendChild(el('span', null, out.readonly ? 'Example post, written to show what a post can look like. You can read it but not change it. To write one for your colony, start a new post.' : 'Example post. As an admin you can edit it in the normal editor.'));
+      box.appendChild(note);
+      if (p.cover) { var im = el('img', 'pv-cover'); im.src = photoSrc(p.cover); im.alt = ''; box.appendChild(im); }
+      if (p.excerpt) box.appendChild(el('p', 'pv-ex', p.excerpt));
+      var bd = el('div'); box.appendChild(bd);
+      exampleViewer = toastui.Editor.factory({ el: bd, viewer: true, initialValue: unwrap(p.body || '') });
+      var gal = realList(p.gallery);
+      if (gal.length) { var g = el('div', 'pv-gal'); gal.forEach(function (src) { var gi = el('img'); gi.src = photoSrc(src); gi.alt = ''; gi.loading = 'lazy'; g.appendChild(gi); }); box.appendChild(g); }
+      if (!out.readonly) { var ed = link('btn ghost sm', '#post/' + slug, 'edit', 'Open in the editor'); ed.style.marginTop = '16px'; box.appendChild(ed); }
+    } catch (e) { fail('Could not open the post', e); go('#posts'); }
   }
   q('posts-search').addEventListener('input', function (e) { postTerm = e.target.value; syncClear('posts-search'); if (posts) drawPosts(); });
   function taggableName(id) { var c = taggable.filter(function (x) { return String(x.id) === String(id); })[0]; if (c) return c.name; var pc = colonies.filter(function (x) { return String(x.id) === String(id); })[0]; return pc ? pc.name : ('#' + id); }

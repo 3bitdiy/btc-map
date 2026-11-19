@@ -658,34 +658,56 @@ function canEditPost(session, colonies) {
   return (colonies || []).some((c) => mine.has(String(c)));
 }
 
+// Example posts: every signed-in organizer can open these read-only in the
+// Studio ("Example posts" card), to see what a good post looks like. The three
+// demo drafts (fictional, workshop 2026-11-20) never go on the public blog.
+// Remove the demo slugs together with the demo data after the workshop.
+const EXAMPLE_POSTS = new Set([
+  "open-studios-weekend-in-sicevo",
+  "jasenovo-2026-in-pictures",
+  "lesnovo-a-season-in-a-mountain-village",
+  "open-call-for-applications-44th-international-terracotta-sculpture-symposium-terra",
+]);
+
 async function apiPostsList(request, env) {
   const session = await getSession(request, env);
   if (!session) return json({ error: "unauthenticated" }, 401);
 
   const entries = await ghListDir(env, BLOG_DIR);
-  const posts = [];
+  const posts = [], examples = [];
   for (const e of entries) {
     if (e.type !== "file" || !e.name.endsWith(".md")) continue;
     const file = await ghGetFile(env, `${BLOG_DIR}/${e.name}`);
     if (!file) continue;
     const { data } = parseFrontMatter(file.text);
     const colonies = normalizeColonies(data.colonies);
-    if (!canEditPost(session, colonies)) continue;
-    posts.push({
-      slug: e.name.replace(/\.md$/, ""),
+    const slug = e.name.replace(/\.md$/, "");
+    const example = EXAMPLE_POSTS.has(slug);
+    const editable = canEditPost(session, colonies);
+    if (!editable && !example) continue;
+    (editable ? posts : examples).push({
+      slug,
       title: data.title || "(untitled)",
       date: data.date || "",
       draft: String(data.draft).toLowerCase() === "true",
       author: data.author || "",
       cover: data.cover || "",
       colonies,
+      example,
     });
   }
-  posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const byDate = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  posts.sort(byDate);
+  examples.sort(byDate);
+  // Names for the examples' colonies (the organizer's picker only has their own).
+  if (examples.length) {
+    const all = await listAllColonies(env);
+    for (const x of examples) x.colony_names = x.colonies.map((id) => (all.find((c) => c.id === String(id)) || {}).name).filter(Boolean);
+  }
   // Colonies the user may tag a post with (for the editor's picker).
   const taggable =
     session.role === "admin" ? await listAllColonies(env) : await listMyColonies(env, session);
-  return json({ posts, taggable, role: session.role });
+  return json({ posts, examples, taggable, role: session.role });
 }
 
 async function apiPostGet(request, env, slug) {
@@ -695,8 +717,10 @@ async function apiPostGet(request, env, slug) {
   if (!file) return json({ error: "post_not_found" }, 404);
   const { data, body } = parseFrontMatter(file.text);
   const colonies = normalizeColonies(data.colonies);
-  if (!canEditPost(session, colonies)) return json({ error: "forbidden" }, 403);
+  const editable = canEditPost(session, colonies);
+  if (!editable && !EXAMPLE_POSTS.has(slug)) return json({ error: "forbidden" }, 403);
   return json({
+    readonly: !editable,
     post: {
       slug,
       title: data.title || "",

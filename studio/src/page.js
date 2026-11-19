@@ -193,6 +193,22 @@ export function renderStudio({ session, env, css, js, icons, logo, disciplines, 
   <div class="content">
     <div class="toolbar">${search("posts-search", "Search posts…")}<div class="chips" id="posts-filters"></div></div>
     <div class="card rows" id="posts-list"><p class="empty">Loading…</p></div>
+    <div class="card" id="examples-card" hidden>
+      ${cardH("star", "Example posts", "Written for the workshop to show what a post can look like. Read only.")}
+      <div class="rows" id="examples-list"></div>
+    </div>
+  </div>
+</section>`;
+
+  const postView = `
+<section id="v-post-view" data-view hidden>
+  <div class="phead has-back">
+    <a class="back" href="#posts">${i("left", true)}Posts</a>
+    <div class="grow"><h1 id="pv-title">Loading…</h1><p id="pv-sub"></p></div>
+    <div class="acts"><a class="btn sm" href="#post/new">${i("plus", true)}<span class="l">Write your own</span></a></div>
+  </div>
+  <div class="content">
+    <div class="card pview"><div class="card-b" id="pv-body"></div></div>
   </div>
 </section>`;
 
@@ -385,7 +401,7 @@ ${icons}
 <div class="app">
 ${sidebar}
 <main class="main" id="main">
-${home}${colonyList}${colonyEdit}${postsList}${postEdit}${network}${noticesView}${noticeEdit}${access}${profile}
+${home}${colonyList}${colonyEdit}${postsList}${postEdit}${postView}${network}${noticesView}${noticeEdit}${access}${profile}
 </main>
 ${tabbar}
 <div class="toast" id="toast" role="status" aria-live="polite">${i("check", true)}<span id="toast-t"></span></div>
