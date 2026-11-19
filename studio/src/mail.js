@@ -117,6 +117,75 @@ export function loginMail({ link: url, code }) {
   return { subject: `Your Studio sign-in code: ${code}`, html, text };
 }
 
+// Sign-in steps shared by both invitations.
+function signInSteps(email) {
+  return steps([
+    `<b>If ${esc(email)} is a Gmail or Google account:</b> click <b>Continue with Google</b>.`,
+    `<b>Any other address:</b> in the field under <i>“or sign in with any email”</i>, type <b>${esc(email)}</b> and click <b>Email me a sign-in link</b>. We'll send you a link and a 6-digit code. No password needed.`,
+  ]);
+}
+function signInStepsText(email) {
+  return `1. If ${email} is a Gmail or Google account: click "Continue with Google".
+2. Any other address: in the field under "or sign in with any email", type ${email} and click "Email me a sign-in link". We'll send you a link and a 6-digit code. No password needed.`;
+}
+
+// Invitation for a project partner with an admin account and no colony
+// (e.g. Goethe-Institut staff): review the Studio and give feedback.
+export function adminInviteMail({ email, name = "", studioUrl }) {
+  // No profile yet: take the first name from a "first.last@" address.
+  const local = String(email).split("@")[0];
+  const guess = /^[a-z]{2,}\.[a-z]{2,}$/i.test(local) ? local.split(".")[0] : "";
+  const first = name ? name.split(/\s+/)[0] : guess ? guess.charAt(0).toUpperCase() + guess.slice(1).toLowerCase() : "";
+  const hi = first ? `Hi ${first},` : "Hi,";
+  const studioHost = studioUrl.replace(/^https?:\/\//, "");
+  const can = [
+    "see the Studio exactly as colony organizers do: their colony pages, blog posts, the Network directory and the notice board",
+    "open and edit any colony's page and any blog post",
+    "add organizers and assign them their colonies (Access page)",
+  ];
+  const html = mailLayout({
+    title: "Your access to the Studio",
+    preheader: "An admin account for the Beyond the Cities Studio. We'd love your feedback.",
+    body:
+      p(esc(hi)) +
+      p("you now have access to the <b>Beyond the Cities Studio</b>, the part of beyondthecities.org where colony organizers update their colony pages, publish news and connect with each other.") +
+      p("You have an <b>admin account</b>, so you can:", "margin-bottom:8px") +
+      bullets(can) +
+      p("<b>We'd love your feedback.</b> What is unclear, what is missing, what would help organizers most? Just reply to this email with anything you notice, big or small.") +
+      p("Feel free to look around: colony pages and blog posts are saved with their full history, so any change there can be undone.") +
+      p(`<b>How to sign in</b> at ${link(studioUrl + "/", studioHost)}`, "margin-bottom:12px") +
+      signInSteps(email) +
+      button(studioUrl + "/", "Open the Studio") +
+      small(`Please always sign in with <b style="color:${C.ink}">${esc(email)}</b>: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.`) +
+      p("Best,<br/>The Beyond the Cities team", "margin-top:8px"),
+  });
+  const text = textLayout({
+    title: "Your access to the Studio",
+    body:
+`${hi}
+
+you now have access to the Beyond the Cities Studio, the part of beyondthecities.org where colony organizers update their colony pages, publish news and connect with each other.
+
+You have an admin account, so you can:
+${can.map((c) => "- " + c).join("\n")}
+
+We'd love your feedback. What is unclear, what is missing, what would help organizers most? Just reply to this email with anything you notice, big or small.
+
+Feel free to look around: colony pages and blog posts are saved with their full history, so any change there can be undone.
+
+HOW TO SIGN IN
+Go to ${studioUrl}/ and then:
+
+${signInStepsText(email)}
+
+Please always sign in with ${email}: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.
+
+Best,
+The Beyond the Cities team`,
+  });
+  return { subject: "Your access to the Beyond the Cities Studio", html, text };
+}
+
 // Invitation for a new organizer. colonies: names of their colonies (may be empty).
 export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
   const hi = name ? `Hi ${name.split(/\s+/)[0]},` : "Hi,";
@@ -139,10 +208,7 @@ export function inviteMail({ email, name = "", colonies = [], studioUrl }) {
         "find other organizers in the Network directory and post open calls, partner searches or questions on the notice board",
       ]) +
       p(`<b>How to sign in</b> at ${link(studioUrl + "/", studioHost)}`, "margin-bottom:12px") +
-      steps([
-        `<b>If ${esc(email)} is a Gmail or Google account:</b> click <b>Continue with Google</b>.`,
-        `<b>Any other address:</b> in the field under <i>“or sign in with any email”</i>, type <b>${esc(email)}</b> and click <b>Email me a sign-in link</b>. We'll send you a link and a 6-digit code. No password needed.`,
-      ]) +
+      signInSteps(email) +
       button(studioUrl + "/", "Open the Studio") +
       small(`Please always sign in with <b style="color:${C.ink}">${esc(email)}</b>: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.`) +
       p("Best,<br/>The Beyond the Cities team", "margin-top:8px"),
@@ -163,8 +229,7 @@ ${colText}In the Studio you can:
 HOW TO SIGN IN
 Go to ${studioUrl}/ and then:
 
-1. If ${email} is a Gmail or Google account: click "Continue with Google".
-2. Any other address: in the field under "or sign in with any email", type ${email} and click "Email me a sign-in link". We'll send you a link and a 6-digit code. No password needed.
+${signInStepsText(email)}
 
 Please always sign in with ${email}: it's the address on our access list. If you'd rather use another one, just reply to this email and we'll switch it.
 

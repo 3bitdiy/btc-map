@@ -687,11 +687,11 @@
   function personMatches(p, t) { if (!t) return true; var hay = [p.name, p.email, p.about].concat(p.colonies.map(function (c) { return c.name + ' ' + c.city + ' ' + c.country; })).join(' '); return foldSearch(hay).indexOf(t) !== -1; }
   function groupOf(p) { if (p.countries.length) return p.countries[0]; return p.role === 'admin' ? 'Project team' : 'Other'; }
   function personCard(p) {
-    var card = el('div', 'person' + (p.me ? ' me' : ''));
+    var card = el('div', 'person' + (p.me ? ' is-me' : ''));
     var ph = el('div', 'ph'); var name = p.name || p.email || 'No name yet'; ph.appendChild(avatarFor(name));
-    var d = el('div'); var b = el('b', null, name); d.appendChild(b);
-    if (p.me) d.appendChild(el('span', 'pill draft', 'You'));
-    else if (p.role === 'admin') d.appendChild(el('span', 'role ' + (p.owner ? 'maintainer' : 'admin'), p.owner ? 'maintainer' : 'admin'));
+    var d = el('div'); var nm = el('div', 'nm'); nm.appendChild(el('b', null, name)); d.appendChild(nm);
+    if (p.me) nm.appendChild(el('span', 'pill draft', 'You'));
+    else if (p.role === 'admin') nm.appendChild(el('span', 'role ' + (p.owner ? 'maintainer' : 'admin'), p.owner ? 'maintainer' : 'admin'));
     if (p.colonies.length) {
       var w = el('div', 'where'); w.appendChild(svg('pin', true)); var span = el('span');
       p.colonies.forEach(function (c, i) { if (i) span.appendChild(document.createTextNode(' · ')); var a = link('', mapUrl(c.id), null, c.name, true); span.appendChild(a); if (c.city) span.appendChild(document.createTextNode(', ' + c.city)); });

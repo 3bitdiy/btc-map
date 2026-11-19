@@ -254,11 +254,11 @@ select.chip{appearance:none;-webkit-appearance:none;padding:5px 12px;min-height:
 .group small{font-weight:600;color:var(--mute);text-transform:none;letter-spacing:0}
 .people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .person{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.person.me{border-color:var(--accent)}
+.person.is-me{border-color:var(--accent)}
 .person .ph{display:flex;gap:10px;align-items:center;min-width:0}
 .person .ph>div{flex:1;min-width:0}
 .person .ph b{font-size:14.5px;color:var(--black);overflow-wrap:anywhere}
-.person .ph .pill{margin-left:4px}
+.person .nm{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;margin-bottom:2px}
 .person .where{font-size:12.5px;color:var(--mute);display:flex;gap:6px;align-items:flex-start}
 .person .where svg{margin-top:2px}
 .person .where a{text-decoration:none;font-weight:600}
@@ -363,6 +363,7 @@ select.chip{appearance:none;-webkit-appearance:none;padding:5px 12px;min-height:
   .card-b{padding:14px}.card-h{padding:12px 14px}
   .hello h1{font-size:20px}
   input[type=text],input[type=search],input[type=date],input[type=url],input[type=email],input[type=tel],select,textarea{font-size:16px;padding:10px 12px}
+  .search input{padding-left:38px;padding-right:40px}
   .card-h h2{font-size:15.5px}
   .toolbar>.btn{width:100%}
   .acc-row{padding:12px 14px}

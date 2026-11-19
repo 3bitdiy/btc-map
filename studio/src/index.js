@@ -7,7 +7,7 @@ import UI_CSS from "./ui.css";
 import UI_JS from "./ui.client.js";
 import ICONS from "./icons.svg";
 import { renderStudio } from "./page.js";
-import { loginMail, inviteMail, sendMail, sendMailBatch } from "./mail.js";
+import { loginMail, inviteMail, adminInviteMail, sendMail, sendMailBatch } from "./mail.js";
 
 const SESSION_COOKIE = "btc_session";
 const STATE_COOKIE = "btc_oauth_state";
@@ -1020,7 +1020,10 @@ async function buildInvite(env, email, access, colonies) {
       if (row) name = row.name || row.google_name || "";
     } catch { /* cosmetic */ }
   }
-  return { to: key, ...inviteMail({ email: key, name, colonies: names, studioUrl: (env.STUDIO_URL || "https://studio.beyondthecities.org").replace(/\/+$/, "") }) };
+  const studioUrl = (env.STUDIO_URL || "https://studio.beyondthecities.org").replace(/\/+$/, "");
+  // Admins without colonies (project partners) get the review/feedback version.
+  if (resolved.role === "admin" && !names.length) return { to: key, ...adminInviteMail({ email: key, name, studioUrl }) };
+  return { to: key, ...inviteMail({ email: key, name, colonies: names, studioUrl }) };
 }
 
 // GET ?email=…[&format=text] → the exact email that would be sent (no sending).
