@@ -4,7 +4,7 @@ date: 2026-11-20
 author: Filmart Office
 excerpt: The short documentary Stone Memory, made during the jubilee 20th edition of Interaction: Student Film Camp, continues its successful journey at festivals across Europe and Australia.
 cover: /assets/images/blog/stone-memory-a-short-documentary-made-at-the-interaction-camp-continues-its-successful-festival-journey-cover-1795168965838.webp
-tags: []
+tags: [film, documentary, film camp]
 colonies: [12]
 draft: false
 ---
